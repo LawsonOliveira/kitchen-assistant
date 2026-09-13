@@ -111,6 +111,8 @@ def register(ctx) -> None:
                 costs.link_child(session_id, parent_session_id)
             return None
         received = None
+        if role == "fifi" and user_message:
+            groundings.setdefault(session_id, SessionGrounding()).add_owner_message(str(user_message))
         if role != "fifi":  # an A2A request carries what is left of the owner turn's budget
             remaining = (_first_json_object(user_message or "").get("trace") or {}).get("turn_cost_remaining_usd")
             received = Decimal(str(remaining)) if isinstance(remaining, (int, float)) else None

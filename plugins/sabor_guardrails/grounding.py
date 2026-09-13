@@ -17,7 +17,8 @@ def _amount(display: str) -> str:
 
 
 class SessionGrounding:
-    """Money display strings seen in the session's expert and MCP results, plus the initial budget."""
+    """Money display strings seen in the session's expert and MCP results and in the owner's messages, plus the
+    initial budget."""
 
     def __init__(self):
         self.amounts = {_amount(BUDGET_DISPLAY)}
@@ -26,6 +27,10 @@ class SessionGrounding:
         for key, value in _walk(result):
             if "display" in key and isinstance(value, str):  # *_display fields and scenario display_price
                 self.amounts |= {_amount(display) for display in extract_brl(value)}
+
+    def add_owner_message(self, text: str) -> None:
+        """Amounts Dona Maria typed herself are hers, not invented by the model (she may be asked to confirm them)."""
+        self.amounts |= {_amount(display) for display in extract_brl(text)}
 
     def ungrounded(self, text: str) -> set[str]:
         return {display for display in extract_brl(text) if _amount(display) not in self.amounts}
