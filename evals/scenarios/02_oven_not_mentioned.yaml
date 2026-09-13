@@ -1,0 +1,50 @@
+# Format: see 01_happy_path.yaml.
+id: "02_oven_not_mentioned"
+title: "The dish needs an oven the owner never mentioned"
+owner_profile:
+  name: "Dona Maria"
+  persona: >
+    Opening her first delivery restaurant on iFood; answers only what she is asked, in short colloquial
+    Brazilian Portuguese. She never mentions her equipment on her own.
+  goal: "Put a roast chicken with potatoes on the launch menu."
+  behavior:
+    - "She never mentions the oven unless Dona Fifi asks about it."
+    - "She confirms purchases and the acceptance of the dish when the numbers fit her budget."
+    - "When shown the price scenarios she picks the cheapest one."
+  opening_message: "Dona Fifi, quero colocar no cardápio um frango assado com batatas. Me ajuda?"
+facts_to_reveal_only_if_asked:
+  - topic: "oven"
+    answer: "Tenho sim, um forno a gás comum."
+  - topic: "stove burners"
+    answer: "Fogão de 4 bocas."
+  - topic: "pressure cooker, air fryer, blender or mixer"
+    answer: "Só panela de pressão e liquidificador."
+  - topic: "time per batch"
+    answer: "Até 3 horas por leva."
+  - topic: "fridge space"
+    answer: "Uns 100 litros livres na geladeira."
+  - topic: "gas or energy"
+    answer: "Gás de botijão, nunca faltou."
+  - topic: "launch batch size"
+    answer: "Umas 8 porções no lançamento."
+clarify_answers:
+  - question_contains: ["preço"]
+    choice_position: 1
+  - default: "Confirmar"
+expected_state:
+  - check: "the oven was recorded in the kitchen profile from her answer"
+    sql: "SELECT count(*) = 1 FROM kitchen_profile WHERE requirement_key = 'oven' AND status = 'available'"
+  - check: "the accepted dish requires the oven"
+    sql: "SELECT count(*) = 1 FROM dishes d JOIN dish_requirements r ON r.dish_id = d.id WHERE d.status = 'accepted' AND r.requirement = 'oven'"
+  - check: "every food purchase belongs to a dish"
+    sql: "SELECT count(*) = 0 FROM purchases p JOIN ingredients i ON i.id = p.ingredient_id WHERE i.kind = 'food' AND p.dish_id IS NULL"
+trajectory_rules:
+  - id: "oven_known_before_buying_or_accepting"
+    type: precedes
+    first: {tool: update_kitchen_profile, args: {key: oven}}
+    then: [{tool: register_purchase}, {tool: accept_dish}]
+    require_then: true
+  - id: "clicks_before_money_and_decisions"
+    type: click_before
+    tools: [register_purchase, accept_dish, select_price_scenario]
+rubric_focus: [owner_decides, didactic_clarity]

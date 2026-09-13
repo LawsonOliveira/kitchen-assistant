@@ -2013,7 +2013,7 @@ Queued during implementation (each: what it blocks, the question, the default if
    `TODO(open question 4)` in `scripts/smoke_a2a.sh`):** assert the card is served (200) and assert
    auth on a `GetTask` POST for a nonexistent task — it passes the auth/trust checks without starting an
    agent turn; allowed edges → 200, missing/wrong token → 401, disallowed caller → 401 or 403.
-5. **PARTIALLY ANSWERED** (owner freed 4 GB, 4 GB more coming; 8 GB total) — **Blocks** every Docker build/run and dependency download from Loop 0 step 3 verification onward
+5. **ANSWERED** (2026-09-13: the owner reports 16 GB free on the root filesystem, measured `df -h /` = 16G available, and considers it sufficient; the Docker VM itself still has 7.5 GiB of RAM, which question 3's approved default covers) — **Blocks** every Docker build/run and dependency download from Loop 0 step 3 verification onward
    (so all remaining loops): the root filesystem is full — `/dev/nvme0n1p6` 81 G, 77 G used, ≈72 MB free
    after pulling the Hermes image (Docker Desktop's VM disk lives under `~/.docker/desktop`; `docker
    system df` reports ≈3.1 GB of reclaimable images and ≈1.7 GB of build cache that predate this project).
@@ -2036,3 +2036,15 @@ Queued during implementation (each: what it blocks, the question, the default if
    `${POSTGRES_HOST_PORT:-55432}` (container port stays 5432; services inside compose are unaffected;
    `tests/integration/conftest.py` reads the same variable). Revert to 5432 if you prefer and stop the
    local Postgres.
+9. **OPEN** — **Blocks** Loop 3 step 4 (only the timeout values and `agent.run_budget_seconds`): the step sets A2A
+   client timeouts fifi→experts 150 s, experts→researcher 120 s and fifi `agent.run_budget_seconds: 240` (D38),
+   but correction C7 raised the nested timeouts after live runs (researcher server 240 s < expert client 270 s <
+   expert server 420 s < fifi client 450 s), and the live measurements since then do not fit D38's values: a
+   three-candidate `suggest_dishes` took 111 s end to end with a 58-second researcher fan-out, and researcher's
+   children alone may use 90 s plus a 45-second repair (C17, C26), so an expert→researcher limit of 120 s and a
+   whole fifi turn of 240 s (which can include several expert calls and the owner's time on a `clarify`
+   prompt) would cut normal turns. Which limits should Loop 3 apply?
+   **Default if unanswered:** keep C7's measured chain (researcher children 90 s + repair 45 s < researcher A2A
+   server 240 s < experts→researcher client 270 s < expert A2A server 420 s < fifi→experts client 450 s) and set
+   fifi `agent.run_budget_seconds: 900`, recording the change as a correction; until answered the current C7
+   values stay in place, marked `TODO(open question 9)`, and `run_budget_seconds` is not set.

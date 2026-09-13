@@ -1,0 +1,48 @@
+# Format: see 01_happy_path.yaml.
+id: "09_non_linear_changes_mind"
+title: "The owner rejects a candidate, jumps to another dish's price, then returns to an earlier candidate"
+owner_profile:
+  name: "Dona Maria"
+  persona: "Opening her first delivery restaurant on iFood; thinks out loud and changes her mind."
+  goal: "Explore options before committing to a dish."
+  behavior:
+    - "She asks for chicken dish ideas."
+    - "She rejects the first candidate: 'Esse não, dá muito trabalho pra marmita.'"
+    - "Before any equipment was discussed she asks how much a ground-beef escondidinho would cost."
+    - "Then she says: 'Na verdade, volta naquele outro prato de frango que você tinha falado.'"
+    - "She only answers equipment questions when asked, and she does not buy or accept anything."
+  opening_message: "Dona Fifi, me dá umas ideias de prato com frango pro meu cardápio?"
+facts_to_reveal_only_if_asked:
+  - topic: "stove burners"
+    answer: "Fogão de 4 bocas."
+  - topic: "oven"
+    answer: "Tenho forno a gás."
+  - topic: "pressure cooker, air fryer, blender or mixer"
+    answer: "Panela de pressão e liquidificador."
+  - topic: "time per batch"
+    answer: "Umas 3 horas por leva."
+  - topic: "fridge space"
+    answer: "Uns 100 litros livres na geladeira."
+  - topic: "gas or energy"
+    answer: "Gás de botijão."
+clarify_answers:
+  - default: "Cancelar"
+expected_state:
+  - check: "the first candidate was rejected with her reason"
+    sql: "SELECT count(*) >= 1 FROM dishes WHERE status = 'rejected' AND rejected_reason IS NOT NULL"
+  - check: "a rejected dish never came back as a new candidate"
+    sql: "SELECT count(*) = 0 FROM (SELECT lower(name) FROM dishes GROUP BY lower(name) HAVING count(*) > 1 AND bool_or(status = 'rejected')) repeated"
+  - check: "nothing accepted or bought while she was only exploring"
+    sql: "SELECT (SELECT count(*) FROM dishes WHERE status = 'accepted') = 0 AND (SELECT count(*) FROM purchases) = 0"
+trajectory_rules:
+  - id: "rejection_recorded"
+    type: called
+    call: {tool: reject_candidate_dish}
+  - id: "no_scenarios_while_requirements_are_unknown"
+    type: precedes
+    first: {tool: check_viability, result: {missing: [], unknown: []}}
+    then: [{tool: compute_dish_cost}]
+    same_args: [dish_id]
+  - id: "rejected_dish_not_suggested_again"
+    type: rejected_dish_not_suggested_again
+rubric_focus: [owner_decides, tone]

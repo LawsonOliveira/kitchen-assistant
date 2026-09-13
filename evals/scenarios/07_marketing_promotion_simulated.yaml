@@ -1,0 +1,50 @@
+# Format: see 01_happy_path.yaml.
+# Reference dish (PLAN.md Loop 1): CMV per portion R$ 2,72; scenarios R$ 7,90 / 9,90 / 10,90.
+id: "07_marketing_promotion_simulated"
+title: "Menu copy and a launch promotion, simulated by cost_expert before it is registered"
+owner_profile:
+  name: "Dona Maria"
+  persona: "Opening her first delivery restaurant on iFood; wants her dish to sell well in the first week."
+  goal: "Accept the reference dish at R$ 9,90, get an iFood description and register a launch promotion."
+  behavior:
+    - "She dictates the reference dish in the opening message."
+    - "She chooses the R$ 9,90 scenario."
+    - "Then she asks for an iFood description and a launch promotion."
+    - "She confirms the description and a promotion only if the simulated numbers still give her a profit."
+  opening_message: >
+    Dona Fifi, meu arroz com frango: rende 4 porções, 45 minutos, 400 g de arroz branco tipo 1, 600 g de peito de
+    frango, 10 g de alho, 30 ml de óleo de soja e 1 pitada de sal. Precisa de 2 bocas e tenho fogão de 4 bocas.
+    Quero colocar no cardápio.
+facts_to_reveal_only_if_asked:
+  - topic: "time per batch"
+    answer: "Umas 3 horas por leva."
+  - topic: "fridge space"
+    answer: "Uns 100 litros livres na geladeira."
+  - topic: "gas or energy"
+    answer: "Gás de botijão."
+  - topic: "launch batch size"
+    answer: "10 porções no lançamento."
+  - topic: "next step after choosing the price"
+    answer: "Agora me ajuda com a descrição pro iFood e uma promoção de lançamento?"
+clarify_answers:
+  - question_contains: ["preço"]
+    choice_position: 2
+  - default: "Confirmar"
+expected_state:
+  - check: "the reference dish was accepted at R$ 9,90"
+    sql: "SELECT count(*) = 1 FROM dishes WHERE status = 'accepted' AND selected_price = 9.90"
+  - check: "menu copy saved within the iFood limits"
+    sql: "SELECT count(*) = 1 AND bool_and(length(title) <= 60 AND length(description) <= 250) FROM menu_copy"
+  - check: "one promotion registered with a valid discount"
+    sql: "SELECT count(*) >= 1 AND bool_and(discount_pct > 0 AND discount_pct < 1) FROM promotions"
+trajectory_rules:
+  - id: "simulate_before_register"
+    type: precedes
+    first: {tool: simulate_promotion}
+    then: [{tool: register_promotion}]
+    same_args: [dish_id, discount_pct]
+    require_then: true
+  - id: "clicks_before_publishing"
+    type: click_before
+    tools: [accept_dish, select_price_scenario, save_menu_copy, register_promotion]
+rubric_focus: [tone, owner_decides]

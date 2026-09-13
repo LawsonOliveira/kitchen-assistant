@@ -1,0 +1,42 @@
+# Format: see 01_happy_path.yaml.
+# Data fact: Cobertura de chocolate is "1 un" for R$ 79,90 with no weight, so grams need the owner's package weight.
+id: "06_chocolate_topping_weight"
+title: "A recipe uses grams of Cobertura de chocolate; Dona Fifi asks the package weight"
+owner_profile:
+  name: "Dona Maria"
+  persona: "Opening her first delivery restaurant on iFood; wants a dessert on the menu."
+  goal: "Know the cost of her chocolate mousse."
+  behavior:
+    - "She dictates her recipe in the opening message."
+    - "She tells the weight of the chocolate topping bar only when asked."
+  opening_message: >
+    Dona Fifi, quanto custa fazer minha mousse de chocolate? Rende 8 porções, leva 30 minutos e usa 300 g de
+    cobertura de chocolate, 500 g de chantilly e 4 ovos.
+facts_to_reveal_only_if_asked:
+  - topic: "weight of the chocolate topping package"
+    answer: "A barra de cobertura que eu compro tem 1 kg."
+  - topic: "mixer or other equipment"
+    answer: "Tenho batedeira e fogão de 4 bocas."
+  - topic: "time per batch"
+    answer: "Umas 3 horas por leva."
+  - topic: "fridge space"
+    answer: "Uns 100 litros livres na geladeira."
+  - topic: "launch batch size"
+    answer: "8 porções no lançamento."
+clarify_answers:
+  - default: "Confirmar"
+expected_state:
+  - check: "1 unit of Cobertura de chocolate = 1000 g is stored from her answer"
+    sql: "SELECT count(*) = 1 FROM conversion_factors c JOIN ingredients i ON i.id = c.ingredient_id WHERE i.name = 'Cobertura de chocolate' AND c.superseded_at IS NULL AND c.measure = 'unit' AND c.amount_base = 1000 AND c.amount_base_unit = 'g'"
+trajectory_rules:
+  - id: "cost_computed_after_the_weight"
+    type: precedes
+    first: {tool: set_conversion_factor, args: {ingredient_name: "Cobertura de chocolate"}}
+    then: [{tool: compute_dish_cost, result_text_contains: "Cobertura de chocolate"}]
+    require_then: true
+  - id: "the_weight_was_not_guessed"
+    type: precedes
+    first: {tool: compute_dish_cost, error_code: missing_conversion}
+    then: [{tool: set_conversion_factor}]
+    require_then: true
+rubric_focus: [didactic_clarity, clarity_of_numbers]

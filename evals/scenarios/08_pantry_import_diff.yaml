@@ -1,0 +1,36 @@
+# Format: see 01_happy_path.yaml.
+# Setup before the conversation: make import-pantry FILE=evals/scenarios/fixtures/despensa_tomate_price.xlsx
+# The fixture is the real workbook with only Tomate's "Preço total pago (R$)" changed from 16,00 to 20,00.
+id: "08_pantry_import_diff"
+title: "A new spreadsheet is previewed as a diff, confirmed with a click and applied"
+owner_profile:
+  name: "Dona Maria"
+  persona: "Opening her first delivery restaurant on iFood; keeps her pantry spreadsheet up to date."
+  goal: "Update the pantry with the new spreadsheet after seeing what changed."
+  behavior:
+    - "She tells Dona Fifi where the new spreadsheet is in the opening message."
+    - "She confirms the import after seeing the changes."
+  opening_message: "Dona Fifi, atualizei minha planilha da despensa: /opt/data/cache/documents/despensa_tomate_price.xlsx. Confere o que mudou e atualiza pra mim?"
+facts_to_reveal_only_if_asked:
+  - topic: "what changed"
+    answer: "Só o tomate ficou mais caro, paguei R$ 20,00 nos 2 kg."
+clarify_answers:
+  - default: "Confirmar"
+expected_state:
+  - check: "exactly one import applied"
+    sql: "SELECT count(*) = 1 FROM pantry_imports WHERE status = 'applied'"
+  - check: "the diff shows only the Tomate price"
+    sql: "SELECT diff = '{\"added\": [], \"removed\": [], \"changed\": [{\"name\": \"Tomate\", \"fields\": {\"total_price_paid\": [\"16.00\", \"20.00\"]}}]}'::jsonb FROM pantry_imports WHERE status = 'applied'"
+  - check: "Tomate's current price is the spreadsheet's new price"
+    sql: "SELECT count(*) = 1 FROM current_ingredient_prices p JOIN ingredients i ON i.id = p.ingredient_id WHERE i.name = 'Tomate' AND p.total_price_paid = 20.00 AND p.quantity_purchased_base = 2000 AND p.source = 'spreadsheet'"
+trajectory_rules:
+  - id: "preview_before_apply"
+    type: precedes
+    first: {tool: import_pantry, args: {apply: false}}
+    then: [{tool: import_pantry, args: {apply: true}}]
+    require_then: true
+  - id: "click_before_apply"
+    type: click_before
+    tools: [import_pantry]
+    args: {apply: true}
+rubric_focus: [clarity_of_numbers, owner_decides]

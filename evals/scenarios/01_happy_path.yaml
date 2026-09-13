@@ -1,0 +1,88 @@
+# Scenario format (PLAN.md Loop 3 Tests; run by hand in the CLI in Loop 3, graded by evals/graders.py in Loop 6).
+#
+# owner_profile            persona and goal of Dona Maria; `opening_message` starts the conversation.
+# facts_to_reveal_only_if_asked
+#                          [{topic, answer}] — the owner says `answer` only when Dona Fifi asks about `topic`.
+# clarify_answers          [{question_contains: [words], choice | choice_position}] then {default: <choice>};
+#                          the first entry whose words all appear in the clarify question wins.
+# expected_state           [{check, sql}] — each `sql` returns one boolean and must return true after the
+#                          conversation; it runs inside a read-only transaction on the app Postgres.
+# trajectory_rules         [{id, type, ...}] over audit_log (costs-mcp tool calls) and fifi's session:
+#   precedes               every successful call matching `then` happens after a successful call matching
+#                          `first`; `same_args` lists argument names both calls must share; `require_then: true`
+#                          also requires at least one `then` call.
+#   click_before           every successful call to `tools` is preceded in fifi's session by a `clarify`
+#                          answered "Confirmar" issued after the previous such write.
+#   called / not_called    at least one / no call matching `call`.
+#   rejected_dish_not_suggested_again
+#                          after `reject_candidate_dish`, every `ask_recipe_expert` `suggest_dishes` request lists
+#                          the rejected dish name in `payload.exclude_dish_names`, and no new candidate repeats it.
+#   A call matcher is {tool, agent?, args?: {subset}, result?: {subset}, result_text_contains?, error_code?};
+#   without `error_code` it matches only successful calls.
+# rubric_focus             criteria from evals/rubric.md the judge weighs most for this scenario.
+
+id: "01_happy_path"
+title: "Dish fully from the pantry, accepted, priced and on the launch menu"
+owner_profile:
+  name: "Dona Maria"
+  persona: >
+    52 years old, has cooked homemade food for decades and is opening her first delivery restaurant on iFood.
+    Short, direct answers in colloquial Brazilian Portuguese. She makes the decisions.
+  goal: "Launch a simple chicken-and-rice dish made only with what she already has in the pantry."
+  behavior:
+    - "If a suggested dish needs an ingredient she does not have, she asks for another option that uses only the pantry."
+    - "She accepts the first dish that uses only pantry ingredients and that she can cook."
+    - "When shown the price scenarios she picks the middle one."
+    - "After choosing the price she asks to see how the launch menu looks."
+  opening_message: "Oi Dona Fifi! Quero começar meu cardápio com um arroz com frango bem simples, usando só o que já tenho na despensa."
+facts_to_reveal_only_if_asked:
+  - topic: "stove burners"
+    answer: "Tenho fogão de 4 bocas."
+  - topic: "oven"
+    answer: "Tenho forno a gás, mas não queria usar pra esse prato."
+  - topic: "pressure cooker, air fryer, blender or mixer"
+    answer: "Tenho panela de pressão e liquidificador. Air fryer e batedeira não."
+  - topic: "time per batch"
+    answer: "Consigo ficar umas 3 horas cozinhando cada leva."
+  - topic: "fridge space"
+    answer: "A geladeira tem espaço livre de uns 100 litros."
+  - topic: "gas or energy"
+    answer: "O gás é de botijão e nunca faltou."
+  - topic: "launch batch size"
+    answer: "No lançamento quero fazer 10 porções."
+clarify_answers:
+  - question_contains: ["preço"]
+    choice_position: 2
+  - default: "Confirmar"
+expected_state:
+  - check: "exactly one accepted dish with a chosen scenario and price"
+    sql: "SELECT count(*) = 1 FROM dishes WHERE status = 'accepted' AND selected_price IS NOT NULL AND selected_target_cmv_pct IS NOT NULL"
+  - check: "the chosen price is a commercial price ending in ,90"
+    sql: "SELECT bool_and(selected_price - floor(selected_price) = 0.90) FROM dishes WHERE status = 'accepted'"
+  - check: "nothing was bought: the dish uses only the pantry"
+    sql: "SELECT count(*) = 0 FROM purchases"
+  - check: "budget untouched"
+    sql: "SELECT remaining = 80.00 FROM budget_status"
+  - check: "the accepted dish reserved its launch batch"
+    sql: "SELECT count(*) > 0 FROM dish_reservations r JOIN dishes d ON d.id = r.dish_id WHERE d.status = 'accepted'"
+trajectory_rules:
+  - id: "clicks_before_decisions"
+    type: click_before
+    tools: [accept_dish, select_price_scenario]
+  - id: "candidate_before_accept"
+    type: precedes
+    first: {tool: register_candidate_dish}
+    then: [{tool: accept_dish}]
+    require_then: true
+  - id: "accept_before_price_choice"
+    type: precedes
+    first: {tool: accept_dish}
+    then: [{tool: select_price_scenario}]
+    same_args: [dish_id]
+    require_then: true
+  - id: "journey_ends_with_launch_menu"
+    type: precedes
+    first: {tool: select_price_scenario}
+    then: [{tool: get_launch_menu}]
+    require_then: true
+rubric_focus: [didactic_clarity, clarity_of_numbers, owner_decides]

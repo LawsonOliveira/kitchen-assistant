@@ -1,0 +1,50 @@
+# Format: see 01_happy_path.yaml.
+# Hand computation: Tomate stock is 2000 g. Molho: yield 4, 1000 g of tomato, launch batch 8 → reserves 2000 g.
+# Vinagrete: yield 4, 300 g of tomato, launch batch 4 → needs 300 g with 0 g available → one 2 kg package (R$ 16,00).
+id: "05_shared_tomato_stock"
+title: "The second dish sees the first dish's tomato reservation and needs a purchase"
+owner_profile:
+  name: "Dona Maria"
+  persona: "Opening her first delivery restaurant on iFood; plans two dishes that both use tomatoes."
+  goal: "Accept two dishes: her tomato sauce first, then her vinaigrette."
+  behavior:
+    - "She dictates the tomato sauce recipe first and, only after it is accepted, dictates the vinaigrette."
+    - "She confirms the acceptance of both dishes and any purchase the second dish needs."
+    - "She does not need to choose prices in this conversation."
+  opening_message: >
+    Dona Fifi, meu primeiro prato é o molho de tomate da vó: rende 4 porções, 50 minutos, 1 kg de tomate, 100 g de
+    cebola, 10 g de alho, 30 ml de óleo de soja e 1 pitada de sal. No lançamento vou fazer 8 porções.
+facts_to_reveal_only_if_asked:
+  - topic: "second dish"
+    answer: >
+      O segundo é meu vinagrete: rende 4 porções, 15 minutos, 300 g de tomate, 100 g de cebola, 5 g de salsinha,
+      20 ml de óleo de soja e 1 pitada de sal. No lançamento faço 4 porções.
+  - topic: "stove burners"
+    answer: "Fogão de 4 bocas."
+  - topic: "time per batch"
+    answer: "Umas 3 horas por leva."
+  - topic: "fridge space"
+    answer: "Uns 100 litros livres na geladeira."
+  - topic: "gas or energy"
+    answer: "Gás de botijão."
+clarify_answers:
+  - default: "Confirmar"
+expected_state:
+  - check: "the sauce reserved all 2000 g of tomato"
+    sql: "SELECT count(*) = 1 FROM dish_reservations r JOIN ingredients i ON i.id = r.ingredient_id JOIN dishes d ON d.id = r.dish_id WHERE i.name = 'Tomate' AND d.name ILIKE '%molho%' AND r.quantity_base = 2000"
+  - check: "tomato was bought for the vinaigrette"
+    sql: "SELECT count(*) >= 1 FROM purchases p JOIN ingredients i ON i.id = p.ingredient_id JOIN dishes d ON d.id = p.dish_id WHERE i.name = 'Tomate' AND d.name ILIKE '%vinagrete%'"
+  - check: "both dishes accepted"
+    sql: "SELECT count(*) = 2 FROM dishes WHERE status = 'accepted'"
+  - check: "tomato stock never goes negative"
+    sql: "SELECT quantity_base >= 0 FROM available_stock WHERE name = 'Tomate'"
+trajectory_rules:
+  - id: "sauce_accepted_before_vinaigrette_is_matched"
+    type: precedes
+    first: {tool: accept_dish}
+    then: [{tool: check_budget_fit, result_text_contains: "Tomate"}]
+    require_then: true
+  - id: "clicks_before_money_and_decisions"
+    type: click_before
+    tools: [register_purchase, accept_dish, select_price_scenario]
+rubric_focus: [clarity_of_numbers, didactic_clarity]
