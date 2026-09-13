@@ -1772,7 +1772,7 @@ flowchart TD
   only `.env.example` placeholders.
 
 **Steps**
-- [ ] 1. *(sequential)* Write `scripts/rehearsal.sh` and the README checklist; run red; commit
+- [x] 1. *(sequential)* Write `scripts/rehearsal.sh` and the README checklist; run red; commit
   `test: L8 …`.
 - [ ] 2. *(parallel with each other)*
   - [ ] a) `README.md` (PT-BR): visão geral; como rodar (≈16 GiB RAM, `.env`, `make up`, `make chat`,
@@ -1784,7 +1784,8 @@ flowchart TD
     simplificações; demo em vídeo não incluída nesta entrega (§4 lists it, §1 and §5 call it
     optional); próximos passos (WhatsApp Cloud API, cloud deploy, W3C traceparent, multi-tenant
     Postgres, classifier on researcher output, LLM evals in CI, free price beyond the scenarios).
-  - [ ] b) `.github/workflows/test.yml`: deterministic suites only — `make test` (host, uv),
+    *(Written and updated for PL1–PL9; only "evals e resultados" waits for the complete `make evals` report.)*
+  - [x] b) `.github/workflows/test.yml`: deterministic suites only — `make test` (host, uv),
     `make test-contracts` and `make test-plugins` (build the agents image once), `make
     test-integration` (Postgres service); no LLM evals and no API keys in CI.
 - [ ] 3. *(sequential)* Run the rehearsal, full suite and secret scan; review the README against the
