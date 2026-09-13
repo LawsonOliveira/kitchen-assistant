@@ -14,13 +14,13 @@ log = logging.getLogger(__name__)
 
 TOOLSET = "sabor_a2a"
 RESEARCH_TASK_TYPES = ["recipe_search", "ingredient_price", "menu_reference"]
-# peer -> (URL, client timeout seconds); nested timeouts per PLAN.md correction C7
-# TODO(open question 9): Loop 3 step 4 plans fifi→experts 150 s and experts→researcher 120 s
+# peer -> (URL, client timeout seconds). Nested chain (PLAN.md open question 9, correction C35): researcher children
+# 120 s + repair 75 s < researcher A2A server 270 s < experts→researcher 300 s < expert A2A server 450 s < fifi→experts 480 s
 PEERS = {
-    "recipe_expert": ("http://recipe-expert:9900/", 450),
-    "cost_expert": ("http://cost-expert:9900/", 450),
-    "marketing_expert": ("http://marketing-expert:9900/", 450),
-    "researcher": ("http://researcher:9900/", 270),
+    "recipe_expert": ("http://recipe-expert:9900/", 480),
+    "cost_expert": ("http://cost-expert:9900/", 480),
+    "marketing_expert": ("http://marketing-expert:9900/", 480),
+    "researcher": ("http://researcher:9900/", 300),
 }
 ROLE_TOOLS = {
     "fifi": ["ask_recipe_expert", "ask_cost_expert", "ask_marketing_expert"],

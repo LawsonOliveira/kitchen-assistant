@@ -11,7 +11,7 @@ plugins:
     - sabor_observability
 agent:
   max_turns: 30
-  # TODO(open question 9): run_budget_seconds (plan: 240) waits for the owner's answer on Loop 3 timeouts
+  run_budget_seconds: 930  # open question 9: above fifi's 480 s expert client, with room for clicks
   disabled_toolsets: [terminal, file, code_execution, browser, computer_use, image_gen, tts, video, video_gen, vision, cronjob, kanban, spotify, homeassistant, x_search, web, delegation, session_search]
 tools:
   tool_search:

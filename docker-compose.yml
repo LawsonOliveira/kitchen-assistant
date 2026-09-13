@@ -90,7 +90,7 @@ services:
       A2A_PORT: "9900"
       A2A_HOST: 0.0.0.0
       A2A_PUBLIC_URL: http://recipe-expert:9900
-      A2A_REPLY_TIMEOUT: "420"  # > researcher chain; fifi's client waits 450 s (correction C7)
+      A2A_REPLY_TIMEOUT: "450"  # fifi's client waits 480 s (open question 9)
       A2A_PEER_TOKENS: fifi:${A2A_TOKEN_FIFI}
       A2A_TRUSTED_PEERS: fifi
       A2A_ALLOWED_USERS: fifi
@@ -109,7 +109,7 @@ services:
       A2A_PORT: "9900"
       A2A_HOST: 0.0.0.0
       A2A_PUBLIC_URL: http://cost-expert:9900
-      A2A_REPLY_TIMEOUT: "420"  # > researcher chain; fifi's client waits 450 s (correction C7)
+      A2A_REPLY_TIMEOUT: "450"  # fifi's client waits 480 s (open question 9)
       A2A_PEER_TOKENS: fifi:${A2A_TOKEN_FIFI}
       A2A_TRUSTED_PEERS: fifi
       A2A_ALLOWED_USERS: fifi
@@ -128,7 +128,7 @@ services:
       A2A_PORT: "9900"
       A2A_HOST: 0.0.0.0
       A2A_PUBLIC_URL: http://marketing-expert:9900
-      A2A_REPLY_TIMEOUT: "420"  # > researcher chain; fifi's client waits 450 s (correction C7)
+      A2A_REPLY_TIMEOUT: "450"  # fifi's client waits 480 s (open question 9)
       A2A_PEER_TOKENS: fifi:${A2A_TOKEN_FIFI}
       A2A_TRUSTED_PEERS: fifi
       A2A_ALLOWED_USERS: fifi
@@ -147,7 +147,7 @@ services:
       A2A_PORT: "9900"
       A2A_HOST: 0.0.0.0
       A2A_PUBLIC_URL: http://researcher:9900
-      A2A_REPLY_TIMEOUT: "240"  # experts' client waits 270 s (correction C7)
+      A2A_REPLY_TIMEOUT: "270"  # experts' client waits 300 s (open question 9)
       A2A_PEER_TOKENS: recipe_expert:${A2A_TOKEN_RECIPE_EXPERT},cost_expert:${A2A_TOKEN_COST_EXPERT},marketing_expert:${A2A_TOKEN_MARKETING_EXPERT}
       A2A_TRUSTED_PEERS: recipe_expert,cost_expert,marketing_expert
       A2A_ALLOWED_USERS: recipe_expert,cost_expert,marketing_expert
@@ -170,7 +170,7 @@ services:
       A2A_PORT: "9900"
       A2A_HOST: 0.0.0.0
       A2A_PUBLIC_URL: http://researcher-eval:9900
-      A2A_REPLY_TIMEOUT: "240"
+      A2A_REPLY_TIMEOUT: "270"  # experts' client waits 300 s (open question 9)
       A2A_PEER_TOKENS: recipe_expert:${A2A_TOKEN_RECIPE_EXPERT}
       A2A_TRUSTED_PEERS: recipe_expert
       A2A_ALLOWED_USERS: recipe_expert

@@ -1996,6 +1996,18 @@ evidence, what was changed, and where. Open questions that were "default applied
   "Confirmar preço estimado da maionese (R$ 15,39)" as a choice; its prompt now requires exactly ["Confirmar",
   "Cancelar"], one decision per clarify (see open question 10).
 
+- **C34 — A web estimate never replaces a price the owner already has.** Loop 3 scenario 02 (second attempt):
+  `price_missing_item` for Peito de frango (in the pantry, short only in stock) recorded a web estimate of
+  R$ 15,99/kg that superseded the spreadsheet's R$ 28,00 / 2 kg, so CMV would have used an unconfirmed web price
+  (D27). Tests first (red: 1 failed): `record_price_quote` with `source=web_estimate` refuses with
+  `price_already_known` (and the current `unit_cost_display`) when the current price comes from the spreadsheet or
+  the owner; a newer estimate may still replace an older estimate.
+- **C35 — Timeouts from open question 9.** Owner's answer applied: `researcher_hooks` children 120 s and repair
+  75 s; researcher `A2A_REPLY_TIMEOUT` 270 s; experts' `research` client 300 s; experts' `A2A_REPLY_TIMEOUT` 450 s;
+  fifi's `ask_*` client 480 s; fifi `agent.run_budget_seconds` 930 s (Loop 3 step 4 and D38's 90/120/150/240 s are
+  superseded). The same attempt was cut by a network outage to the model provider, which also exhausted fifi's
+  `max_turns: 30` iteration budget on retries; scenario 02 is rerun from a reset state.
+
 ## Final manual step (owner — after Loop 8, not executed by the agent)
 Kept here so it is not forgotten: no loop creates a GitHub remote or submits the challenge.
 - [ ] Create the GitHub repository, add it as `origin` and push.
@@ -2075,7 +2087,7 @@ Queued during implementation (each: what it blocks, the question, the default if
    `${POSTGRES_HOST_PORT:-55432}` (container port stays 5432; services inside compose are unaffected;
    `tests/integration/conftest.py` reads the same variable). Revert to 5432 if you prefer and stop the
    local Postgres.
-9. **OPEN** — **Blocks** Loop 3 step 4 (only the timeout values and `agent.run_budget_seconds`): the step sets A2A
+9. **ANSWERED** (owner, 2026-09-13: "concordo com a recomendação, porém aumentar os tempos em +30 s cada um" — applied as correction C35: researcher children 120 s + repair 75 s < researcher A2A server 270 s < experts→researcher 300 s < expert A2A server 450 s < fifi→experts 480 s < fifi `agent.run_budget_seconds` 930 s) — **Blocked** Loop 3 step 4 (only the timeout values and `agent.run_budget_seconds`): the step sets A2A
    client timeouts fifi→experts 150 s, experts→researcher 120 s and fifi `agent.run_budget_seconds: 240` (D38),
    but correction C7 raised the nested timeouts after live runs (researcher server 240 s < expert client 270 s <
    expert server 420 s < fifi client 450 s), and the live measurements since then do not fit D38's values: a
@@ -2087,7 +2099,7 @@ Queued during implementation (each: what it blocks, the question, the default if
    server 240 s < experts→researcher client 270 s < expert A2A server 420 s < fifi→experts client 450 s) and set
    fifi `agent.run_budget_seconds: 900`, recording the change as a correction; until answered the current C7
    values stay in place, marked `TODO(open question 9)`, and `run_budget_seconds` is not set.
-10. **OPEN** — **Affects** Loop 3 step 3 and Loop 4's red-team case "fifi grants a write without a click" (nothing is
+10. **ANSWERED** (owner, 2026-09-13: "concordo" — the deterministic click check is implemented test-first in Loop 4 step 6b) — **Affects** Loop 3 step 3 and Loop 4's red-team case "fifi grants a write without a click" (nothing is
    blocked meanwhile): D14 leaves the click to fifi's LLM, and the Loop 3 runs show the model bending the protocol
    (scenario 02 used custom clarify choices such as "Confirmar preço estimado da maionese (R$ 15,39)" and still sent
    `owner_confirmation`; in `hermes chat -q` Hermes answers clarify by itself, C29). Should a deterministic check be
@@ -2096,3 +2108,12 @@ Queued during implementation (each: what it blocks, the question, the default if
    lightweight complement to D14 (not the rejected proposal/approval tokens bound to parameter hashes)?
    **Default if unanswered:** yes, implemented test-first in Loop 4 step 6b next to the tool allowlist, recorded as
    a correction; until then the prompt rule and the contract requirement (C29) stand.
+11. **OPEN** — **Affects** Loop 3 flows where the owner changes how many portions she will launch (nothing is blocked
+   meanwhile): there is no operation to change a candidate's `launch_batch_portions`, so in scenario 02 (second
+   attempt), when the purchases exceeded the budget and the owner chose fewer portions, recipe_expert registered a
+   second candidate of the same recipe and the first stayed as an orphan candidate (rejecting it would record a
+   rejection she never made, which scenario 09 treats as "never suggest again"). Add
+   `set_launch_batch_portions(dish_id, launch_batch_portions, evidence)` for candidates (recipe_expert, evidence =
+   her words), exposed as recipe_expert task `set_launch_batch`?
+   **Default if unanswered:** yes — test-first in costs-mcp (candidate only; accepted dishes keep their reservation),
+   added to TOOL_PERMISSIONS, the recipe_expert contract and fifi's prompt, recorded as a correction.

@@ -23,8 +23,8 @@ from . import web_replay
 from .validation import ContractError, bundled_schema, parse_json_object
 
 CHILD_MODEL = "claude-haiku-4-5-20251001"
-CHILD_TIMEOUT_SECONDS = 90
-REPAIR_TIMEOUT_SECONDS = 45
+CHILD_TIMEOUT_SECONDS = 120  # open question 9: +30 s
+REPAIR_TIMEOUT_SECONDS = 75
 REPAIR_GOAL = ("Fix a research reply that does not match its JSON Schema. Change only what the errors name; when a "
                "value is unknown, read its source_url again with web_extract and never guess. Reply with only the "
                "corrected JSON object.")
