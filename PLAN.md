@@ -2023,7 +2023,10 @@ evidence, what was changed, and where. Open questions that were "default applied
   trabalho pra marmita") fifi only acknowledged it; nothing reached `reject_candidate_dish` (it needs a registered
   candidate), so the rejection was not auditable and could not keep the dish out of later rounds. fifi's `SOUL.md`
   now registers the rejected recipe as a candidate (launch batch = its yield, her words as evidence) and rejects it
-  with her reason at once; the scenario was rerun from a reset state.
+  with her reason at once; the scenario was rerun from a reset state. In the second attempt recipe_expert refused
+  that registration ("owner_statement is a rejection, not interest") and fifi still told the owner the rejection was
+  noted; recipe_expert's `SOUL.md` now accepts a rejection as evidence for that registration, and fifi's `SOUL.md`
+  forbids claiming anything was recorded unless the expert's result confirms it.
 
 ## Final manual step (owner — after Loop 8, not executed by the agent)
 Kept here so it is not forgotten: no loop creates a GitHub remote or submits the challenge.
