@@ -79,3 +79,34 @@ def test_non_positive_portions_are_refused(conn, yield_portions, launch_batch_po
     with pytest.raises(DomainError) as error:
         operations.register_candidate_dish(conn, make_recipe(RICE), yield_portions, launch_batch_portions, EVIDENCE)
     assert error.value.code == "invalid_portions"
+
+
+def launch_batch(conn, dish_id):
+    return conn.execute("SELECT launch_batch_portions FROM dishes WHERE id = %s", (dish_id,)).fetchone()[0]
+
+
+def test_a_candidate_launch_batch_can_change_with_her_words(conn):
+    # PLAN.md open question 11: in Loop 3 scenario 02 she chose fewer portions to fit the budget and recipe_expert had to
+    # register a second candidate of the same recipe, leaving the first as an orphan.
+    dish = operations.register_candidate_dish(conn, make_recipe(RICE), 4, 20, EVIDENCE)["dish_id"]
+    result = operations.set_launch_batch_portions(conn, dish, 10, "vou fazer só 10 porções então")
+    assert result["dish_id"] == dish and result["launch_batch_portions"] == 10 and "pantry_match" in result
+    assert launch_batch(conn, dish) == 10
+
+
+def test_an_accepted_dish_keeps_its_launch_batch(conn):
+    viable_profile(conn)
+    dish = operations.register_candidate_dish(conn, make_recipe(RICE), 4, 4, EVIDENCE)["dish_id"]
+    operations.accept_dish(conn, dish)
+    with pytest.raises(DomainError) as error:
+        operations.set_launch_batch_portions(conn, dish, 8, "quero 8")
+    assert error.value.code == "not_candidate" and launch_batch(conn, dish) == 4
+
+
+def test_launch_batch_must_be_a_positive_integer(conn):
+    dish = operations.register_candidate_dish(conn, make_recipe(RICE), 4, 4, EVIDENCE)["dish_id"]
+    for portions in (0, -2, 2.5):
+        with pytest.raises(DomainError) as error:
+            operations.set_launch_batch_portions(conn, dish, portions, "quero mudar")
+        assert error.value.code == "invalid_portions"
+    assert launch_batch(conn, dish) == 4

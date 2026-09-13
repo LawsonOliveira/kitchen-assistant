@@ -1,0 +1,14 @@
+{
+  "task": "set_launch_batch",
+  "trace": {
+    "trace_id": "trace-1",
+    "parent_span_id": "span-1",
+    "turn_cost_remaining_usd": 4.5
+  },
+  "owner_confirmation": null,
+  "owner_statement": "Então vou fazer só 10 porções.",
+  "payload": {
+    "dish_id": 3,
+    "launch_batch_portions": 10
+  }
+}

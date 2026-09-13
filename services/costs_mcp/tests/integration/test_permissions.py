@@ -50,3 +50,8 @@ def test_unknown_token_is_rejected_before_reaching_the_mcp_app():
     assert client.get("/mcp", headers={"Authorization": "Bearer not-a-token"}).status_code == 401
     assert client.get("/mcp", headers={"Authorization": "Bearer good-token"}).status_code == 200
     assert client.get("/health").status_code == 200
+
+
+def test_only_recipe_expert_changes_a_candidate_launch_batch():
+    assert "set_launch_batch_portions" in server.TOOL_PERMISSIONS["recipe_expert"]
+    assert all("set_launch_batch_portions" not in tools for agent, tools in server.TOOL_PERMISSIONS.items() if agent != "recipe_expert")
