@@ -91,8 +91,9 @@ def alerts(conversation_signals: dict, cost_usd: float, limits: dict = LIMITS) -
 
 def score_payloads(session_id: str, conversation_signals: dict, rubric_scores: dict) -> list[dict]:
     values = {**rubric_scores, **{name: conversation_signals[name] for name in SIGNAL_SCORES}}
-    return [{"sessionId": session_id, "name": name, "value": value, "dataType": "NUMERIC", "comment": "review_conversations"}
-            for name, value in values.items()]
+    # A stable id per session and score: Langfuse upserts by id, so a rerun updates instead of adding a copy.
+    return [{"id": f"review-{session_id}-{name}", "sessionId": session_id, "name": name, "value": value, "dataType": "NUMERIC",
+             "comment": "review_conversations"} for name, value in values.items()]
 
 
 def needs_annotation(judge: dict, conversation_signals: dict, conversation_alerts: list[str]) -> bool:
@@ -154,6 +155,20 @@ def _langfuse(env: dict):
     return call
 
 
+def _annotation_queue(langfuse, criteria: list[str]) -> str:
+    """The review queue, created on first use; Langfuse requires score configs on a queue, so the rubric criteria get
+    numeric 1–5 configs (reused by name)."""
+    queues = langfuse("GET", "annotation-queues?limit=50").get("data", [])
+    existing = next((queue["id"] for queue in queues if queue["name"] == QUEUE_NAME), None)
+    if existing:
+        return existing
+    configs = {config["name"]: config["id"] for config in langfuse("GET", "score-configs?limit=100").get("data", [])}
+    ids = [configs.get(name) or langfuse("POST", "score-configs", {"name": name, "dataType": "NUMERIC", "minValue": 1, "maxValue": 5,
+                                                                   "description": f"evals/rubric.md: {name}"})["id"] for name in criteria]
+    return langfuse("POST", "annotation-queues", {"name": QUEUE_NAME, "description": "Conversations flagged by review_conversations",
+                                                  "scoreConfigIds": ids})["id"]
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--since", help="YYYY-MM-DD (default: 7 days ago)")
@@ -189,10 +204,10 @@ def main(argv: list[str] | None = None) -> int:
                 langfuse("POST", "scores", payload)
             if needs_annotation(judged, conversation_signals, conversation_alerts):
                 if queue_id is None:
-                    queues = langfuse("GET", "annotation-queues?limit=50").get("data", [])
-                    queue_id = next((q["id"] for q in queues if q["name"] == QUEUE_NAME), None) or langfuse(
-                        "POST", "annotation-queues", {"name": QUEUE_NAME, "description": "Conversations flagged by review_conversations", "scoreConfigIds": []})["id"]
-                langfuse("POST", f"annotation-queues/{queue_id}/items", {"objectId": session_id, "objectType": "SESSION"})
+                    queue_id = _annotation_queue(langfuse, graders.rubric_criteria(rubric))
+                queued = langfuse("GET", f"annotation-queues/{queue_id}/items?limit=100").get("data", [])
+                if not any(item.get("objectId") == session_id for item in queued):
+                    langfuse("POST", f"annotation-queues/{queue_id}/items", {"objectId": session_id, "objectType": "SESSION"})
         except Exception as error:  # the local report is still written
             problems.append(f"{session_id}: Langfuse {type(error).__name__}: {error}")
     date = datetime.now().strftime("%Y-%m-%d")
