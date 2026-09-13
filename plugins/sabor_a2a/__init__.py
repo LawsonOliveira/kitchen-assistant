@@ -144,5 +144,9 @@ def register(ctx) -> None:
         researcher_hooks.register(ctx)
         ctx.register_system_prompt_section(
             "sabor-researcher-child", lambda info: CHILD_INSTRUCTIONS if info.get("platform") == "subagent" else "")
+    if role == "cost_expert":
+        from . import relay
+
+        relay.register(ctx)  # registered before _ensure_cost_field: the first transform_llm_output result wins
     if role != "fifi":
         ctx.register_hook("transform_llm_output", _ensure_cost_field)

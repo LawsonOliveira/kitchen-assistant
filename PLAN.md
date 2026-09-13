@@ -1909,6 +1909,16 @@ evidence, what was changed, and where. Open questions that were "default applied
   costs-mcp with the same tools. fifi also tried `clarify`, unavailable in non-interactive `hermes chat -Q`, and
   then asked in plain text as its `SOUL.md` says.
 
+- **C25 — cost_expert relays costs-mcp results verbatim.** In the second reference-dish conversation
+  `compute_dish_cost` returned margins 55,6% / 62,6% / 65,1%, but cost_expert (`claude-sonnet-5`) retyped the
+  JSON into its A2A reply as 55,6% / 65,1% / 65,1% and fifi showed the wrong 30% scenario margin (prices and
+  profits were right; the costs-mcp unit test already asserted 0.6257). A prompt cannot guarantee exact
+  copying, so `plugins/sabor_a2a/relay.py` (cost_expert only, tests first — red: collection error) records the
+  latest `mcp__costs__compute_dish_cost` result of each request from `transform_tool_result` (decoding Hermes'
+  `{"result": "<json>"}` envelope, with or without the untrusted-data wrapper) and `transform_llm_output`
+  replaces the reply's `result` with it, keeping only the model's `questions_for_owner`. A new request in a
+  reused session forgets the previous result. Loop 3 adds the other cost tools to `RELAYED_TOOLS` as they return.
+
 ## Final manual step (owner — after Loop 8, not executed by the agent)
 Kept here so it is not forgotten: no loop creates a GitHub remote or submits the challenge.
 - [ ] Create the GitHub repository, add it as `origin` and push.
