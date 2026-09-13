@@ -1,0 +1,20 @@
+[project]
+name = "costs-mcp"
+version = "0.1.0"
+description = "Deterministic pantry, CMV and pricing MCP server for Sabor da Maria"
+requires-python = ">=3.12"
+dependencies = [
+    "mcp",
+    "psycopg[binary]",
+    "openpyxl",
+    "jsonschema",
+]
+
+[dependency-groups]
+dev = ["pytest"]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+pythonpath = ["."]

@@ -1038,7 +1038,7 @@ flowchart TD
   the guardrail self-test and the evals). No GitHub remote (D45).
 - [x] 2. *(sequential)* Write every test in **Tests** above; run them red; commit `test: L0 …`.
 - [ ] 3. *(parallel with each other; 3b needs 3a's recipe schema)*
-  - [ ] a) `contracts/recipe.schema.json`, `contracts/requirements.json`,
+  - [x] a) `contracts/recipe.schema.json`, `contracts/requirements.json`,
     `contracts/events.schema.json` exactly as in *Shared definitions*.
   - [ ] b) `services/costs_mcp/` minimal: `pyproject.toml` (Python 3.12; deps `mcp`,
     `psycopg[binary]`, `openpyxl`, `jsonschema`; dev `pytest`); `Dockerfile`;
@@ -1064,7 +1064,7 @@ flowchart TD
     researcher (env vars `A2A_PEER_TOKENS`, `A2A_TRUSTED_PEERS` set in compose per the D3 edges), `mcp_servers.costs`
     (`url: http://costs-mcp:8000/mcp`, bearer header) on fifi and the 3 experts, Tavily web provider
     on researcher only; `make hermes-shell` target.
-  - [ ] d) `plugins/sabor_a2a/`: `plugin.yaml`, `__init__.py: register(ctx)`; `client.py:
+  - [x] d) `plugins/sabor_a2a/`: `plugin.yaml`, `__init__.py: register(ctx)`; `client.py:
     send_message(peer_url, token, text, timeout_s) -> str` (stdlib `urllib`, JSON-RPC
     `message/send`, new `contextId` per call; HTTP 401 → `A2AAuthError`; timeout → `A2ATimeout`);
     tools chosen by env `SABOR_AGENT_ROLE`: on fifi `ask_recipe_expert(message)`,
@@ -1846,3 +1846,11 @@ Queued during implementation (each: what it blocks, the question, the default if
    `TODO(open question 4)` in `scripts/smoke_a2a.sh`):** assert the card is served (200) and assert
    auth on a `GetTask` POST for a nonexistent task — it passes the auth/trust checks without starting an
    agent turn; allowed edges → 200, missing/wrong token → 401, disallowed caller → 401 or 403.
+5. **Blocks** every Docker build/run and dependency download from Loop 0 step 3 verification onward
+   (so all remaining loops): the root filesystem is full — `/dev/nvme0n1p6` 81 G, 77 G used, ≈72 MB free
+   after pulling the Hermes image (Docker Desktop's VM disk lives under `~/.docker/desktop`; `docker
+   system df` reports ≈3.1 GB of reclaimable images and ≈1.7 GB of build cache that predate this project).
+   The app stack alone needs several GB (Hermes image, Postgres, Python images, agents image) and the
+   Langfuse stack several more. **Default:** none — this stays blocked until the owner frees disk space
+   (e.g. `docker system prune` of images/build cache they no longer need). Implementation files that need
+   no download keep being written, but nothing is checked off until its tests actually run.

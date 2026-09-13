@@ -1,0 +1,7 @@
+name: sabor_observability
+version: "0.1.0"
+description: "Sabor da Maria observability: tool-call events (Loop 0 stdout stub; cockpit + Langfuse in Loop 5)."
+author: "Sabor da Maria"
+hooks:
+  - pre_tool_call
+  - post_tool_call

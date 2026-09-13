@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sabor.local/contracts/events.schema.json",
+  "title": "Observability event (cockpit + Langfuse)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "trace_id", "span_id", "parent_span_id", "agent", "kind", "name", "status", "started_at",
+    "duration_ms", "model", "prompt_hash", "tokens_in", "tokens_out", "cost_usd", "preview"
+  ],
+  "properties": {
+    "trace_id": { "type": "string", "minLength": 1, "maxLength": 100 },
+    "span_id": { "type": "string", "minLength": 1, "maxLength": 100 },
+    "parent_span_id": { "type": ["string", "null"], "maxLength": 100 },
+    "agent": { "type": "string", "minLength": 1, "maxLength": 50 },
+    "kind": {
+      "enum": [
+        "guard_input", "guard_output", "guard_memory", "llm_call", "tool_call", "a2a_call", "a2a_serve",
+        "subagent", "mcp_call", "state_snapshot", "progress", "error", "health"
+      ]
+    },
+    "name": { "type": "string", "minLength": 1, "maxLength": 200 },
+    "status": { "enum": ["ok", "error", "blocked"] },
+    "started_at": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}" },
+    "duration_ms": { "type": "integer", "minimum": 0 },
+    "model": { "type": ["string", "null"], "maxLength": 100 },
+    "prompt_hash": { "type": ["string", "null"], "maxLength": 64 },
+    "tokens_in": { "type": ["integer", "null"], "minimum": 0 },
+    "tokens_out": { "type": ["integer", "null"], "minimum": 0 },
+    "cost_usd": { "type": ["number", "null"], "minimum": 0 },
+    "preview": { "type": "string", "maxLength": 200 }
+  }
+}

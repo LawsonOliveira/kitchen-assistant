@@ -1,0 +1,17 @@
+# fifi — Hermes config seeded into HERMES_HOME on every start (agents/entrypoint.sh).
+model:
+  default: claude-sonnet-5
+  provider: anthropic  # authenticated with CLAUDE_CODE_OAUTH_TOKEN (PLAN.md D46)
+terminal:
+  cwd: /workspace
+plugins:
+  enabled:
+    - sabor_a2a
+    - sabor_observability
+agent:
+  disabled_toolsets: [terminal, file, code_execution, browser, computer_use, image_gen, tts, video, video_gen, vision, cronjob, kanban, spotify, homeassistant, x_search, web]
+mcp_servers:
+  costs:
+    url: http://costs-mcp:8000/mcp
+    headers:
+      Authorization: "Bearer ${COSTS_MCP_TOKEN}"

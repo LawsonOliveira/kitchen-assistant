@@ -1,0 +1,154 @@
+name: sabor
+
+# One image for the five Hermes agents; each mounts its versioned config at /seed (PLAN.md D18).
+x-agent: &agent
+  build:
+    context: .
+    dockerfile: agents/Dockerfile
+  image: sabor-agent:local
+  restart: unless-stopped
+  depends_on:
+    costs-mcp:
+      condition: service_healthy
+
+x-agent-env: &agent-env
+  # TODO(open question 1): how the Claude Code credential reaches the containers is still open.
+  CLAUDE_CODE_OAUTH_TOKEN: ${CLAUDE_CODE_OAUTH_TOKEN:-}
+
+x-a2a-server-healthcheck: &a2a-healthcheck
+  test: ["CMD", "/opt/hermes/.venv/bin/python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:9900/health', timeout=3)"]
+  interval: 10s
+  timeout: 5s
+  retries: 30
+
+services:
+  postgres:
+    image: postgres:17.6-alpine
+    environment:
+      POSTGRES_USER: sabor
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: sabor
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sabor -d sabor"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  costs-mcp:
+    build: services/costs_mcp
+    image: sabor-costs-mcp:local
+    environment:
+      DATABASE_URL: postgresql://sabor:${POSTGRES_PASSWORD}@postgres:5432/sabor
+      COSTS_MCP_AGENT_TOKENS: >-
+        fifi:${COSTS_MCP_TOKEN_FIFI:?set COSTS_MCP_TOKEN_FIFI in .env},recipe_expert:${COSTS_MCP_TOKEN_RECIPE_EXPERT:?set COSTS_MCP_TOKEN_RECIPE_EXPERT in .env},cost_expert:${COSTS_MCP_TOKEN_COST_EXPERT:?set COSTS_MCP_TOKEN_COST_EXPERT in .env},marketing_expert:${COSTS_MCP_TOKEN_MARKETING_EXPERT:?set COSTS_MCP_TOKEN_MARKETING_EXPERT in .env}
+      SABOR_SPREADSHEET: /data/despensa_dona_maria.xlsx
+    volumes:
+      - ./data:/data:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  fifi:
+    <<: *agent
+    environment:
+      <<: *agent-env
+      SABOR_AGENT_ROLE: fifi
+      SABOR_A2A_TOKEN: ${A2A_TOKEN_FIFI:?set A2A_TOKEN_FIFI in .env}
+      COSTS_MCP_TOKEN: ${COSTS_MCP_TOKEN_FIFI}
+    volumes:
+      - ./agents/fifi:/seed:ro
+      - hermes_fifi:/opt/data
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "gateway run"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+
+  recipe-expert:
+    <<: *agent
+    environment:
+      <<: *agent-env
+      SABOR_AGENT_ROLE: recipe_expert
+      SABOR_A2A_TOKEN: ${A2A_TOKEN_RECIPE_EXPERT:?set A2A_TOKEN_RECIPE_EXPERT in .env}
+      COSTS_MCP_TOKEN: ${COSTS_MCP_TOKEN_RECIPE_EXPERT}
+      A2A_PORT: "9900"
+      A2A_HOST: 0.0.0.0
+      A2A_PUBLIC_URL: http://recipe-expert:9900
+      A2A_PEER_TOKENS: fifi:${A2A_TOKEN_FIFI}
+      A2A_TRUSTED_PEERS: fifi
+      A2A_ALLOWED_USERS: fifi
+    volumes:
+      - ./agents/recipe_expert:/seed:ro
+      - hermes_recipe_expert:/opt/data
+    healthcheck: *a2a-healthcheck
+
+  cost-expert:
+    <<: *agent
+    environment:
+      <<: *agent-env
+      SABOR_AGENT_ROLE: cost_expert
+      SABOR_A2A_TOKEN: ${A2A_TOKEN_COST_EXPERT:?set A2A_TOKEN_COST_EXPERT in .env}
+      COSTS_MCP_TOKEN: ${COSTS_MCP_TOKEN_COST_EXPERT}
+      A2A_PORT: "9900"
+      A2A_HOST: 0.0.0.0
+      A2A_PUBLIC_URL: http://cost-expert:9900
+      A2A_PEER_TOKENS: fifi:${A2A_TOKEN_FIFI}
+      A2A_TRUSTED_PEERS: fifi
+      A2A_ALLOWED_USERS: fifi
+    volumes:
+      - ./agents/cost_expert:/seed:ro
+      - hermes_cost_expert:/opt/data
+    healthcheck: *a2a-healthcheck
+
+  marketing-expert:
+    <<: *agent
+    environment:
+      <<: *agent-env
+      SABOR_AGENT_ROLE: marketing_expert
+      SABOR_A2A_TOKEN: ${A2A_TOKEN_MARKETING_EXPERT:?set A2A_TOKEN_MARKETING_EXPERT in .env}
+      COSTS_MCP_TOKEN: ${COSTS_MCP_TOKEN_MARKETING_EXPERT}
+      A2A_PORT: "9900"
+      A2A_HOST: 0.0.0.0
+      A2A_PUBLIC_URL: http://marketing-expert:9900
+      A2A_PEER_TOKENS: fifi:${A2A_TOKEN_FIFI}
+      A2A_TRUSTED_PEERS: fifi
+      A2A_ALLOWED_USERS: fifi
+    volumes:
+      - ./agents/marketing_expert:/seed:ro
+      - hermes_marketing_expert:/opt/data
+    healthcheck: *a2a-healthcheck
+
+  researcher:
+    <<: *agent
+    depends_on: []
+    environment:
+      <<: *agent-env
+      SABOR_AGENT_ROLE: researcher
+      TAVILY_API_KEY: ${TAVILY_API_KEY:?set TAVILY_API_KEY in .env}
+      A2A_PORT: "9900"
+      A2A_HOST: 0.0.0.0
+      A2A_PUBLIC_URL: http://researcher:9900
+      A2A_PEER_TOKENS: recipe_expert:${A2A_TOKEN_RECIPE_EXPERT},cost_expert:${A2A_TOKEN_COST_EXPERT},marketing_expert:${A2A_TOKEN_MARKETING_EXPERT}
+      A2A_TRUSTED_PEERS: recipe_expert,cost_expert,marketing_expert
+      A2A_ALLOWED_USERS: recipe_expert,cost_expert,marketing_expert
+    volumes:
+      - ./agents/researcher:/seed:ro
+      - hermes_researcher:/opt/data
+    healthcheck: *a2a-healthcheck
+
+volumes:
+  postgres_data:
+  hermes_fifi:
+  hermes_recipe_expert:
+  hermes_cost_expert:
+  hermes_marketing_expert:
+  hermes_researcher:

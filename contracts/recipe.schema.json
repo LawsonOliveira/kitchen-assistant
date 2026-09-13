@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sabor.local/contracts/recipe.schema.json",
+  "title": "Normalized recipe",
+  "description": "No free-text preparation field on purpose: free text is where injected instructions would live (PLAN.md D5).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["name", "source_url", "yield_portions", "prep_time_minutes", "ingredients", "requirements"],
+  "properties": {
+    "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+    "source_url": { "type": "string", "maxLength": 500, "pattern": "^https?://[^\\s]+$" },
+    "yield_portions": { "type": "integer", "minimum": 1 },
+    "prep_time_minutes": { "type": "integer", "minimum": 1 },
+    "ingredients": { "type": "array", "minItems": 1, "maxItems": 40, "items": { "$ref": "#/$defs/ingredient" } },
+    "requirements": {
+      "type": "array",
+      "maxItems": 30,
+      "uniqueItems": true,
+      "items": { "$ref": "https://sabor.local/contracts/requirements.json" }
+    }
+  },
+  "$defs": {
+    "ingredient": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "quantity", "unit", "pantry_match"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 60 },
+        "quantity": { "type": ["number", "null"] },
+        "unit": {
+          "enum": ["g", "kg", "ml", "l", "unit", "cup", "tablespoon", "teaspoon", "clove", "pinch", "drizzle", "to_taste", "can", "package"]
+        },
+        "pantry_match": { "type": ["string", "null"], "minLength": 1, "maxLength": 60 }
+      },
+      "if": { "properties": { "unit": { "const": "to_taste" } } },
+      "then": { "properties": { "quantity": { "type": "null" } } },
+      "else": { "properties": { "quantity": { "type": "number", "exclusiveMinimum": 0 } } }
+    }
+  }
+}

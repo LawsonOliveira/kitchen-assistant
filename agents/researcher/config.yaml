@@ -1,0 +1,14 @@
+# researcher — Hermes config seeded into HERMES_HOME on every start (agents/entrypoint.sh).
+model:
+  default: claude-haiku-4-5-20251001
+  provider: anthropic  # authenticated with CLAUDE_CODE_OAUTH_TOKEN (PLAN.md D46)
+terminal:
+  cwd: /workspace
+plugins:
+  enabled:
+    - sabor_a2a
+    - sabor_observability
+agent:
+  disabled_toolsets: [terminal, file, code_execution, browser, computer_use, image_gen, tts, video, video_gen, vision, cronjob, kanban, spotify, homeassistant, x_search]
+web:
+  backend: tavily
