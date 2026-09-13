@@ -102,3 +102,18 @@ def test_oil_to_taste_is_a_small_estimate_in_ml_not_a_conversion_question(conn):
     cost = operations.compute_dish_cost(conn, recipe=recipe)
     oil = next(line for line in cost["lines"] if line["ingredient"] == "Óleo de soja")
     assert "error" not in cost and oil["quantity_used_display"] == "1 ml" and oil["is_estimate"] is True
+
+
+def test_a_web_estimate_never_replaces_a_price_the_owner_already_has(conn):
+    # Loop 3 scenario 02: an estimate of R$ 15,99/kg superseded the spreadsheet's R$ 28,00 / 2 kg for Peito de frango.
+    with pytest.raises(DomainError) as error:
+        operations.record_price_quote(conn, ingredient_name="Peito de frango", kind="food", package_quantity="1", package_unit="kg",
+                                      package_price="15.99", source="web_estimate", source_url="https://mercado.example/frango",
+                                      evidence=EVIDENCE)
+    assert error.value.code == "price_already_known" and error.value.details["unit_cost_display"] == "R$ 14,00/kg"
+    assert operations.compute_dish_cost(conn, recipe=make_recipe([ingredient("Peito de frango", 1000, "g")]))["recipe_cmv_display"] == "R$ 14,00"
+
+
+def test_a_newer_web_estimate_may_replace_an_older_estimate(conn):
+    quote_creme(conn, price="5.00")
+    assert quote_creme(conn, price="4.50")["package_price_display"] == "R$ 4,50"
