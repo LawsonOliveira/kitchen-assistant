@@ -11,6 +11,7 @@ session_id=..., status="blocked", duration_ms=..., model=..., prompt_hash=..., p
 
 import atexit
 import json
+import sys
 import logging
 import os
 import queue
@@ -196,8 +197,17 @@ def _close_observation(observation, event: dict, fields: dict) -> None:
         _worked("langfuse")
 
 
+def _terminal() -> bool:
+    """fifi's classic CLI (`make chat`) owns stdout: event lines there would land on Dona Maria's screen."""
+    try:
+        return sys.stdout.isatty()
+    except (AttributeError, ValueError):
+        return False
+
+
 def _publish(event: dict) -> None:
-    print(json.dumps(event, ensure_ascii=False, default=str), flush=True)  # `make logs | grep '"kind"'` keeps working
+    if not _terminal():  # container logs (`make logs | grep '"kind"'`) keep every event; the cockpit and Langfuse too
+        print(json.dumps(event, ensure_ascii=False, default=str), flush=True)
     if not os.environ.get("SABOR_COCKPIT_URL"):
         return
     _start_worker()
