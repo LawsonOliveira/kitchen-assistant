@@ -2170,6 +2170,13 @@ recorded as a correction. Findings below were measured on the running stack; ope
   connections accept the adapters anthropic, openai, azure, bedrock, google-vertex-ai and google-ai-studio with a
   secret key, so an in-Langfuse evaluator needs either a provider key (open question 14) or an OpenAI-compatible
   endpoint reachable from the compose network.
+  **Decided (owner): path A.** The review runs outside Langfuse, reading the orchestrator's sessions, `audit_log` and
+  events, and writes its results into Langfuse: rubric criteria as numeric score configs (1–5) plus automatic signals
+  (guard false positive, tool error, latency, cost) as scores on each conversation's traces; low-scoring or suspicious
+  traces go to an annotation queue for human labeling; accepted cases become dataset items or scenarios for `make evals`.
+  No in-Langfuse LLM evaluator (no provider key). Still open: frequency, 👍/👎 buttons at the end of a flow, retention of
+  raw conversations, how accepted proposals are delivered (report only or a local branch), and latency/cost alert
+  limits.
 - **PL8 — RAG.** There is no embedding or vector retrieval today. Retrieval is live web search with strict extraction
   (researcher), structured SQL through costs-mcp, Hermes' memory snapshot and on-demand skills. Candidate: a recipe
   cache in Postgres (researched recipes reused across rounds and conversations; cuts research latency and cost), keyed
@@ -2313,7 +2320,7 @@ Queued during implementation (each: what it blocks, the question, the default if
    not offered there at all).
    **Default if unanswered:** yes — the CLI pty driver; red-team single-turn cases without clicks may still use the
    API server.
-14. **OPEN** — **Blocks** Loop 6 step 5's Langfuse *online* evaluator (the manual flywheel example is not blocked):
+14. **ANSWERED** (owner, 2026-09-13: no Anthropic API key; keep the judge offline and write results into Langfuse — PL7 path A) — **Blocked** Loop 6 step 5's Langfuse *online* evaluator (the manual flywheel example is not blocked):
    Langfuse LLM-as-judge evaluators call the model through an LLM connection configured with a provider API key
    (`/api/public/llm-connections` is empty). Under D46 there is no Anthropic Console key, and sending the Claude Code
    OAuth token to Langfuse as an API key is not a supported use of that credential. Do you want to provide an Anthropic
