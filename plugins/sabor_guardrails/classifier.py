@@ -16,9 +16,10 @@ HOOK_LIMIT_SECONDS = 30  # Hermes skips a hook callback after 30 s, so a guard m
 VERDICTS = ("allow", "block", "uncertain")
 VERDICT_SCHEMA = {
     "type": "object", "additionalProperties": False, "required": ["verdict", "category", "reason"],
-    "properties": {"verdict": {"enum": list(VERDICTS)}, "category": {"type": "string", "maxLength": 40},
-                   "reason": {"type": "string", "maxLength": 300}},
+    # No maxLength: Hermes validates the model's JSON against this schema, and a long label must not cost the verdict.
+    "properties": {"verdict": {"enum": list(VERDICTS)}, "category": {"type": "string"}, "reason": {"type": "string"}},
 }
+CATEGORY_CHARS, REASON_CHARS = 40, 300
 Verdict = namedtuple("Verdict", "verdict category reason")
 
 
@@ -51,7 +52,7 @@ def parse_verdict(text) -> Verdict:
             raise GuardInfraError("classifier output is not JSON") from None
     if not isinstance(data, dict) or data.get("verdict") not in VERDICTS:
         raise GuardInfraError(f"classifier output has no valid verdict: {str(data)[:120]}")
-    return Verdict(data["verdict"], str(data.get("category", "")), str(data.get("reason", "")))
+    return Verdict(data["verdict"], str(data.get("category", ""))[:CATEGORY_CHARS], str(data.get("reason", ""))[:REASON_CHARS])
 
 
 def classify(llm, prompt_file: str, content: str, timeout_s: float) -> Verdict:
