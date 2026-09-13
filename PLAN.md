@@ -2204,6 +2204,14 @@ evidence, what was changed, and where. Open questions that were "default applied
   Cutover: project `sabor` down (its 13 volumes kept on disk), `kitchen-assistant` up on fresh volumes — every service
   healthy, self-test ok, `make test-skin` ok, Telegram "Connected (polling mode)", seed 37 ingredients and 16 measures,
   integration suite green against the new database. The repository folder stays `ifood` (owner).
+- **C60 — Dona Sálvia's banner hero drawn as pixel art from the owner's image.** The owner supplied a picture (the
+  grandma with glasses, spatula, whisk and heart apron inside an orange pot) and a first raster of it that rendered out
+  of line. Cause: Hermes puts the hero in a centered Rich table column, and Rich strips trailing spaces and centers each
+  row on its own, so rows of different widths shift. Test first (red on the raster): `make test-skin` requires rows of
+  one width, no trailing spaces, at most 52 cells. The art is now a readable 52×50 pixel grid with a named palette
+  (`agents/orchestrator/dona-salvia-hero.txt`); `scripts/render_hero.py` turns it into half-block markup (top pixel as
+  foreground, bottom as background) with U+2800 for transparent cells. Checked by rendering Hermes' real banner at 120
+  and 100 columns: rows aligned. The owner's colour edits to the skin were kept.
 
 ## Post-loop changes (owner requests, 2026-09-13)
 Requested by the owner while Loops 6–8 were running, test-first, each recorded as a correction. **Order decided by the

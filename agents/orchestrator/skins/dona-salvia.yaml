@@ -1,5 +1,9 @@
-# Dona Sálvia skin for the classic CLI (PLAN.md D42, Loop 7). Copied into $HERMES_HOME/skins by the entrypoint and
-# selected with display.skin in orchestrator's config.yaml. Missing keys inherit Hermes' default skin.
+# Dona Sálvia skin for the classic CLI (PLAN.md D42, Loop 7). Copied into $HERMES_HOME/skins by the
+# entrypoint and selected with display.skin in orchestrator's config.yaml. Missing keys inherit
+# Hermes' default skin.
+#
+# banner_hero is generated from agents/orchestrator/dona-salvia-hero.txt by scripts/render_hero.py and must
+# stay the last key; edit the pixel art there, never the markup below.
 name: dona-salvia
 description: Dona Sálvia — a vovó ajudante da cozinha, tons de tomate, laranja e mostarda
 
@@ -11,15 +15,19 @@ colors:
   banner_text: "#FDEBD0"
   ui_accent: "#E67E22"
   ui_text: "#FDEBD0"
-  ui_border: "#A04000"
+  ui_border: "#C0603A"
   prompt: "#FDEBD0"
   input_rule: "#C0392B"
   response_border: "#E67E22"
   session_label: "#F39C12"
-  session_border: "#A04000"
+  session_border: "#C0603A"
 
 spinner:
-  thinking_verbs: ["mexendo a panela", "provando o tempero", "picando cebola", "fazendo as contas no caderninho"]
+  thinking_verbs:
+    - "mexendo a panela"
+    - "provando o tempero"
+    - "picando cebola"
+    - "fazendo as contas no caderninho"
 
 branding:
   agent_name: Dona Sálvia
@@ -31,7 +39,7 @@ branding:
 
 tool_prefix: "┊"
 
-banner_logo: |-
+banner_logo: |2-
   [bold #C0392B]██████╗  ██████╗ ███╗   ██╗ █████╗     ███████╗ █████╗ ██╗     ██╗   ██╗██╗ █████╗[/]
   [bold #D35400]██╔══██╗██╔═══██╗████╗  ██║██╔══██╗    ██╔════╝██╔══██╗██║     ██║   ██║██║██╔══██╗[/]
   [bold #E67E22]██║  ██║██║   ██║██╔██╗ ██║███████║    ███████╗███████║██║     ██║   ██║██║███████║[/]
@@ -40,14 +48,28 @@ banner_logo: |-
   [bold #B7950B]╚═════╝  ╚═════╝ ╚═╝  ╚═══╝╚═╝  ╚═╝    ╚══════╝╚═╝  ╚═╝╚══════╝  ╚═══╝  ╚═╝╚═╝  ╚═╝[/]
 
 banner_hero: |-
-  [#C0392B]⠀⠀⠀⠀⠀▄▄▄███▄▄▄[/][#FDFEFE]⠀⠀[/]
-  [#C0392B]⠀⠀⠀▄██[/][#F0B27A]▀▀▀▀▀▀▀[/][#C0392B]██▄[/]
-  [#C0392B]⠀⠀⠀█[/][#F5CBA7]  [/][#34495E]o─o[/][#F5CBA7]    [/][#C0392B]█[/][#FDFEFE]⠀⠀[/]
-  [#C0392B]⠀⠀⠀▀[/][#F5CBA7]▄   ‿   ▄[/][#C0392B]▀[/][#FDFEFE]⠀⠀[/]
-  [#F5CBA7]⠀⠀⠀⠀⠀▀▄▄▄▄▄▄▄▀[/][#FDFEFE]⠀⠀[/]
-  [#2E86C1]⠀⠀⠀▄█████████▄[/][#FDFEFE]⠀⠀[/]
-  [#2E86C1]⠀⠀███[/][#FDFEFE]▓▓▓▓▓▓▓[/][#2E86C1]███[/][#FDFEFE]⠀[/]
-  [#2E86C1]⠀⠀███[/][#FDFEFE]▓▓▓[/][#E74C3C]♥[/][#FDFEFE]▓▓▓[/][#2E86C1]███[/][#FDFEFE]⠀[/]
-  [#2E86C1]⠀⠀███[/][#FDFEFE]▓▓▓▓▓▓▓[/][#2E86C1]███[/][#FDFEFE]⠀[/]
-  [#2E86C1]⠀⠀⠀██[/][#FDFEFE]▓▓▓▓▓▓▓[/][#2E86C1]██[/][#FDFEFE]⠀⠀[/]
-  [#5D4037]⠀⠀⠀⠀▀▀     ▀▀[/][#FDFEFE]⠀⠀⠀[/]
+  ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[#2E3A59]▄▄▄[/][#2E3A59 on #C8845A]▀▀▀▀▀▀▀[/][#2E3A59]▄█[/][#C8845A]█[/][#C8845A on #E3A474]▀▀[/][#C8845A]████[/][#2E3A59]█▄[/]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+  ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[#2E3A59]▄[/][#2E3A59 on #C8845A]▀▀[/][#C8845A]████[/][#E3A474 on #C8845A]▀▀[/][#C8845A]███████████████[/][#2E3A59 on #C8845A]▀▀[/][#2E3A59]▄[/]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+  ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[#2E3A59]█[/][#C8845A]█[/][#E3A474 on #C8845A]▀▀[/][#C8845A]██████████████████[/][#E3A474 on #C8845A]▀[/][#C8845A]███[/][#2E3A59]█[/]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+  ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[#2E3A59]█[/][#C8845A]██████████████████████████[/][#2E3A59]█[/]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+  ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[#2E3A59]█[/][#C8845A]█████████[/][#C8845A on #9C5F3C]▀▀[/][#C8845A]███████[/][#C8845A on #9C5F3C]▀[/][#C8845A]███████[/][#2E3A59]█[/]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+  ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[#2E3A59]▄█[/][#C8845A]████[/][#2E3A59 on #A9ADCB]▀▀[/][#C8845A on #2E3A59]▀▀▀[/][#2E3A59 on #A9ADCB]▀▀▀▀[/][#C8845A on #2E3A59]▀▀▀▀[/][#2E3A59 on #A9ADCB]▀▀▀▀[/][#C8845A]███[/][#C8845A on #9C5F3C]▀[/][#C8845A]█[/][#2E3A59]█[/]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+  ⠀⠀⠀⠀⠀⠀⠀⠀[#2E3A59]▄▄▄[/][#2E3A59 on #DDE2EA]▀[/][#F9B47C on #2E3A59]▀[/][#2E3A59]█[/][#C8845A]████[/][#A9ADCB]█████████████████[/][#C8845A]███[/][#9C5F3C on #C8845A]▀[/][#C8845A]█[/][#2E3A59]█▄[/]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+  ⠀⠀⠀⠀[#2E3A59]▄[/][#2E3A59 on #DDE2EA]▀▀▀[/][#DDE2EA]████[/][#2E3A59 on #DDE2EA]▀[/][#2E3A59]█[/][#C8845A]█[/][#9C5F3C]█[/][#C8845A]█[/][#2E3A59]█[/][#2E3A59 on #DDE3EE]▀▀▀▀▀▀▀[/][#2E3A59]█[/][#A9ADCB on #2E3A59]▀▀[/][#2E3A59]█[/][#2E3A59 on #DDE3EE]▀▀▀▀▀▀▀[/][#2E3A59]█[/][#2E3A59 on #A9ADCB]▀[/][#2E3A59]██[/][#F28C45 on #2E3A59]▀[/][#2E3A59 on #DDE2EA]▀▀▀[/][#2E3A59]▄▄[/]⠀⠀⠀⠀⠀⠀
+  ⠀⠀[#2E3A59]▄▄█[/][#DDE2EA on #2E3A59]▀[/][#DDE2EA]██[/][#DDE2EA on #9AA3B5]▀[/][#DDE2EA]█[/][#9AA3B5]█[/][#DDE2EA]██[/][#2E3A59]█[/][#C8845A]██[/][#C8845A on #2E3A59]▀[/][#2E3A59]█[/][#DDE3EE]███[/][#2E3A59 on #DDE3EE]▀▀[/][#DDE3EE]██[/][#2E3A59]█[/][#A9ADCB]██[/][#2E3A59]█[/][#DDE3EE]███[/][#2E3A59 on #DDE3EE]▀▀[/][#DDE3EE]██[/][#2E3A59]█[/][#A9ADCB on #2E3A59]▀[/][#2E3A59 on #DDE2EA]▀[/][#DDE2EA on #2E3A59]▀▀[/][#DDE2EA]█[/][#2E3A59]█[/][#DDE2EA]█[/][#DDE2EA on #2E3A59]▀▀[/][#2E3A59 on #DDE2EA]▀[/][#2E3A59]▄▄▄[/]⠀⠀
+  [#2E3A59]▄[/][#2E3A59 on #F28C45]▀[/][#F28C45]███[/][#2E3A59]█[/][#DDE2EA]██[/][#9AA3B5]█[/][#DDE2EA]█[/][#9AA3B5 on #DDE2EA]▀[/][#DDE2EA on #9AA3B5]▀[/][#DDE2EA]█[/][#2E3A59 on #DDE2EA]▀[/][#2E3A59]██[/][#A9ADCB]█[/][#2E3A59 on #A9ADCB]▀▀▀▀▀▀▀▀▀[/][#A9ADCB]██[/][#2E3A59 on #A9ADCB]▀▀▀▀▀▀▀▀[/][#2E3A59]█[/][#2E3A59 on #DDE2EA]▀[/][#DDE2EA on #2E3A59]▀[/][#2E3A59]█[/][#DDE2EA]█[/][#2E3A59]█[/][#F28C45]█[/][#2E3A59]█[/][#DDE2EA]█[/][#2E3A59]█[/][#DDE2EA on #2E3A59]▀[/][#2E3A59 on #DDE2EA]▀[/][#F28C45 on #2E3A59]▀[/][#F28C45]█[/][#2E3A59 on #F28C45]▀[/][#2E3A59]▄[/]
+  [#2E3A59 on #F28C45]▀[/][#F28C45]███[/][#F28C45 on #2E3A59]▀[/][#2E3A59 on #F9B47C]▀[/][#DDE2EA on #2E3A59]▀[/][#DDE2EA]██[/][#9AA3B5]█[/][#DDE2EA]█[/][#9AA3B5]█[/][#DDE2EA]██[/][#2E3A59]██[/][#A9ADCB]████████████████████[/][#2E3A59]█[/][#DDE2EA]█[/][#2E3A59]██[/][#DDE2EA]█[/][#2E3A59]███[/][#DDE2EA]█[/][#2E3A59]██[/][#DDE2EA]█[/][#2E3A59]█[/][#F28C45]██[/][#2E3A59 on #F28C45]▀[/]
+  [#F28C45]████[/][#2E3A59]█[/][#F9B47C]█[/][#2E3A59]█[/][#DDE2EA]██[/][#9AA3B5 on #DDE2EA]▀[/][#DDE2EA]████[/][#2E3A59 on #DDE2EA]▀[/][#2E3A59]█[/][#A9ADCB]███████[/][#2E3A59 on #A9ADCB]▀[/][#A9ADCB on #2E3A59]▀▀▀▀▀▀[/][#2E3A59 on #A9ADCB]▀[/][#A9ADCB]█████[/][#2E3A59]█[/][#DDE2EA]█[/][#2E3A59]██[/][#DDE2EA]█[/][#2E3A59]█[/]⠀[#2E3A59]█[/][#DDE2EA]█[/][#2E3A59]██[/][#DDE2EA]█[/][#2E3A59]█[/][#F28C45]███[/]
+  [#F28C45 on #2E3A59]▀[/][#F28C45]██[/][#2E3A59]█[/][#F28C45]██[/][#2E3A59 on #F28C45]▀[/][#DDE2EA on #2E3A59]▀[/][#DDE2EA]████[/][#DDE2EA on #2E3A59]▀▀▀[/][#2E3A59]▀[/][#A9ADCB on #2E3A59]▀[/][#A9ADCB]███████████████████[/][#2E3A59 on #8B8FAF]▀[/][#DDE2EA on #2E3A59]▀[/][#DDE2EA]█[/][#2E3A59]█[/][#DDE2EA]█[/][#2E3A59]█[/]⠀[#2E3A59]█[/][#DDE2EA]█[/][#2E3A59]█[/][#DDE2EA]█[/][#DDE2EA on #2E3A59]▀[/][#2E3A59]█[/][#F28C45]██[/][#F28C45 on #2E3A59]▀[/]
+  [#2E3A59]▀[/][#F28C45 on #2E3A59]▀[/][#F28C45]█[/][#2E3A59]█[/][#F28C45]███[/][#2E3A59]█[/][#DDE2EA on #2E3A59]▀[/][#2E3A59]▀▀█[/][#9AA3B5]██[/][#2E3A59]█[/]⠀⠀[#2E3A59]▀[/][#A9ADCB on #2E3A59]▀▀▀▀[/][#2E3A59 on #A9ADCB]▀▀▀▀▀▀▀▀▀▀[/][#A9ADCB on #2E3A59]▀▀▀▀[/][#2E3A59]▀▀[/][#DDE2EA on #2E3A59]▀[/][#DDE2EA]███[/][#2E3A59]█[/][#DDE2EA]███[/][#DDE2EA on #2E3A59]▀[/][#2E3A59 on #F28C45]▀[/][#2E3A59]█[/][#F28C45]█[/][#F28C45 on #2E3A59]▀[/][#2E3A59]▀[/]
+  ⠀⠀[#2E3A59]▀█[/][#F28C45]███[/][#2E3A59]█[/]⠀⠀⠀[#2E3A59]█[/][#9AA3B5]██[/][#2E3A59]█[/]⠀⠀[#2E3A59]▄[/][#2E3A59 on #7FBAD4]▀▀[/][#2E3A59]█[/][#2E3A59 on #7FBAD4]▀▀▀▀▀▀▀▀▀▀▀▀[/][#2E3A59]█[/][#2E3A59 on #7FBAD4]▀▀[/][#2E3A59]▄[/]⠀⠀[#2E3A59]█[/][#DDE2EA]██[/][#DDE2EA on #2E3A59]▀[/][#DDE2EA]██[/][#2E3A59]█[/][#F28C45]██[/][#2E3A59]█▀[/]⠀⠀
+  ⠀⠀⠀[#2E3A59]█[/][#F28C45]███[/][#2E3A59]█[/]⠀⠀⠀[#2E3A59]█[/][#9AA3B5]██[/][#2E3A59]█▄█[/][#7FBAD4]██[/][#2E3A59]█[/][#2E3A59 on #BEC2D1]▀▀▀▀▀▀▀▀▀▀▀▀▀▀[/][#2E3A59]█[/][#7FBAD4]██[/][#2E3A59]█▄▄█[/][#DDE2EA]█[/][#2E3A59 on #DDE2EA]▀[/][#DDE2EA]█[/][#2E3A59]█[/][#F28C45]███[/][#2E3A59]█[/]⠀⠀⠀
+  ⠀⠀⠀[#2E3A59]▀[/][#F28C45 on #2E3A59]▀[/][#F28C45]███[/][#2E3A59]█[/]⠀[#2E3A59]▄[/][#2E3A59 on #A9ADCB]▀▀▀[/][#2E3A59]█[/][#A9ADCB]█[/][#A9ADCB on #2E3A59]▀[/][#2E3A59 on #7FBAD4]▀[/][#7FBAD4]█[/][#2E3A59]█[/][#BEC2D1]████[/][#BEC2D1 on #EE5D6C]▀▀[/][#BEC2D1]██[/][#BEC2D1 on #EE5D6C]▀▀[/][#BEC2D1]████[/][#2E3A59]█[/][#7FBAD4]█[/][#2E3A59 on #7FBAD4]▀[/][#A9ADCB on #2E3A59]▀[/][#2E3A59 on #A9ADCB]▀▀▀[/][#2E3A59]█[/][#DDE2EA]█[/][#2E3A59]█[/][#F28C45]███[/][#F28C45 on #2E3A59]▀[/][#2E3A59]▀[/]⠀⠀⠀
+  ⠀⠀⠀⠀[#2E3A59]█[/][#F28C45]███[/][#2E3A59 on #D9692B]▀[/][#2E3A59]█[/][#A9ADCB]█████[/][#2E3A59]█[/][#2E3A59 on #7FBAD4]▀[/][#7FBAD4]██[/][#2E3A59]█[/][#BEC2D1]███[/][#EE5D6C]█[/][#FF9CA6 on #EE5D6C]▀[/][#EE5D6C]██████[/][#BEC2D1]███[/][#2E3A59]█[/][#7FBAD4]█[/][#2E3A59]█[/][#A9ADCB]█████[/][#2E3A59]█[/][#2E3A59 on #D9692B]▀[/][#F28C45]███[/][#2E3A59]█[/]⠀⠀⠀⠀
+  ⠀⠀⠀⠀⠀[#2E3A59]█[/][#F28C45]██[/][#D9692B on #F28C45]▀[/][#2E3A59]█[/][#A9ADCB]█████[/][#2E3A59]█[/][#7FBAD4]███[/][#2E3A59]█[/][#BEC2D1]████[/][#EE5D6C on #BEC2D1]▀[/][#EE5D6C]████[/][#EE5D6C on #BEC2D1]▀[/][#BEC2D1]████[/][#2E3A59]█[/][#7FBAD4]█[/][#2E3A59]█[/][#A9ADCB]█████[/][#2E3A59]█[/][#2E3A59 on #F28C45]▀[/][#F28C45]██[/][#2E3A59]█[/]⠀⠀⠀⠀⠀
+  ⠀⠀⠀⠀⠀⠀[#2E3A59]█[/][#F28C45 on #2E3A59]▀[/][#F28C45]██[/][#2E3A59 on #D9692B]▀[/][#A9ADCB on #2E3A59]▀▀▀[/][#2E3A59]█[/][#7FBAD4]████[/][#2E3A59]█[/][#BEC2D1]██████[/][#EE5D6C on #BEC2D1]▀▀[/][#BEC2D1]██████[/][#2E3A59]█[/][#7FBAD4]██[/][#2E3A59 on #7FBAD4]▀[/][#A9ADCB on #2E3A59]▀▀▀[/][#2E3A59 on #56617E]▀[/][#F28C45 on #2E3A59]▀[/][#F28C45]█[/][#F28C45 on #2E3A59]▀[/][#2E3A59]█[/]⠀⠀⠀⠀⠀⠀
+  ⠀⠀⠀⠀⠀⠀⠀[#2E3A59]▀[/][#F28C45 on #2E3A59]▀[/][#F28C45]██[/][#2E3A59]█[/][#56617E]██[/][#2E3A59]█[/][#7FBAD4]███[/][#7FBAD4 on #2E3A59]▀[/][#2E3A59 on #BEC2D1]▀[/][#BEC2D1]██████████████[/][#2E3A59 on #BEC2D1]▀[/][#7FBAD4 on #2E3A59]▀[/][#7FBAD4]███[/][#2E3A59]█[/][#56617E]██[/][#2E3A59]█[/][#F28C45 on #2E3A59]▀[/][#2E3A59]▀[/]⠀⠀⠀⠀⠀⠀⠀
+  ⠀⠀⠀⠀⠀⠀⠀⠀⠀[#2E3A59]▀[/][#F28C45 on #2E3A59]▀[/][#F28C45]██[/][#D9692B on #F28C45]▀▀[/][#2E3A59 on #D9692B]▀[/][#2E3A59]█[/][#7FBAD4 on #2E3A59]▀[/][#2E3A59]█[/][#BEC2D1]██████████████[/][#BEC2D1 on #2E3A59]▀▀[/][#2E3A59]█[/][#2E3A59 on #D9692B]▀[/][#D9692B on #F28C45]▀▀[/][#F28C45]██[/][#F28C45 on #2E3A59]▀[/][#2E3A59]▀[/]⠀⠀⠀⠀⠀⠀⠀⠀⠀
+  ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[#2E3A59]▀[/][#F28C45 on #2E3A59]▀▀[/][#F28C45]██[/][#D9692B on #F28C45]▀▀[/][#2E3A59 on #D9692B]▀▀▀▀[/][#BEC2D1 on #2E3A59]▀▀▀▀▀▀▀▀[/][#2E3A59 on #D9692B]▀▀▀▀[/][#D9692B on #F28C45]▀▀[/][#F28C45]██[/][#F28C45 on #2E3A59]▀▀[/][#2E3A59]▀[/]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+  ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[#2E3A59]▀█[/][#F28C45 on #2E3A59]▀▀[/][#F28C45]████[/][#D9692B on #F28C45]▀▀▀▀▀▀▀▀[/][#F28C45]████[/][#F28C45 on #2E3A59]▀▀[/][#2E3A59]█▀[/]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+  ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[#2E3A59]▀▀▀[/][#F28C45 on #2E3A59]▀▀▀▀▀▀▀▀▀▀[/][#2E3A59]▀▀▀[/]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
