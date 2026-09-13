@@ -1,0 +1,53 @@
+# Dona Fifi skin for the classic CLI (PLAN.md D42, Loop 7). Copied into $HERMES_HOME/skins by the entrypoint and
+# selected with display.skin in fifi's config.yaml. Missing keys inherit Hermes' default skin.
+name: dona-fifi
+description: Dona Fifi — cozinha caseira, tons de tomate, laranja e mostarda
+
+colors:
+  banner_border: "#C0392B"
+  banner_title: "#F39C12"
+  banner_accent: "#E67E22"
+  banner_dim: "#A67C52"
+  banner_text: "#FDEBD0"
+  ui_accent: "#E67E22"
+  ui_text: "#FDEBD0"
+  ui_border: "#A04000"
+  prompt: "#FDEBD0"
+  input_rule: "#C0392B"
+  response_border: "#E67E22"
+  session_label: "#F39C12"
+  session_border: "#A04000"
+
+spinner:
+  thinking_verbs: ["mexendo a panela", "provando o tempero", "picando cebola", "fazendo as contas no caderninho"]
+
+branding:
+  agent_name: Dona Fifi
+  welcome: "Oi, querida! Eu sou a Dona Fifi. Me conta o que tem na despensa que a gente monta o seu cardápio."
+  goodbye: "Até logo! Bom trabalho na cozinha 🍲"
+  response_label: " 🍲 Dona Fifi "
+  prompt_symbol: "❯"
+  help_header: "(^_^)? Comandos"
+
+tool_prefix: "┊"
+
+banner_logo: |-
+  [bold #C0392B]██████╗  ██████╗ ███╗   ██╗ █████╗     ███████╗██╗███████╗██╗[/]
+  [bold #D35400]██╔══██╗██╔═══██╗████╗  ██║██╔══██╗    ██╔════╝██║██╔════╝██║[/]
+  [bold #E67E22]██║  ██║██║   ██║██╔██╗ ██║███████║    █████╗  ██║█████╗  ██║[/]
+  [bold #F39C12]██║  ██║██║   ██║██║╚██╗██║██╔══██║    ██╔══╝  ██║██╔══╝  ██║[/]
+  [bold #F1C40F]██████╔╝╚██████╔╝██║ ╚████║██║  ██║    ██║     ██║██║     ██║[/]
+  [bold #B7950B]╚═════╝  ╚═════╝ ╚═╝  ╚═══╝╚═╝  ╚═╝    ╚═╝     ╚═╝╚═╝     ╚═╝[/]
+
+banner_hero: |-
+  [#C0392B]     ▄▄▄███▄▄▄[/][#D5D8DC]         ░  ░[/]
+  [#C0392B]   ▄██[/][#F0B27A]▀▀▀▀▀▀▀[/][#C0392B]██▄[/][#D5D8DC]      ░  ░ ░[/]
+  [#C0392B]   █[/][#F5CBA7]  [/][#34495E]o─o[/][#F5CBA7]    [/][#C0392B]█[/][#D5D8DC]       ░ ░[/]
+  [#C0392B]   ▀[/][#F5CBA7]▄   ‿   ▄[/][#C0392B]▀[/][#D5D8DC]        ░[/]
+  [#F5CBA7]     ▀▄▄▄▄▄▄▄▀[/]
+  [#2E86C1]   ▄█████████▄[/][#F5CBA7]▄▄[/][#8E6E53]━━━━━┓[/]
+  [#2E86C1]  ███[/][#FDFEFE]▓▓▓▓▓▓▓[/][#2E86C1]███[/][#8E6E53]      ┃[/]
+  [#2E86C1]  ███[/][#FDFEFE]▓▓▓[/][#E74C3C]♥[/][#FDFEFE]▓▓▓[/][#2E86C1]███[/][#7F8C8D] ▄▄▄▄▄█▄▄▄[/]
+  [#2E86C1]  ███[/][#FDFEFE]▓▓▓▓▓▓▓[/][#2E86C1]███[/][#7F8C8D]▐[/][#E67E22]≈≈≈≈≈≈≈≈≈[/][#7F8C8D]▌[/]
+  [#2E86C1]   ██[/][#FDFEFE]▓▓▓▓▓▓▓[/][#2E86C1]██[/][#7F8C8D]  ▐█████████▌[/]
+  [#5D4037]    ▀▀     ▀▀[/][#7F8C8D]     ▀▀▀▀▀▀▀▀▀[/]

@@ -45,6 +45,7 @@ mcp_servers:
 memory:
   memory_enabled: true  # taste and style only, never business facts (D15); experts and researcher run without memory
 display:  # no unverified text reaches the owner (Loop 4 step 7, Hermes fact 7)
+  skin: dona-fifi  # agents/fifi/skins/dona-fifi.yaml (D42)
   streaming: false
   platforms:
     telegram:
