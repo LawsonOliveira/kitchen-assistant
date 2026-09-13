@@ -15,12 +15,14 @@ Use this whenever a recipe from `research` must become the recipe contract
    g, kg, ml, l; "unidade" -> unit; "xícara" -> cup; "colher de sopa" -> tablespoon; "colher de chá" -> teaspoon;
    "dente" -> clove; "pitada" -> pinch; "fio" -> drizzle; "lata" -> can; "pacote" -> package;
    "a gosto" -> to_taste with quantity null. Fractions become decimals (1/2 -> 0.5).
-3. **Quantities.** Copy them from the page. If a quantity is missing, do not guess: put the ingredient with
+3. **Water.** Leave tap water out of `ingredients`: it is not bought, so it is neither a pantry item nor a
+   missing one.
+4. **Quantities.** Copy them from the page. If a quantity is missing, do not guess: put the ingredient with
    unit to_taste only when the page says "a gosto"; otherwise add a question to `questions_for_owner`.
-4. **Yield and time.** `yield_portions` and `prep_time_minutes` come from the page (or from the owner's words;
+5. **Yield and time.** `yield_portions` and `prep_time_minutes` come from the page (or from the owner's words;
    an owner-dictated recipe has `source_url` "owner", never a made-up URL). If the page omits the yield,
    use 1 and add the question "Quantas porções essa receita rende na sua marmita?".
-5. **Requirements.** Equipment and techniques from the preparation steps, only from the vocabulary:
+6. **Requirements.** Equipment and techniques from the preparation steps, only from the vocabulary:
    oven, pressure_cooker, blender, mixer, air_fryer, food_processor, microwave, grill, deep_fryer,
    stove_burners>=N (count the pans used at the same time), technique:fresh_pasta, technique:bechamel,
    technique:meat_doneness, technique:deep_frying, technique:bread_baking, technique:caramel,

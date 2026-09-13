@@ -10,6 +10,7 @@ source_url was not returned by web_search/web_extract in the same request is dro
 """
 
 import json
+import logging
 import re
 import threading
 import time
@@ -20,6 +21,10 @@ from .validation import ContractError, bundled_schema, parse_json_object
 
 CHILD_MODEL = "claude-haiku-4-5-20251001"
 CHILD_TIMEOUT_SECONDS = 90
+REPAIR_TIMEOUT_SECONDS = 45
+REPAIR_GOAL = ("Fix a research reply that does not match its JSON Schema. Change only what the errors name; when a "
+               "value is unknown, read its source_url again with web_extract and never guess. Reply with only the "
+               "corrected JSON object.")
 # task_type -> (contract file, JSON pointer of one result item)
 ITEM_SCHEMAS = {
     "recipe_search": ("recipe.schema.json", ""),
@@ -41,6 +46,7 @@ TOOL_PARAMETERS = {
     "properties": {"task_type": {"type": "string", "enum": sorted(ITEM_SCHEMAS)},
                    "items": {"type": "array", "items": {"type": "string"}, "minItems": 1, "maxItems": 5}},
 }
+log = logging.getLogger(__name__)
 _URL = re.compile(r"https?://[^\s\"'<>\]\\]+")  # parentheses allowed: real recipe URLs contain them
 _lock = threading.Lock()
 _request_type: dict[str, str] = {}
@@ -124,19 +130,20 @@ def _error(code: str, message: str) -> dict:
     return {"error": {"code": code, "message": message}}
 
 
-def _child_item(lifecycle, handle, deadline: float, validator: Draft202012Validator) -> dict | None:
-    """The child's schema-valid JSON object, or None when it timed out, failed or replied outside the schema."""
+def _child_reply(lifecycle, handle, deadline: float, validator: Draft202012Validator) -> tuple[dict | None, dict | None, str]:
+    """(schema-valid item, schema-invalid JSON object worth one repair, reason it is not valid) for one child."""
     if lifecycle.wait(handle, timeout_seconds=max(0.0, deadline - time.monotonic())).timed_out:
         lifecycle.cancel(handle, reason="research child timed out")
-        return None
+        return None, None, "timed out"
     result = lifecycle.result(handle)
     if result.terminal_state != "SUCCEEDED":
-        return None
+        return None, None, f"child {getattr(result.terminal_state, 'value', result.terminal_state)}"
     try:
         item = parse_json_object(result.summary or "")
     except ContractError:
-        return None
-    return item if validator.is_valid(item) else None
+        return None, None, "reply is not a JSON object"  # nothing to repair: a repair would invent the data
+    errors = [f"{'/'.join(map(str, error.absolute_path)) or '<root>'}: {error.message}" for error in validator.iter_errors(item)]
+    return (None, item, "; ".join(errors[:5])) if errors else (item, None, "")
 
 
 def fan_out(lifecycle, request_cls, session_id: str, task_type: str, items: list[str]) -> dict:
@@ -149,7 +156,22 @@ def fan_out(lifecycle, request_cls, session_id: str, task_type: str, items: list
     handles = [lifecycle.launch(request_cls(goal=CHILD_GOALS[task_type].format(item=item), context=context,
                                             model=CHILD_MODEL, allowed_toolsets=("web",))) for item in items[:5]]
     deadline, validator = time.monotonic() + CHILD_TIMEOUT_SECONDS, Draft202012Validator(schema)
-    results = [item for handle in handles if (item := _child_item(lifecycle, handle, deadline, validator)) is not None]
+    replies = [_child_reply(lifecycle, handle, deadline, validator) for handle in handles]
+    # Same rule as call_with_contract: a reply outside the contract gets exactly one retry with its errors.
+    repairs = {index: lifecycle.launch(request_cls(
+        goal=REPAIR_GOAL, model=CHILD_MODEL, allowed_toolsets=("web",),
+        context=f"{context}\n\nReply to fix:\n{json.dumps(invalid, ensure_ascii=False)}\n\nErrors: {reason}"))
+        for index, (_, invalid, reason) in enumerate(replies) if invalid is not None}
+    repair_deadline = time.monotonic() + REPAIR_TIMEOUT_SECONDS
+    for index, handle in repairs.items():
+        item, _, reason = _child_reply(lifecycle, handle, repair_deadline, validator)
+        replies[index] = (item, None, f"after one repair: {reason}")
+    results = []
+    for item, _, reason in replies:
+        if item is None:
+            log.warning("research child dropped (%s): %s", task_type, reason)
+        else:
+            results.append(item)
     merged = {"task_type": task_type, "results": results}
     if task_type == "recipe_search":
         visited = _visited.get(_root(session_id), set())
