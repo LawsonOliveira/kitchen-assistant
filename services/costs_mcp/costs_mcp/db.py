@@ -133,6 +133,21 @@ def conversion_factors(conn) -> dict[tuple[str, str], tuple[Decimal, str]]:
     return {(row["name"], row["measure"]): (row["amount_base"], row["amount_base_unit"]) for row in rows}
 
 
+def measures(conn) -> dict:
+    rows = conn.execute("SELECT measure, ingredient_name, amount_base, amount_base_unit, source, source_url FROM measures "
+                        "WHERE superseded_at IS NULL").fetchall()
+    return {(measure, ingredient): {"amount": amount, "unit": unit, "source": source, "source_url": url}
+            for measure, ingredient, amount, unit, source, url in rows}
+
+
+def replace_measure(conn, measure: str, ingredient_name: str | None, amount_base: Decimal, amount_base_unit: str, source: str,
+                    source_url: str | None, evidence: str) -> None:
+    conn.execute("UPDATE measures SET superseded_at = now() WHERE measure = %s AND ingredient_name IS NOT DISTINCT FROM %s "
+                 "AND superseded_at IS NULL", (measure, ingredient_name))
+    conn.execute("INSERT INTO measures (measure, ingredient_name, amount_base, amount_base_unit, source, source_url, evidence) "
+                 "VALUES (%s, %s, %s, %s, %s, %s, %s)", (measure, ingredient_name, amount_base, amount_base_unit, source, source_url, evidence))
+
+
 def replace_conversion_factor(conn, ingredient_id: int, measure: str, amount_base: Decimal, amount_base_unit: str, evidence: str) -> None:
     conn.execute(
         "UPDATE conversion_factors SET superseded_at = now() WHERE ingredient_id = %s AND measure = %s AND superseded_at IS NULL",

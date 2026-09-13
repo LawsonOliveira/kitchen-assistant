@@ -17,7 +17,7 @@ from jsonschema import Draft202012Validator
 from referencing import Registry, Resource
 
 from costs_mcp import db
-from costs_mcp.measures import MissingConversionError, resolve_measure
+from costs_mcp.measures import MissingConversionError, UnconfirmedMeasureError, resolve_measure
 from costs_mcp.pantry_import import IngredientRecord, PantryImportError, diff, load_records, plain
 from costs_mcp.pricing import (
     cmv_per_portion, format_brl, format_brl_min, format_unit_cost, min_price, min_price_with_packaging,
@@ -126,7 +126,7 @@ def _to_ingredient_base(name: str, quantity: Decimal, unit: str, ingredient_base
 
 def _resolve_lines(conn, recipe: dict):
     """(lines, unmatched names, conversions needed) — a line is one recipe ingredient in the ingredient's base unit."""
-    factors = db.conversion_factors(conn)
+    factors, table = db.conversion_factors(conn), db.measures(conn)
     lines, unmatched, conversions = [], [], []
     for item in recipe["ingredients"]:
         name = item["pantry_match"] or item["name"]
@@ -140,8 +140,12 @@ def _resolve_lines(conn, recipe: dict):
                 quantity, unit, estimate = Decimal(str(item["quantity"])) * spec.factor_to_base, spec.base_unit, False
             else:
                 count = Decimal(str(item["quantity"])) if item["quantity"] is not None else Decimal(1)
-                quantity, unit, estimate = resolve_measure(name, item["unit"], count, factors, base_unit=row["base_unit"])
+                quantity, unit, estimate = resolve_measure(name, item["unit"], count, factors, base_unit=row["base_unit"], table=table)
             quantity = _to_ingredient_base(name, quantity, unit, row["base_unit"], factors)
+        except UnconfirmedMeasureError as error:
+            conversions.append({"ingredient": error.ingredient, "measure": error.measure,
+                                "estimate": {"amount_display": error.amount_display, "source_url": error.source_url}})
+            continue
         except MissingConversionError as error:
             conversions.append({"ingredient": error.ingredient, "measure": error.measure})
             continue
@@ -299,7 +303,7 @@ def accept_dish(conn, dish_id: int) -> dict:
     if unmatched:
         raise DomainError("missing_price_quote", "some ingredients are neither in the pantry nor quoted", ingredients=unmatched)
     if conversions:
-        raise DomainError("missing_conversion", "ask the owner for a conversion factor", ingredient=conversions[0]["ingredient"], conversions=conversions)
+        _refuse_conversions(conversions)
     required = _required_by_ingredient(lines, dish)
     available = db.available_stock(conn)
     shortfalls = [{"ingredient": row["name"], "short_base": plain(need - available.get(ingredient_id, Decimal(0))), "base_unit": row["base_unit"]}
@@ -432,6 +436,53 @@ def set_conversion_factor(conn, ingredient_name: str, measure: str, amount, unit
 
 # --- cost, scenarios, alerts ---------------------------------------------------------------------------
 
+def _refuse_conversions(conversions: list[dict]) -> None:
+    """Web measures waiting for her click are named as such (PL6); other gaps ask her for a conversion factor."""
+    estimates = [conversion for conversion in conversions if "estimate" in conversion]
+    if estimates:
+        raise DomainError("unconfirmed_measure", "the owner must confirm or correct these web measures",
+                          measures=[{"ingredient": c["ingredient"], "measure": c["measure"], **c["estimate"]} for c in estimates])
+    raise DomainError("missing_conversion", "ask the owner for a conversion factor", ingredient=conversions[0]["ingredient"], conversions=conversions)
+
+
+WEB_MEASURES = {"cup", "tablespoon", "teaspoon", "clove", "can", "package"}  # small estimates (pinch, a gosto) never go to the web
+
+
+def _measure_result(ingredient_name: str, measure: str, amount: Decimal, unit: str, source: str, source_url: str | None) -> dict:
+    return {"ingredient": ingredient_name, "measure": measure, "amount_display": f"{plain(Decimal(amount))} {unit}", "source": source,
+            "source_url": source_url}
+
+
+def record_measure_quote(conn, ingredient_name: str, measure: str, amount, unit: str, source_url: str | None, evidence: str) -> dict:
+    """A household measure recipe_expert found on the web (PL6): stored as web_estimate, refused in CMV until confirm_measure."""
+    if measure not in WEB_MEASURES:
+        raise DomainError("unknown_measure", f"{measure!r} is not a measure to look up", measure=measure, allowed=sorted(WEB_MEASURES))
+    if unit not in ("g", "ml"):
+        raise DomainError("invalid_unit", "a measure is stored in g or ml", unit=unit)
+    amount_base = _decimal(amount, "amount")
+    if amount_base <= 0:
+        raise DomainError("invalid_amount", f"amount must be > 0, got {amount!r}", amount=str(amount))
+    table = db.measures(conn)
+    known = next((table[key] for key in ((measure, ingredient_name), (measure, None)) if key in table and table[key]["source"] != "web_estimate"), None)
+    if known is not None:  # the web only fills gaps, never replaces the D23 table or her confirmation
+        raise DomainError("measure_already_known", f"{measure!r} of {ingredient_name!r} already converts", ingredient=ingredient_name,
+                          measure=measure, **{k: v for k, v in _measure_result(ingredient_name, measure, known["amount"], known["unit"], known["source"], None).items() if k in ("amount_display", "source")})
+    with conn.transaction():
+        db.replace_measure(conn, measure, ingredient_name, amount_base, unit, "web_estimate", source_url, evidence)
+    return _measure_result(ingredient_name, measure, amount_base, unit, "web_estimate", source_url)
+
+
+def confirm_measure(conn, ingredient_name: str, measure: str, evidence: str) -> dict:
+    """Her click on a web measure (PL6): from now on CMV uses it."""
+    current = db.measures(conn).get((measure, ingredient_name))
+    if current is None or current["source"] != "web_estimate":
+        raise DomainError("no_measure_estimate", f"there is no web measure of {measure!r} for {ingredient_name!r} to confirm",
+                          ingredient=ingredient_name, measure=measure)
+    with conn.transaction():
+        db.replace_measure(conn, measure, ingredient_name, current["amount"], current["unit"], "owner_confirmed", current["source_url"], evidence)
+    return _measure_result(ingredient_name, measure, current["amount"], current["unit"], "owner_confirmed", current["source_url"])
+
+
 def _priced_lines(conn, lines, unmatched) -> list[tuple[dict, dict]]:
     priced, without_price, unconfirmed = [], list(unmatched), []
     for line in lines:
@@ -452,7 +503,7 @@ def _priced_lines(conn, lines, unmatched) -> list[tuple[dict, dict]]:
 def _cost(conn, recipe: dict, yield_portions: int, packaging_ingredient_id: int | None) -> dict:
     lines, unmatched, conversions = _resolve_lines(conn, recipe)
     if conversions:
-        raise DomainError("missing_conversion", "ask the owner for a conversion factor", ingredient=conversions[0]["ingredient"], conversions=conversions)
+        _refuse_conversions(conversions)
     priced = _priced_lines(conn, lines, unmatched)
     costed = [(line, price, line["quantity_base"] * unit_cost(price["total_price_paid"], price["quantity_purchased_base"])) for line, price in priced]
     total = recipe_cmv([(line["quantity_base"], unit_cost(price["total_price_paid"], price["quantity_purchased_base"])) for line, price in priced])

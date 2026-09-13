@@ -21,7 +21,8 @@
         "reject_candidate",
         "confirm_requirement",
         "accept",
-        "set_launch_batch"
+        "set_launch_batch",
+        "confirm_measure"
       ]
     },
     "trace": {
@@ -424,6 +425,55 @@
               "owner_statement": {
                 "type": "string",
                 "minLength": 1
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "task": {
+            "const": "confirm_measure"
+          }
+        }
+      },
+      "then": {
+        "allOf": [
+          {
+            "properties": {
+              "payload": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "ingredient_name",
+                  "measure"
+                ],
+                "properties": {
+                  "ingredient_name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 80
+                  },
+                  "measure": {
+                    "enum": [
+                      "can",
+                      "clove",
+                      "cup",
+                      "package",
+                      "tablespoon",
+                      "teaspoon"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "properties": {
+              "owner_confirmation": {
+                "type": "object"
               }
             }
           }

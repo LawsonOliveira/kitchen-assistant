@@ -13,7 +13,7 @@ import uuid
 log = logging.getLogger(__name__)
 
 TOOLSET = "sabor_a2a"
-RESEARCH_TASK_TYPES = ["recipe_search", "ingredient_price", "menu_reference"]
+RESEARCH_TASK_TYPES = ["recipe_search", "ingredient_price", "menu_reference", "measure_lookup"]
 # peer -> (URL, client timeout seconds). Nested chain (PLAN.md open question 9, correction C35): researcher children
 # 120 s + repair 75 s < researcher A2A server 270 s < experts→researcher 300 s < expert A2A server 450 s < fifi→experts 480 s
 PEERS = {

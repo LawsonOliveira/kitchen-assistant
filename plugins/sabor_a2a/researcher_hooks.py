@@ -34,6 +34,7 @@ ITEM_SCHEMAS = {
     "recipe_search": ("recipe.schema.json", ""),
     "ingredient_price": ("research/ingredient_price.response.json", "/properties/results/items"),
     "menu_reference": ("research/menu_reference.response.json", "/properties/results/items"),
+    "measure_lookup": ("research/measure_lookup.response.json", "/properties/results/items"),
 }
 CHILD_GOALS = {
     "recipe_search": "Find one real recipe page written in Brazilian Portuguese for: {item}. Use web_search, read the best result with "
@@ -42,6 +43,9 @@ CHILD_GOALS = {
                         "supermarket page. Use web_search and web_extract, and reply with only the JSON object.",
     "menu_reference": "Find how delivery restaurants on iFood name and describe: {item}. Use web_search and "
                       "web_extract, and reply with only the JSON object.",
+    "measure_lookup": "Find how many grams or ml one household measure holds, as sold or used in Brazil: {item}. For a can or "
+                      "package, use the net content printed on a real product page; for a cup, spoon or clove, a real "
+                      "Brazilian cooking reference. Use web_search and web_extract, and reply with only the JSON object.",
 }
 TOOL_DESCRIPTION = ("Research every item of the request in parallel (one web child per item) and return the merged, "
                     "schema-checked JSON reply. Call it exactly once per request.")

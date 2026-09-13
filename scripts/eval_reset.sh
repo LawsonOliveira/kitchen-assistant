@@ -22,7 +22,7 @@ fi
 # costs-mcp only seeds an empty database. Stopping fifi also ends any CLI session left inside it.
 # shellcheck disable=SC2086
 docker compose stop $AGENTS >/dev/null
-docker compose exec -T postgres psql -U sabor -d sabor -q -c "TRUNCATE $TABLES RESTART IDENTITY CASCADE"
+docker compose exec -T postgres psql -U sabor -d sabor -q -c "TRUNCATE $TABLES RESTART IDENTITY CASCADE" -c "DELETE FROM measures WHERE source <> 'seed'"
 docker compose run --rm --no-deps -T --entrypoint sh fifi -c 'rm -f /opt/data/memories/* /opt/data/cache/documents/*' >/dev/null
 docker compose restart costs-mcp >/dev/null
 docker compose up -d --wait costs-mcp >/dev/null

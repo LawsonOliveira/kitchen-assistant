@@ -39,6 +39,8 @@ mcp_servers:
         - register_candidate_dish
         - reject_candidate_dish
         - set_launch_batch_portions
+        - record_measure_quote
+        - confirm_measure
         - confirm_dish_requirement
         - accept_dish
         - update_kitchen_profile
