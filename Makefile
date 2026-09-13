@@ -2,7 +2,7 @@ COMPOSE := docker compose
 UV := uv
 AGENT_PYTHON := /opt/hermes/.venv/bin/python
 
-.PHONY: up down logs chat test test-integration test-contracts test-plugins smoke-a2a smoke-research eval-requirements import-pantry db-shell hermes-shell
+.PHONY: up down logs chat test test-integration test-contracts test-plugins smoke-a2a smoke-research eval-requirements import-pantry selftest db-shell hermes-shell
 
 up:
 	$(COMPOSE) up -d --build --wait
@@ -46,6 +46,9 @@ import-pantry:  # copy a spreadsheet where Dona Fifi can import it: make import-
 	$(COMPOSE) cp "$(FILE)" fifi:/opt/data/cache/documents/$(notdir $(FILE))
 	$(COMPOSE) exec -T fifi chown hermes:hermes /opt/data/cache/documents/$(notdir $(FILE))
 	@echo "Diga à Dona Fifi: atualizei minha planilha da despensa em /opt/data/cache/documents/$(notdir $(FILE))"
+
+selftest:  # guardrail canary against fifi's API server (Loop 4)
+	bash scripts/selftest.sh
 
 db-shell:
 	$(COMPOSE) exec postgres psql -U sabor -d sabor
