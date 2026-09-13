@@ -18,7 +18,7 @@ plugins:
 agent:
   max_turns: 30
   run_budget_seconds: 930  # open question 9: above fifi's 480 s expert client, with room for clicks
-  disabled_toolsets: [terminal, file, code_execution, browser, computer_use, image_gen, tts, video, video_gen, vision, cronjob, kanban, spotify, homeassistant, x_search, web, delegation, session_search]
+  disabled_toolsets: [terminal, file, code_execution, browser, computer_use, image_gen, tts, video, video_gen, vision, cronjob, kanban, spotify, homeassistant, x_search, web, delegation, session_search, todo]
 tools:
   tool_search:
     enabled: "off"  # tools are called directly, no tool_search/tool_call bridge (PLAN.md correction C8)

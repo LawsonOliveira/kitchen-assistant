@@ -11,7 +11,7 @@ plugins:
     - sabor_observability
     - sabor_guardrails
 agent:
-  disabled_toolsets: [terminal, file, code_execution, browser, computer_use, image_gen, tts, video, video_gen, vision, cronjob, kanban, spotify, homeassistant, x_search, web, clarify, memory, delegation, session_search]
+  disabled_toolsets: [terminal, file, code_execution, browser, computer_use, image_gen, tts, video, video_gen, vision, cronjob, kanban, spotify, homeassistant, x_search, web, clarify, memory, delegation, session_search, todo]
 tools:
   tool_search:
     enabled: "off"  # tools are called directly, no tool_search/tool_call bridge (PLAN.md correction C8)

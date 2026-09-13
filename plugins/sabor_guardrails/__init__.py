@@ -9,6 +9,7 @@ so every guard catches its own errors and blocks with a fixed message.
 import json
 import logging
 import os
+from concurrent.futures import ThreadPoolExecutor
 from decimal import Decimal
 
 from . import classifier, cost_cap, input_guard, memory_guard, output_guard, progress, tool_policy
@@ -75,6 +76,7 @@ def register(ctx) -> None:
     costs = cost_cap.SessionCosts(Decimal(os.environ["SABOR_TURN_COST_CAP_USD"]), agent=role)
     cost_cap.ACTIVE = costs
     ledger, groundings = tool_policy.ClickLedger(), {}
+    guard_pool = ThreadPoolExecutor(max_workers=4, thread_name_prefix="sabor-input-guard")
     import_dir = os.environ.get("SABOR_IMPORT_DIR", "/opt/data/cache/documents")
 
     def classify_with(prompt_file: str):
@@ -86,16 +88,14 @@ def register(ctx) -> None:
         return json.dumps({"result": {"error": COST_CAP_ERROR}, "questions_for_owner": [], "cost_usd_spent": 0.0})
 
     def llm_execution(request=None, next_call=None, api_call_count=0, platform="", session_id="", model="", **_):
+        guard = None
         try:
-            if role == "fifi" and platform not in SKIPPED_PLATFORMS:
+            if role == "fifi" and platform not in SKIPPED_PLATFORMS and api_call_count == 1:
+                # PL9 lever 4: the classification (2–5 s) runs alongside the first model call; a block discards the answer,
+                # whose tool calls have not run yet.
                 owner, last_assistant = _owner_and_last_assistant(request)
-                decision = input_guard.decide(owner, last_assistant, classify_with("input_guard.md"),
-                                              api_call_count=api_call_count, import_dir=import_dir)
-                if api_call_count == 1:
-                    _emit("guard_input", "input_guard", status="blocked" if decision.action == "block" else "ok",
-                          session_id=session_id, prompt_hash=classifier.prompt_hash("input_guard.md"))
-                if decision.action == "block":
-                    return _synthetic(decision.message, model)
+                guard = guard_pool.submit(input_guard.decide, owner, last_assistant, classify_with("input_guard.md"),
+                                          api_call_count=api_call_count, import_dir=import_dir)
             if platform != "curator" and not costs.allows_next_call(session_id):
                 _emit("error", "turn_cost_cap_reached", status="blocked", session_id=session_id,
                       preview=json.dumps(costs.breakdown(session_id))[:200])
@@ -103,7 +103,17 @@ def register(ctx) -> None:
         except Exception:
             log.exception("sabor_guardrails: guard failed before the model call; blocking")
             return _synthetic(INFRA_BLOCK_MESSAGE if role == "fifi" else cost_cap_reply(), model)
-        return next_call(request)
+        response = next_call(request)
+        if guard is None:
+            return response
+        try:
+            decision = guard.result()
+        except Exception:
+            log.exception("sabor_guardrails: input guard failed; blocking")
+            decision = input_guard.Decision("block", INFRA_BLOCK_MESSAGE)
+        _emit("guard_input", "input_guard", status="blocked" if decision.action == "block" else "ok",
+              session_id=session_id, prompt_hash=classifier.prompt_hash("input_guard.md"))
+        return _synthetic(decision.message, model) if decision.action == "block" else response
 
     def pre_llm_call(session_id="", turn_id="", user_message="", platform="", parent_session_id="", **_):
         if platform == "subagent":

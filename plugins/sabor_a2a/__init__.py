@@ -177,6 +177,10 @@ def register(ctx) -> None:
         researcher_hooks.register(ctx)
         ctx.register_system_prompt_section(
             "sabor-researcher-child", lambda info: CHILD_INSTRUCTIONS if info.get("platform") == "subagent" else "")
+    if role == "cost_expert":
+        from . import fast_path
+
+        ctx.register_middleware("llm_execution", fast_path.llm_execution)  # PL9: single-tool tasks skip the model loop
     if role in ("cost_expert", "marketing_expert"):
         from . import relay
 
