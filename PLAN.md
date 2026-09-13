@@ -2059,6 +2059,29 @@ evidence, what was changed, and where. Open questions that were "default applied
   Dona Fifi's own prompt and configuration only. Rechecked with the real guard model, twice per case: 4 allow
   cases → allow, 6 block cases (health claim, competitor, tool leak, prompt leak, off-topic, web instruction) → block.
 
+- **C44 — Loop 5 ran in a parallel worktree, and its trace design follows how Hermes calls plugins.** Implemented on
+  a separate branch while Loop 4 ran live (merged after Loop 4 closed; one conflict in `sabor_a2a._trace`, resolved so
+  the request carries both the observability trace and the Loop 4 cost-cap remainder). Differences from Loop 5
+  step 3, all verified against the pinned Hermes source (`plugins/sabor_observability/NOTES.md`):
+  - trace state is keyed by Hermes `session_id` (bounded to 1,000 sessions, child → parent from `subagent_start`),
+    not a `ContextVar`: one turn's hooks, tool handlers and delegated children run on different threads;
+  - Hermes imports directory plugins as `hermes_plugins.<name>`, so the plugin also registers its modules under their
+    plain names; `sabor_guardrails` finds `emit` by module-name suffix at call time, so load order does not matter;
+  - span tree: fifi's model and tool spans are trace roots carrying the owner's session id; a serving agent opens an
+    `a2a_serve` span under the caller's `parent_span_id` (the latest open span of the calling tool, because tool
+    handlers get no `tool_call_id`); a delegated child opens a `subagent` span; a span closes on whichever of
+    `post_tool_call` / `transform_tool_result` fires first, and a blocked call only fires `post_tool_call`;
+  - costs-mcp posts `mcp_call` and `state_snapshot` to the cockpit only; in Langfuse a costs-mcp call is the calling
+    agent's `mcp__costs__*` observation, and `audit_log.trace_id` equals the Langfuse trace id (calls without one use
+    `trace_id: "untraced"`);
+  - the cockpit's state panel reads one `state_snapshot.preview` line (`Saldo R$ 55,00 | #1 …`), since the event
+    contract has no payload field; the cockpit validates events by hand against the contract's six keywords and
+    refuses to start if the contract gains another (no `jsonschema` in its image);
+  - `prompt_hash` = sha256 of `SOUL.md`, `.hermes.md` and `skills/*/SKILL.md`; Langfuse SDK pinned to
+    `langfuse==4.15.1` (v4 SDK, full support on self-hosted v4; 4.15.2 is still inside the Hermes image's 14-day uv
+    `exclude-newer` quarantine, so the first image build refused it), images pinned in `services/cockpit/NOTES.md`, and
+    memory limits of about 4 GiB in total for the Langfuse services (open question 3).
+
 ## Final manual step (owner — after Loop 8, not executed by the agent)
 Kept here so it is not forgotten: no loop creates a GitHub remote or submits the challenge.
 - [ ] Create the GitHub repository, add it as `origin` and push.

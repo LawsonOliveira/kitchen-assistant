@@ -66,10 +66,11 @@ running the Langfuse SDK on the host against a local OTLP capture server.
 - **Event statuses are not coerced.** `emit()` truncates `name`/`preview` to 200 characters but passes `kind` and
   `status` through; an event outside the contract is rejected by the cockpit (400) and logged once, not silently fixed.
 
-## Langfuse Python SDK pin: `langfuse==4.15.2`
+## Langfuse Python SDK pin: `langfuse==4.15.1`
 
 - SDK v4 is the current major; Langfuse's self-hosted compatibility matrix marks Python SDK v4 as *full support* on
-  server OSS v4 (v3 SDK: deprecated). 4.15.2 was the latest on PyPI on 2026-09-13.
+  server OSS v4 (v3 SDK: deprecated). 4.15.2 was the latest on PyPI on 2026-09-13, but the Hermes image resolves packages under a 14-day uv `exclude-newer`
+  quarantine (`/opt/hermes/pyproject.toml`), so the image build refused it; 4.15.1 (2026-08-28) is pinned instead.
 - Its requirements (`opentelemetry-api/sdk/exporter-otlp-proto-http >=1.33.1,<2`, `httpx`, `pydantic>=2`,
   `packaging`) are already in the Hermes venv (OpenTelemetry 1.39.1, httpx 0.28.1, pydantic 2.13.4); only
   `langfuse`, `backoff` and `wrapt` are added.
