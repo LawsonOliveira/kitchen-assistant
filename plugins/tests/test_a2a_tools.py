@@ -66,3 +66,9 @@ def test_the_click_travels_with_the_request(fifi_tools, monkeypatch):
         {"task": "register_purchase", "payload": PURCHASE, "owner_confirmation": CONFIRMATION}))
     assert reply["result"]["budget_remaining_display"] == "R$ 64,00"
     assert sent["request"]["owner_confirmation"] == CONFIRMATION and sent["peer_url"] == "http://cost-expert:9900/"
+
+
+def test_the_task_guide_shows_short_enum_values(fifi_tools):
+    # Loop 3 scenario 02: fifi sent status "confirmed" twice because the guide listed only field names.
+    guide = fifi_tools["ask_recipe_expert"]["schema"]["description"]
+    assert "status: available|unavailable" in guide and "kind: food|packaging" in fifi_tools["ask_cost_expert"]["schema"]["description"]
