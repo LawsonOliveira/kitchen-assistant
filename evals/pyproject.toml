@@ -1,5 +1,5 @@
 [project]
-name = "sabor-evals"
+name = "kitchen-evals"
 version = "0.1.0"
 description = "Offline evals for Sabor da Maria (PLAN.md Loops 2 and 6)"
 requires-python = ">=3.12"

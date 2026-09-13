@@ -97,7 +97,7 @@ def test_the_page_has_the_pipeline_nodes_and_listens_to_the_stream(cockpit):
     page = response.read().decode()
     connection.close()
     assert response.status == 200 and "EventSource" in page
-    for node in ("guard_input", "fifi", "recipe_expert", "cost_expert", "marketing_expert", "researcher", "mcp", "guard_output"):
+    for node in ("guard_input", "orchestrator", "recipe_expert", "cost_expert", "marketing_expert", "researcher", "mcp", "guard_output"):
         assert f'data-node="{node}"' in page
 
 

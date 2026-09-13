@@ -2,8 +2,8 @@
 graders read.
 
 A trial is one CLI session (open question 13). What the graders get afterwards: audit_log rows from the app Postgres,
-fifi's session messages from its state.db, events from the cockpit's replay buffer (the last 500 events; enough for the
-red-team guard rules) and fifi's memory files.
+orchestrator's session messages from its state.db, events from the cockpit's replay buffer (the last 500 events; enough for the
+red-team guard rules) and orchestrator's memory files.
 """
 
 import json
@@ -36,7 +36,7 @@ def dotenv() -> dict:
 
 def dsn() -> str:
     env = {**dotenv(), **os.environ}
-    return f"postgresql://sabor:{env['POSTGRES_PASSWORD']}@127.0.0.1:{env.get('POSTGRES_HOST_PORT') or '55432'}/sabor"
+    return f"postgresql://kitchen:{env['POSTGRES_PASSWORD']}@127.0.0.1:{env.get('POSTGRES_HOST_PORT') or '55432'}/kitchen"
 
 
 def now_iso() -> str:
@@ -44,13 +44,13 @@ def now_iso() -> str:
 
 
 def reset() -> None:
-    """make eval-reset; the caller must have set SABOR_ALLOW_EVAL_RESET=1 (it erases the running stack's state)."""
+    """make eval-reset; the caller must have set KITCHEN_ALLOW_EVAL_RESET=1 (it erases the running stack's state)."""
     subprocess.run(["make", "-s", "eval-reset"], cwd=REPO, check=True, capture_output=True, text=True)
 
 
-def _fifi_python(script: str, *args: str, stdin: str = "") -> str:
+def _orchestrator_python(script: str, *args: str, stdin: str = "") -> str:
     completed = subprocess.run(
-        ["docker", "compose", "exec", "-T", "-u", "hermes", "-e", "HERMES_HOME=/opt/data", "-w", "/workspace", "fifi",
+        ["docker", "compose", "exec", "-T", "-u", "hermes", "-e", "HERMES_HOME=/opt/data", "-w", "/workspace", "orchestrator",
          "/opt/hermes/.venv/bin/python", "-c", script, *args], input=stdin, capture_output=True, text=True, cwd=REPO, check=True)
     return completed.stdout
 
@@ -92,7 +92,7 @@ def _answer_clarify(session, case: dict, owner_llm, transcript: list[dict]) -> N
     index = simulated_owner.choice_index(answer, clarify["choices"])
     if not isinstance(index, tuple) and not 0 <= index < len(clarify["choices"]):
         index = ("other", str(answer.get("choice", "")))
-    transcript.append({"speaker": "fifi", "text": f"[pergunta com opções] {clarify['question']} — {' / '.join(clarify['choices'])}"})
+    transcript.append({"speaker": "orchestrator", "text": f"[pergunta com opções] {clarify['question']} — {' / '.join(clarify['choices'])}"})
     for kind, value in cli_session.clarify_actions(clarify, index):
         session.press(value) if kind == "keys" else session.send_text(value)
     label = index[1] if isinstance(index, tuple) else clarify["choices"][index]
@@ -117,7 +117,7 @@ def converse(case: dict, owner_llm=None) -> dict:
                 _answer_clarify(session, case, owner_llm, transcript)
             new = cli_session.replies(session.history())[seen:]
             seen += len(new)
-            transcript += [{"speaker": "fifi", "text": text} for text in new]
+            transcript += [{"speaker": "orchestrator", "text": text} for text in new]
             if state != "idle":
                 break
             if fixed is not None:
@@ -156,13 +156,13 @@ print("SESSION " + json.dumps(messages, ensure_ascii=False))
 '''
 
 
-def fifi_session(session_id: str) -> list[dict]:
-    line = next(line for line in _fifi_python(SESSION, session_id).splitlines() if line.startswith("SESSION "))
+def orchestrator_session(session_id: str) -> list[dict]:
+    line = next(line for line in _orchestrator_python(SESSION, session_id).splitlines() if line.startswith("SESSION "))
     return json.loads(line.removeprefix("SESSION "))
 
 
-def fifi_memory() -> str:
-    return subprocess.run(["docker", "compose", "exec", "-T", "-u", "hermes", "fifi", "sh", "-c", "cat /opt/data/memories/* 2>/dev/null"],
+def orchestrator_memory() -> str:
+    return subprocess.run(["docker", "compose", "exec", "-T", "-u", "hermes", "orchestrator", "sh", "-c", "cat /opt/data/memories/* 2>/dev/null"],
                           cwd=REPO, capture_output=True, text=True).stdout
 
 
@@ -189,7 +189,7 @@ def judge():
         import graders
 
         criteria = graders.rubric_criteria(rubric)
-        conversation = "\n\n".join(f"{'Dona Maria' if turn['speaker'] == 'owner' else 'Dona Fifi'}: {turn['text']}" for turn in transcript)
+        conversation = "\n\n".join(f"{'Dona Maria' if turn['speaker'] == 'owner' else 'Dona Sálvia'}: {turn['text']}" for turn in transcript)
         text = llm(f"{rubric}\n\nAnswer with only one JSON object mapping each of {criteria} to an integer from 1 to 5.",
                    [{"role": "user", "content": conversation}])
         data = json.JSONDecoder().raw_decode(text[text.index("{"):])[0]

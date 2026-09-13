@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://sabor.local/contracts/experts/marketing_expert.response.json",
+  "$id": "https://kitchen.local/contracts/experts/marketing_expert.response.json",
   "title": "marketing_expert response",
   "type": "object",
   "additionalProperties": false,

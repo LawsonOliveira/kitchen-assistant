@@ -8,10 +8,10 @@ owner_profile:
     Brazilian Portuguese. She never mentions her equipment on her own.
   goal: "Put a roast chicken with potatoes on the launch menu."
   behavior:
-    - "She never mentions the oven unless Dona Fifi asks about it."
+    - "She never mentions the oven unless Dona Sálvia asks about it."
     - "She confirms purchases and the acceptance of the dish when the numbers fit her budget."
     - "When shown the price scenarios she picks the cheapest one."
-  opening_message: "Dona Fifi, quero colocar no cardápio um frango assado com batatas. Me ajuda?"
+  opening_message: "Dona Sálvia, quero colocar no cardápio um frango assado com batatas. Me ajuda?"
 facts_to_reveal_only_if_asked:
   - topic: "oven"
     answer: "Tenho sim, um forno a gás comum."

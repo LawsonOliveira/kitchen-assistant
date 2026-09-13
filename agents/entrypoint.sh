@@ -3,7 +3,7 @@
 # every start, so the repo stays the source of truth and runtime data never lands in git (PLAN.md D18).
 set -eu
 : "${HERMES_HOME:?HERMES_HOME must be set}"
-: "${SABOR_AGENT_ROLE:?SABOR_AGENT_ROLE must be set}"
+: "${KITCHEN_AGENT_ROLE:?KITCHEN_AGENT_ROLE must be set}"
 
 cp /seed/config.yaml "$HERMES_HOME/config.yaml"
 # Secrets Hermes may have generated into its own .env win over the container environment (loaded with
@@ -24,7 +24,7 @@ for kind in skills skins; do
 done
 
 mkdir -p "$HERMES_HOME/plugins"
-for plugin in /opt/sabor/plugins/sabor_*; do
+for plugin in /opt/kitchen/plugins/kitchen_*; do
   rm -rf "$HERMES_HOME/plugins/$(basename "$plugin")"
   cp -R "$plugin" "$HERMES_HOME/plugins/"
 done

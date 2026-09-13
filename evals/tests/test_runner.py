@@ -47,12 +47,12 @@ def test_eval_reset_refuses_without_the_explicit_opt_in_and_touches_nothing(tmp_
     fake_bin.mkdir()
     (fake_bin / "docker").write_text(f"#!/bin/sh\ntouch {marker}\n")
     (fake_bin / "docker").chmod(0o755)
-    environ = {key: value for key, value in os.environ.items() if key != "SABOR_ALLOW_EVAL_RESET"}
+    environ = {key: value for key, value in os.environ.items() if key != "KITCHEN_ALLOW_EVAL_RESET"}
     environ["PATH"] = f"{fake_bin}:{environ['PATH']}"
     completed = subprocess.run(["make", "-s", "-C", str(REPO), "eval-reset"], env=environ, capture_output=True, text=True)
     output = completed.stdout + completed.stderr
     assert completed.returncode != 0
-    assert "SABOR_ALLOW_EVAL_RESET=1" in output and "audit_log" in output and "memories" in output
+    assert "KITCHEN_ALLOW_EVAL_RESET=1" in output and "audit_log" in output and "memories" in output
     assert not marker.exists()
 
 
@@ -62,7 +62,7 @@ def fake_docker(tmp_path, ingredients: str):
     fake_bin.mkdir()
     (fake_bin / "docker").write_text(f'#!/bin/sh\necho "$*" >> {log}\ncase "$*" in *"count(*) FROM ingredients"*) echo "{ingredients}";; esac\n')
     (fake_bin / "docker").chmod(0o755)
-    environ = {**os.environ, "SABOR_ALLOW_EVAL_RESET": "1", "PATH": f"{fake_bin}:{os.environ['PATH']}"}
+    environ = {**os.environ, "KITCHEN_ALLOW_EVAL_RESET": "1", "PATH": f"{fake_bin}:{os.environ['PATH']}"}
     return log, environ
 
 

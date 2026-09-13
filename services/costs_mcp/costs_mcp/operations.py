@@ -26,8 +26,8 @@ from costs_mcp.pricing import (
 )
 from costs_mcp.units import NonPositiveQuantityError, UnknownUnitError, parse_unit, to_base
 
-FEE_RATE = Decimal(os.environ.get("SABOR_PLATFORM_FEE_RATE", "0.10"))
-CONTRACTS_DIR = Path(os.environ.get("SABOR_CONTRACTS_DIR") or Path(__file__).resolve().parents[3] / "contracts")
+FEE_RATE = Decimal(os.environ.get("KITCHEN_PLATFORM_FEE_RATE", "0.10"))
+CONTRACTS_DIR = Path(os.environ.get("KITCHEN_CONTRACTS_DIR") or Path(__file__).resolve().parents[3] / "contracts")
 MAX_IMPORT_BYTES = 1_000_000
 METRIC_UNITS = {"g", "kg", "ml", "l", "unit"}
 PARAMETRIC = re.compile(r"^(stove_burners|max_batch_time_minutes|fridge_space_liters)>=(\d+)$")
@@ -356,7 +356,7 @@ def record_price_quote(conn, ingredient_name: str, kind: str, package_quantity, 
         db.supersede_price(conn, row["id"])
         db.insert_price(conn, row["id"], price, quantity_base, f"{plain(_decimal(package_quantity, 'package_quantity'))} {package_unit}",
                         source, source_url, evidence)
-    # The package travels back so Dona Fifi can confirm exactly this quote (Loop 3 scenario 02).
+    # The package travels back so Dona Sálvia can confirm exactly this quote (Loop 3 scenario 02).
     return {"ingredient": ingredient_name, "price_source": source, "package_quantity": plain(_decimal(package_quantity, "package_quantity")),
             "package_unit": package_unit, "package_price": f"{price:.2f}", "package_price_display": format_brl(price),
             "unit_cost_display": format_unit_cost(price, quantity_base, base_unit)}

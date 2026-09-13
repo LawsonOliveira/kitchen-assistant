@@ -24,7 +24,7 @@ log = logging.getLogger("costs_mcp")
 
 READ_TOOLS = {"get_pantry", "get_state_summary", "check_pantry_match", "get_launch_menu"}
 TOOL_PERMISSIONS = {
-    "fifi": READ_TOOLS,
+    "orchestrator": READ_TOOLS,
     "recipe_expert": READ_TOOLS | {
         "check_viability", "register_candidate_dish", "reject_candidate_dish", "set_launch_batch_portions", "record_measure_quote", "confirm_measure", "find_cached_recipes", "cache_recipes", "confirm_dish_requirement",
         "accept_dish", "update_kitchen_profile",
@@ -60,7 +60,7 @@ def dispatch(conn, agent: str, tool: str, args: dict, trace_id: str | None = Non
         operation = TOOLS[tool]
         kwargs = dict(args)
         if tool == "import_pantry":
-            kwargs["import_dir"] = os.environ.get("SABOR_IMPORT_DIR", "/opt/data/cache/documents")
+            kwargs["import_dir"] = os.environ.get("KITCHEN_IMPORT_DIR", "/opt/data/cache/documents")
         try:
             inspect.signature(operation).bind(conn, **kwargs)
         except TypeError as error:
@@ -152,7 +152,7 @@ def main() -> None:
     _agent_by_token.update(parse_agent_tokens(os.environ["COSTS_MCP_AGENT_TOKENS"]))
     with db.connect(_dsn()) as conn:
         db.apply_migrations(conn)
-        loaded = seed_from_workbook(conn, Path(os.environ.get("SABOR_SPREADSHEET", "/data/despensa_dona_maria.xlsx")))
+        loaded = seed_from_workbook(conn, Path(os.environ.get("KITCHEN_SPREADSHEET", "/data/despensa_dona_maria.xlsx")))
     log.info("seed loaded %d ingredients", loaded)
     security = TransportSecuritySettings(allowed_hosts=["costs-mcp:8000", "localhost:8000", "127.0.0.1:8000"])
     app = mcp.streamable_http_app(host="0.0.0.0", transport_security=security)

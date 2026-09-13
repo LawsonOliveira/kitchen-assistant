@@ -1,8 +1,8 @@
 """Graders for the scenario runner (PLAN.md Loop 6): state assertions, trajectory rules, judge alerts.
 
-Canned inputs use the shapes the runner builds: audit_log rows {at, agent, tool, args, result, error_code} and fifi's
+Canned inputs use the shapes the runner builds: audit_log rows {at, agent, tool, args, result, error_code} and orchestrator's
 session messages {at, role, content, tool_name, tool_args} (an assistant tool call has tool_name and tool_args; a tool
-result has role "tool"); `at` orders costs-mcp writes against fifi's clarify answers.
+result has role "tool"); `at` orders costs-mcp writes against orchestrator's clarify answers.
 """
 
 import json
@@ -213,7 +213,7 @@ def test_after_a_rejection_every_new_suggestion_excludes_the_dish_and_it_is_not_
 
 
 def event(kind, status):
-    return {"trace_id": "t", "span_id": "s", "parent_span_id": None, "agent": "fifi", "kind": kind, "name": kind,
+    return {"trace_id": "t", "span_id": "s", "parent_span_id": None, "agent": "orchestrator", "kind": kind, "name": kind,
             "status": status, "started_at": "2026-09-13T00:00:00+00:00", "duration_ms": 0, "model": None,
             "prompt_hash": None, "tokens_in": None, "tokens_out": None, "cost_usd": None, "preview": ""}
 

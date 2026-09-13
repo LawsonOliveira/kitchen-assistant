@@ -10,10 +10,10 @@ from pathlib import Path
 
 import pytest
 
-import sabor_a2a
-import sabor_observability
-from sabor_a2a import validation
-from sabor_observability import emit, trace
+import kitchen_a2a
+import kitchen_observability
+from kitchen_a2a import validation
+from kitchen_observability import emit, trace
 
 PLUGINS = Path(__file__).resolve().parents[1]
 TRACE_ID = "0123456789abcdef0123456789abcdef"
@@ -39,7 +39,7 @@ class FakeContext:
 
 @pytest.fixture(autouse=True)
 def clean_state(monkeypatch, tmp_path):
-    for name in ("SABOR_COCKPIT_URL", "LANGFUSE_PUBLIC_KEY", "LANGFUSE_SECRET_KEY", "LANGFUSE_BASE_URL"):
+    for name in ("KITCHEN_COCKPIT_URL", "LANGFUSE_PUBLIC_KEY", "LANGFUSE_SECRET_KEY", "LANGFUSE_BASE_URL"):
         monkeypatch.delenv(name, raising=False)
     monkeypatch.setenv("HERMES_HOME", str(tmp_path))
     monkeypatch.chdir(tmp_path)
@@ -48,9 +48,9 @@ def clean_state(monkeypatch, tmp_path):
 
 
 def register(monkeypatch, role: str) -> dict:
-    monkeypatch.setenv("SABOR_AGENT_ROLE", role)
+    monkeypatch.setenv("KITCHEN_AGENT_ROLE", role)
     ctx = FakeContext()
-    sabor_observability.register(ctx)
+    kitchen_observability.register(ctx)
     return ctx.hooks
 
 
@@ -58,8 +58,8 @@ def printed_events(capsys) -> list[dict]:
     return [json.loads(line) for line in capsys.readouterr().out.splitlines() if line.startswith("{")]
 
 
-def test_fifi_starts_a_new_trace_for_every_owner_message(monkeypatch):
-    hooks = register(monkeypatch, "fifi")
+def test_orchestrator_starts_a_new_trace_for_every_owner_message(monkeypatch):
+    hooks = register(monkeypatch, "orchestrator")
     hooks["pre_llm_call"](session_id="owner-1", user_message="Quero um prato com frango e arroz", platform="cli")
     first = trace.current("owner-1")["trace_id"]
     hooks["pre_llm_call"](session_id="owner-1", user_message="sim", platform="cli")
@@ -98,11 +98,11 @@ def test_mcp_tool_args_receive_the_trace_id_through_pre_tool_call_modify(monkeyp
                                   session_id="expert-1", tool_call_id="c2") is None
 
 
-def test_fifi_requests_carry_the_turn_trace_and_the_calling_span(monkeypatch, capsys):
-    hooks = register(monkeypatch, "fifi")
-    monkeypatch.setenv("SABOR_A2A_TOKEN", "token-fifi")
+def test_orchestrator_requests_carry_the_turn_trace_and_the_calling_span(monkeypatch, capsys):
+    hooks = register(monkeypatch, "orchestrator")
+    monkeypatch.setenv("KITCHEN_A2A_TOKEN", "token-orchestrator")
     a2a = FakeContext()
-    sabor_a2a.register(a2a)
+    kitchen_a2a.register(a2a)
     sent = {}
 
     def fake_send(peer_url, token, request, response_schema, timeout_s):
@@ -143,22 +143,22 @@ def test_researcher_web_children_share_the_request_trace(monkeypatch, capsys):
 
 
 def test_hermes_plugin_naming_and_plain_imports_share_one_trace_state(monkeypatch):
-    # Hermes imports a directory plugin as hermes_plugins.<name> (hermes_cli/plugins_loader.py); sabor_a2a and
-    # sabor_guardrails import it by its plain name, which must reach the same modules or the trace state splits.
-    for name in [name for name in sys.modules if name.split(".")[0] == "sabor_observability"]:
+    # Hermes imports a directory plugin as hermes_plugins.<name> (hermes_cli/plugins_loader.py); kitchen_a2a and
+    # kitchen_guardrails import it by its plain name, which must reach the same modules or the trace state splits.
+    for name in [name for name in sys.modules if name.split(".")[0] == "kitchen_observability"]:
         monkeypatch.delitem(sys.modules, name)
     namespace = types.ModuleType("hermes_plugins")
     namespace.__path__ = []
     monkeypatch.setitem(sys.modules, "hermes_plugins", namespace)
-    plugin_dir = PLUGINS / "sabor_observability"
-    spec = importlib.util.spec_from_file_location("hermes_plugins.sabor_observability", plugin_dir / "__init__.py",
+    plugin_dir = PLUGINS / "kitchen_observability"
+    spec = importlib.util.spec_from_file_location("hermes_plugins.kitchen_observability", plugin_dir / "__init__.py",
                                                   submodule_search_locations=[str(plugin_dir)])
     module = importlib.util.module_from_spec(spec)
-    monkeypatch.setitem(sys.modules, "hermes_plugins.sabor_observability", module)
+    monkeypatch.setitem(sys.modules, "hermes_plugins.kitchen_observability", module)
     spec.loader.exec_module(module)
 
-    import sabor_observability.trace as plain_trace
-    from sabor_observability.emit import emit as plain_emit
+    import kitchen_observability.trace as plain_trace
+    from kitchen_observability.emit import emit as plain_emit
 
-    assert plain_trace is sys.modules["hermes_plugins.sabor_observability.trace"]
-    assert plain_emit is sys.modules["hermes_plugins.sabor_observability.emit"].emit
+    assert plain_trace is sys.modules["hermes_plugins.kitchen_observability.trace"]
+    assert plain_emit is sys.modules["hermes_plugins.kitchen_observability.emit"].emit

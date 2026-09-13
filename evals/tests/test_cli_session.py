@@ -1,6 +1,6 @@
 """Reading the classic CLI screen (PLAN.md open question 13): replies, clarify prompts, session id, keys to answer.
 
-The canned screens are copied from the Loop 3–5 CLI runs (pyte rendering, 150 columns, Dona Fifi skin).
+The canned screens are copied from the Loop 3–5 CLI runs (pyte rendering, 150 columns, Dona Sálvia skin).
 """
 
 import cli_session
@@ -9,12 +9,12 @@ BANNER = """│  claude-sonnet-5 · Nous Research  autonomous-ai-agents: claude-
 │            /workspace             creative: architecture-diagram                                               │
 │  Session: 20260913_181934_340f31  devops: sdlc-review                                                          │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-Oi, querida! Eu sou a Dona Fifi. Me conta o que tem na despensa que a gente monta o seu cardápio.""".splitlines()
+Oi, querida! Eu sou a Dona Sálvia. Me conta o que tem na despensa que a gente monta o seu cardápio.""".splitlines()
 
 REPLY = """● Quero sim, calcula o custo e me mostra os preços.
 🧮 Fazendo as contas…
   ┊ ⚡ ask_cost_   12.2s
- ─  🍲 Dona Fifi  ───────────────────────────────────────────────────────────────────────────────────────────────
+ ─  🍲 Dona Sálvia  ───────────────────────────────────────────────────────────────────────────────────────────────
  Ótimo, saiu tudo certinho!
  - Arroz: comprou 5 kg por R$ 24,90 → R$ 4,98/kg. Usa 400 g → custo de R$ 1,99
  Qual você prefere?

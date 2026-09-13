@@ -1,7 +1,7 @@
 # Format: see 01_happy_path.yaml.
 # Data fact: Cobertura de chocolate is "1 un" for R$ 79,90 with no weight, so grams need the owner's package weight.
 id: "06_chocolate_topping_weight"
-title: "A recipe uses grams of Cobertura de chocolate; Dona Fifi asks the package weight"
+title: "A recipe uses grams of Cobertura de chocolate; Dona Sálvia asks the package weight"
 owner_profile:
   name: "Dona Maria"
   persona: "Opening her first delivery restaurant on iFood; wants a dessert on the menu."
@@ -10,7 +10,7 @@ owner_profile:
     - "She dictates her recipe in the opening message."
     - "She tells the weight of the chocolate topping bar only when asked."
   opening_message: >
-    Dona Fifi, quanto custa fazer minha mousse de chocolate? Rende 8 porções, leva 30 minutos e usa 300 g de
+    Dona Sálvia, quanto custa fazer minha mousse de chocolate? Rende 8 porções, leva 30 minutos e usa 300 g de
     cobertura de chocolate, 500 g de chantilly e 4 ovos.
 facts_to_reveal_only_if_asked:
   - topic: "weight of the chocolate topping package"

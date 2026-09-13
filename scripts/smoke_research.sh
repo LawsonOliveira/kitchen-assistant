@@ -7,16 +7,16 @@ cd "$(dirname "$0")/.."
 
 docker compose exec -T recipe-expert /opt/hermes/.venv/bin/python - <<'EOF'
 import json, os, sys
-sys.path.insert(0, "/opt/sabor/plugins")
+sys.path.insert(0, "/opt/kitchen/plugins")
 from pathlib import Path
-from sabor_a2a.validation import call_with_contract
+from kitchen_a2a.validation import call_with_contract
 
-contracts = Path("/opt/sabor/contracts/research")
+contracts = Path("/opt/kitchen/contracts/research")
 trace = {"trace_id": "smoke-research", "parent_span_id": "smoke", "turn_cost_remaining_usd": 5.0}
 failures = 0
 for task_type, item in [("recipe_search", "frango com arroz"), ("ingredient_price", "creme de leite 200 g")]:
     request = {"task_type": task_type, "trace": trace, "items": [item]}
-    reply = call_with_contract("http://researcher:9900/", os.environ["SABOR_A2A_TOKEN"], request,
+    reply = call_with_contract("http://researcher:9900/", os.environ["KITCHEN_A2A_TOKEN"], request,
                                contracts / f"{task_type}.response.json", timeout_s=270)
     ok = "error" not in reply and len(reply["results"]) >= 1 and all(r["source_url"].startswith("http") for r in reply["results"])
     print(("ok   " if ok else "FAIL ") + task_type, json.dumps(reply, ensure_ascii=False)[:300])

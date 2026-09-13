@@ -14,10 +14,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "plugins"))
-from sabor_a2a.validation import call_with_contract  # noqa: E402
+from kitchen_a2a.validation import call_with_contract  # noqa: E402
 
 PEER_URL = f"http://127.0.0.1:{os.environ.get('RESEARCHER_EVAL_HOST_PORT', '59900')}/"
-FIXTURE_BASE_URL = "https://fixtures.sabor.test/"
+FIXTURE_BASE_URL = "https://fixtures.kitchen.test/"
 PAGES = ROOT / "evals" / "web_fixtures" / "pages"
 THRESHOLDS = {"equipment": 1.0, "techniques": 0.9, "operations": 0.9}
 OPERATION_KEYS = ("stove_burners>=", "max_batch_time_minutes>=", "fridge_space_liters>=")

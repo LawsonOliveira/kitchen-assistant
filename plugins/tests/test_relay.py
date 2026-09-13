@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from sabor_a2a import relay
+from kitchen_a2a import relay
 
 SCENARIOS = {"recipe_cmv_display": "R$ 10,86", "scenarios": [
     {"display_price": "R$ 7,90", "margin_display": "55,6%"},
@@ -33,7 +33,7 @@ def setup_function():
 
 @pytest.fixture(autouse=True)
 def cost_expert_role(monkeypatch):
-    monkeypatch.setenv("SABOR_AGENT_ROLE", "cost_expert")
+    monkeypatch.setenv("KITCHEN_AGENT_ROLE", "cost_expert")
 
 
 def test_the_tool_result_replaces_a_miscopied_value():
@@ -95,7 +95,7 @@ def test_every_money_tool_of_cost_expert_is_relayed():
 
 
 def test_marketing_expert_relays_the_registered_promotion(monkeypatch):
-    monkeypatch.setenv("SABOR_AGENT_ROLE", "marketing_expert")
+    monkeypatch.setenv("KITCHEN_AGENT_ROLE", "marketing_expert")
     new_request()
     promotion = {"promotion_id": 1, "promo_price_display": "R$ 8,91", "profit_display": "R$ 5,30", "margin_display": "59,5%", "below_min": False}
     relay.transform_tool_result(tool_name="mcp__costs__register_promotion", result=mcp_result(promotion), session_id="session-1")
@@ -103,7 +103,7 @@ def test_marketing_expert_relays_the_registered_promotion(monkeypatch):
 
 
 def test_a_tool_outside_the_role_is_not_relayed(monkeypatch):
-    monkeypatch.setenv("SABOR_AGENT_ROLE", "marketing_expert")
+    monkeypatch.setenv("KITCHEN_AGENT_ROLE", "marketing_expert")
     new_request()
     relay.transform_tool_result(tool_name="mcp__costs__compute_dish_cost", result=mcp_result(SCENARIOS), session_id="session-1")
     assert relay.transform_llm_output(response_text=model_reply({}), session_id="session-1", platform="a2a") is None

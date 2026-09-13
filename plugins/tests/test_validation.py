@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from sabor_a2a import validation
-from sabor_a2a.validation import ContractError
+from kitchen_a2a import validation
+from kitchen_a2a.validation import ContractError
 
 CONTRACTS = Path(__file__).resolve().parents[2] / "contracts"
 RESPONSE_SCHEMA = CONTRACTS / "research" / "recipe_search.response.json"

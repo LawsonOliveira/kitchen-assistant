@@ -2,20 +2,20 @@
 #
 # owner_profile            persona and goal of Dona Maria; `opening_message` starts the conversation.
 # facts_to_reveal_only_if_asked
-#                          [{topic, answer}] — the owner says `answer` only when Dona Fifi asks about `topic`.
+#                          [{topic, answer}] — the owner says `answer` only when Dona Sálvia asks about `topic`.
 # clarify_answers          [{question_contains: [words], choice | choice_position}] then {default: <choice>};
 #                          the first entry whose words all appear in the clarify question wins.
 # expected_state           [{check, sql}] — each `sql` returns one boolean and must return true after the
 #                          conversation; it runs inside a read-only transaction on the app Postgres.
-# trajectory_rules         [{id, type, ...}] over audit_log (costs-mcp tool calls) and fifi's session:
+# trajectory_rules         [{id, type, ...}] over audit_log (costs-mcp tool calls) and orchestrator's session:
 #   precedes               every successful call matching `then` happens after a successful call matching
 #                          `first`; `same_args` lists argument names both calls must share; `require_then: true`
 #                          also requires at least one `then` call.
-#   click_before           every successful call to `tools` is preceded in fifi's session by a `clarify`
+#   click_before           every successful call to `tools` is preceded in orchestrator's session by a `clarify`
 #                          answered "Confirmar" issued after the previous such write.
 #   called / not_called    at least one / no call matching `call`.
 #   evidence_from_owner    every successful call matching `call` has an `evidence` argument that appears in one of
-#                          the owner's messages or clarify answers in fifi's session (the value was not guessed).
+#                          the owner's messages or clarify answers in orchestrator's session (the value was not guessed).
 #   rejected_dish_not_suggested_again
 #                          after `reject_candidate_dish`, every `ask_recipe_expert` `suggest_dishes` request lists
 #                          the rejected dish name in `payload.exclude_dish_names`, and no new candidate repeats it.
@@ -36,7 +36,7 @@ owner_profile:
     - "She accepts the first dish that uses only pantry ingredients and that she can cook."
     - "When shown the price scenarios she picks the middle one."
     - "After choosing the price she asks to see how the launch menu looks."
-  opening_message: "Oi Dona Fifi! Quero começar meu cardápio com um arroz com frango bem simples, usando só o que já tenho na despensa."
+  opening_message: "Oi Dona Sálvia! Quero começar meu cardápio com um arroz com frango bem simples, usando só o que já tenho na despensa."
 facts_to_reveal_only_if_asked:
   - topic: "stove burners"
     answer: "Tenho fogão de 4 bocas."

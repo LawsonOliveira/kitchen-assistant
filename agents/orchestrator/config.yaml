@@ -1,0 +1,62 @@
+# orchestrator — Hermes config seeded into HERMES_HOME on every start (agents/entrypoint.sh).
+_config_version: 42  # schema version of the pinned Hermes image; avoids the legacy-config migration path
+model:
+  default: claude-sonnet-5
+  provider: anthropic  # authenticated with CLAUDE_CODE_OAUTH_TOKEN (PLAN.md D46)
+terminal:
+  cwd: /workspace
+plugins:
+  entries:
+    kitchen_guardrails:
+      llm:  # the guards call Haiku through Hermes' plugin LLM client (NOTES.md §5)
+        allow_model_override: true
+        allowed_models: [claude-haiku-4-5-20251001]
+  enabled:
+    - kitchen_a2a
+    - kitchen_observability
+    - kitchen_guardrails
+agent:
+  max_turns: 30
+  run_budget_seconds: 930  # open question 9: above orchestrator's 480 s expert client, with room for clicks
+  disabled_toolsets: [terminal, file, code_execution, browser, computer_use, image_gen, tts, video, video_gen, vision, cronjob, kanban, spotify, homeassistant, x_search, web, delegation, session_search, todo]
+tools:
+  tool_search:
+    enabled: "off"  # tools are called directly, no tool_search/tool_call bridge (PLAN.md correction C8)
+auxiliary:
+  background_review:
+    enabled: false  # no self-created skills: skills are versioned in the repo (correction C9)
+curator:
+  enabled: false
+skills:
+  write_approval: true
+mcp_servers:
+  costs:
+    url: http://costs-mcp:8000/mcp
+    headers:
+      Authorization: "Bearer ${COSTS_MCP_TOKEN}"
+    tools:
+      resources: false  # no generated read_resource/list_resources utilities (correction C22)
+      prompts: false  # no generated get_prompt/list_prompts utilities
+      include:
+        - get_pantry
+        - get_state_summary
+        - check_pantry_match
+        - get_launch_menu
+memory:
+  memory_enabled: true  # taste and style only, never business facts (D15); experts and researcher run without memory
+display:  # no unverified text reaches the owner (Loop 4 step 7, Hermes fact 7)
+  skin: dona-salvia  # agents/orchestrator/skins/dona-salvia.yaml (D42)
+  streaming: false
+  platforms:
+    telegram:
+      streaming: false
+      interim_assistant_messages: false
+      tool_progress: "off"
+      long_running_notifications: "off"
+streaming:
+  enabled: false
+timeouts:
+  tools:
+    # Hermes' default sequential tool deadline is 420 s; kitchen_a2a waits 480 s for an expert (correction C35), so the
+    # deadline sits between that client and agent.run_budget_seconds (930 s).
+    sequential_call: 540

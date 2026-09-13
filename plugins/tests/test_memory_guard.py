@@ -1,11 +1,11 @@
-"""Memory write guard on fifi: only an explicit allow reaches Hermes memory (D15, fail closed)."""
+"""Memory write guard on orchestrator: only an explicit allow reaches Hermes memory (D15, fail closed)."""
 
 import pytest
 from fakes import FakeClassifier
 
-from sabor_guardrails import memory_guard
-from sabor_guardrails.classifier import GuardInfraError
-from sabor_guardrails.messages import MEMORY_BLOCK_MESSAGE
+from kitchen_guardrails import memory_guard
+from kitchen_guardrails.classifier import GuardInfraError
+from kitchen_guardrails.messages import MEMORY_BLOCK_MESSAGE
 
 WRITE = {"action": "add", "target": "memory", "content": "Dona Maria não curte fritura"}
 

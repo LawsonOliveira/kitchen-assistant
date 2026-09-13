@@ -1,7 +1,7 @@
 """costs-mcp telemetry (PLAN.md Loop 5 step 4): an mcp_call event for every tool call and a state_snapshot after every
 successful write, POSTed to the cockpit.
 
-Best-effort, like the agents' sabor_observability.emit: a background thread, a 0.5 s timeout, failures dropped and
+Best-effort, like the agents' kitchen_observability.emit: a background thread, a 0.5 s timeout, failures dropped and
 logged once. A tool result never waits for telemetry and never fails because of it. (A small copy of the agents'
 sender instead of a shared package: costs-mcp and the agents are separate images with separate dependencies.)
 """
@@ -66,7 +66,7 @@ def after_call(conn, agent: str, tool: str, trace_id: str | None, started_at: st
 
 def send(event: dict) -> None:
     print(json.dumps(event, ensure_ascii=False), flush=True)
-    if not os.environ.get("SABOR_COCKPIT_URL"):
+    if not os.environ.get("KITCHEN_COCKPIT_URL"):
         return
     with _lock:
         if _state["worker"] is None or not _state["worker"].is_alive():
@@ -96,8 +96,8 @@ def _send_forever() -> None:
         event = _queue.get()
         try:
             request = urllib.request.Request(
-                os.environ.get("SABOR_COCKPIT_URL", "").rstrip("/") + "/events", data=json.dumps(event).encode(), method="POST",
-                headers={"Content-Type": "application/json", "Authorization": f"Bearer {os.environ.get('SABOR_COCKPIT_TOKEN', '')}"})
+                os.environ.get("KITCHEN_COCKPIT_URL", "").rstrip("/") + "/events", data=json.dumps(event).encode(), method="POST",
+                headers={"Content-Type": "application/json", "Authorization": f"Bearer {os.environ.get('KITCHEN_COCKPIT_TOKEN', '')}"})
             with urllib.request.urlopen(request, timeout=COCKPIT_TIMEOUT_SECONDS) as response:
                 response.read()
         except Exception as error:  # timeout, refused connection, DNS failure or a 4xx/5xx reply

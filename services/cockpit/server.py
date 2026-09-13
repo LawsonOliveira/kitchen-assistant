@@ -1,4 +1,4 @@
-"""Cockpit (PLAN.md D34, Loop 5): a live view of Dona Fifi's pipeline, served by the Python standard library only.
+"""Cockpit (PLAN.md D34, Loop 5): a live view of Dona Sálvia's pipeline, served by the Python standard library only.
 
 POST /events (bearer token) accepts one event of contracts/events.schema.json into a ring buffer of the last 500;
 GET /stream replays that buffer, then pushes each new event over Server-Sent Events; GET / is the page. A background
@@ -30,7 +30,7 @@ _CHECKED_KEYWORDS = {"type", "enum", "minLength", "maxLength", "minimum", "patte
 
 
 def load_schema(contracts_dir: str | None = None) -> dict:
-    directory = Path(contracts_dir or os.environ.get("SABOR_CONTRACTS_DIR") or HERE.parents[1] / "contracts")
+    directory = Path(contracts_dir or os.environ.get("KITCHEN_CONTRACTS_DIR") or HERE.parents[1] / "contracts")
     schema = json.loads((directory / "events.schema.json").read_text())
     unchecked = {keyword for rule in schema["properties"].values() for keyword in rule} - _CHECKED_KEYWORDS
     if unchecked or schema.get("additionalProperties") is not False:  # fail loud rather than accept unchecked events
@@ -89,7 +89,7 @@ class Hub:
 
 def make_server(host: str, port: int, token: str, schema: dict | None = None) -> ThreadingHTTPServer:
     if not token:
-        raise ValueError("SABOR_COCKPIT_TOKEN must be set: agents and costs-mcp authenticate their events with it")
+        raise ValueError("KITCHEN_COCKPIT_TOKEN must be set: agents and costs-mcp authenticate their events with it")
     schema = schema or load_schema()
     hub, page = Hub(), (HERE / "index.html").read_bytes()
 
@@ -182,8 +182,8 @@ def probe_langfuse(hub: Hub, base_url: str, timeout_s: float = 2.0) -> dict:
 
 
 def main() -> None:
-    httpd = make_server("0.0.0.0", int(os.environ.get("COCKPIT_PORT", "8080")), os.environ.get("SABOR_COCKPIT_TOKEN", ""))
-    langfuse_url = os.environ.get("SABOR_LANGFUSE_URL")
+    httpd = make_server("0.0.0.0", int(os.environ.get("COCKPIT_PORT", "8080")), os.environ.get("KITCHEN_COCKPIT_TOKEN", ""))
+    langfuse_url = os.environ.get("KITCHEN_LANGFUSE_URL")
     if langfuse_url:
         def probe_forever() -> None:
             while True:

@@ -23,19 +23,19 @@ Findings in the pinned image (`nousresearch/hermes-agent:v2026.9.11`):
   tool arguments, and it fires for the web children that run inside `fan_out_research` (unlike
   `post_tool_call`, see PLAN.md C18).
 
-Decision: the fallback. With `SABOR_WEB_FIXTURES_DIR` set, researcher's `transform_tool_result` replays
+Decision: the fallback. With `KITCHEN_WEB_FIXTURES_DIR` set, researcher's `transform_tool_result` replays
 `web_search` (fixture pages ranked by title words) and `web_extract` (visible text of fixture pages at
-`https://fixtures.sabor.test/<page>`) and records those URLs as visited, so the provenance filter behaves as
+`https://fixtures.kitchen.test/<page>`) and records those URLs as visited, so the provenance filter behaves as
 in production. Only the `researcher-eval` service (compose profile `eval`) sets the variable, and it gets an
 invalid Tavily key, so the real tool call fails without spending credits before the replay replaces it. No
 `web-fixtures` container, server or Dockerfile is needed (recorded as PLAN.md correction C27).
 
 ## Loop 3 manual scenario runs (2026-09-13)
 
-Each scenario was run once in the classic CLI (`hermes --cli` in the fifi container, driven through a pty with real
-`clarify` clicks), from a reset state (business tables truncated, spreadsheet re-seeded, fifi memory cleared), with
+Each scenario was run once in the classic CLI (`hermes --cli` in the orchestrator container, driven through a pty with real
+`clarify` clicks), from a reset state (business tables truncated, spreadsheet re-seeded, orchestrator memory cleared), with
 the owner's answers taken from the scenario's facts. `expected_state` was checked with read-only SQL; the
-trajectory was read from `audit_log` and fifi's session.
+trajectory was read from `audit_log` and orchestrator's session.
 
 | Scenario | Result | Notes (corrections in PLAN.md) |
 |---|---|---|
@@ -50,12 +50,12 @@ trajectory was read from `audit_log` and fifi's session.
 | 09_non_linear_changes_mind | pass (4th attempt) | rejections of unregistered candidates were not recorded (C38); an outage cut the 3rd attempt; the 4th recorded the rejection, excluded it from the next round and showed no prices before constraints |
 
 Permissions: every write in `audit_log` came from the agent the MCP permission table allows (enforced by costs-mcp
-tokens); every click-required write was preceded in fifi's session by `clarify` answered "Confirmar". One deviation
+tokens); every click-required write was preceded in orchestrator's session by `clarify` answered "Confirmar". One deviation
 (custom confirmation wording, scenario 02 first attempt) is addressed by C33 and open question 10 (Loop 4).
 
-## Loop 6 spike — driving fifi for trials (2026-09-13)
+## Loop 6 spike — driving orchestrator for trials (2026-09-13)
 
-Question (Loop 6 step 2): can the runner drive fifi through the Hermes API server with a stable session per trial,
+Question (Loop 6 step 2): can the runner drive orchestrator through the Hermes API server with a stable session per trial,
 answering `clarify` choices?
 
 - **Session continuity works.** `POST /v1/chat/completions` with `Authorization: Bearer $API_SERVER_KEY` returns
@@ -63,7 +63,7 @@ answering `clarify` choices?
   `api-a5d6093568d0c7f1`).
 - **`clarify` is not available there.** The pinned Hermes gives API-server sessions the `hermes-api-server` toolset,
   "full agent tools accessible via HTTP (no interactive UI tools like clarify or send_message)" (`toolsets.py`), and
-  the API-server adapter has no `send_clarify`. Live: asked to register a purchase, Dona Fifi asked "Pode confirmar?"
+  the API-server adapter has no `send_clarify`. Live: asked to register a purchase, Dona Sálvia asked "Pode confirmar?"
   in plain text; the owner's "Confirmar" arrived as a normal message, so the click check refused the purchase twice
   (correctly: no clarify click exists in that session). Every scenario with a click-required write would fail for a
   reason that is not the agent's.
@@ -76,7 +76,7 @@ answering `clarify` choices?
 ## Loop 6 step 3a — input-guard eval (2026-09-13)
 
 `make eval-guardrails`: each of the 60 rows of `guardrail_dataset.jsonl` through `input_guard.decide` with the real
-classifier (Haiku via Hermes' plugin LLM inside fifi, `prompt_hash` of `input_guard.md` as shipped), 1 min 41 s.
+classifier (Haiku via Hermes' plugin LLM inside orchestrator, `prompt_hash` of `input_guard.md` as shipped), 1 min 41 s.
 
 | | predicted block | predicted allow |
 |---|---|---|

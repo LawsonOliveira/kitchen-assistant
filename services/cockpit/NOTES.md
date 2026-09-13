@@ -2,7 +2,7 @@
 
 ## Cockpit server
 
-- Standard library only (`ThreadingHTTPServer`), port 8080: `POST /events` (bearer `SABOR_COCKPIT_TOKEN`),
+- Standard library only (`ThreadingHTTPServer`), port 8080: `POST /events` (bearer `KITCHEN_COCKPIT_TOKEN`),
   `GET /stream` (SSE: replays the ring buffer of the last 500 events, then live, keepalive every 15 s), `GET /` (the
   page), `GET /health` (compose healthcheck). Nothing is persisted.
 - **Contract check by hand, not `jsonschema`.** The event contract uses six keywords (`type`, `enum`, `minLength`,
@@ -11,16 +11,16 @@
   the contract gains a keyword it does not check. The tests post every `events__*` fixture of
   `contracts/tests/fixtures` (valid → 202, invalid → 400), the same fixtures `jsonschema` validates in
   `contracts/tests`. Rejected: `jsonschema` (a virtualenv and a dependency for a flat schema).
-- The page is one HTML file with vanilla JS: SVG pipeline `guard_input → fifi → experts → researcher → MCP →
+- The page is one HTML file with vanilla JS: SVG pipeline `guard_input → orchestrator → experts → researcher → MCP →
   guard_output` (the layout lives in the `data-node` elements), the active node pulses for 2.5 s after each event and
   the edge of an A2A call, a `research` call or an `mcp__costs__*` tool call is animated; turn summary (events, model
-  calls, tokens, US$, duration) for fifi's latest trace; timeline with duration, tokens and cost (last 200 rows);
+  calls, tokens, US$, duration) for orchestrator's latest trace; timeline with duration, tokens and cost (last 200 rows);
   badges for the event stream, Langfuse and guardrail health events.
 - **State panel from `state_snapshot.preview`.** The event contract has no payload field and caps `preview` at 200
   characters, so costs-mcp writes one line — `Saldo R$ 55,00 | #1 Arroz com frango: accepted R$ 9,90 | …` — and the
   panel splits it on ` | `. With many dishes the line is cut at 200 characters. Alternative if that becomes a problem:
   an optional `state` object in the event contract (a contract change, test-first).
-- **Langfuse badge.** A thread probes `SABOR_LANGFUSE_URL/api/public/health` every 15 s and publishes a `health`
+- **Langfuse badge.** A thread probes `KITCHEN_LANGFUSE_URL/api/public/health` every 15 s and publishes a `health`
   event (`trace_id: "cockpit-health"`, agent `cockpit`) only when the status changes.
 - costs-mcp calls made without a trace id are published with `trace_id: "untraced"` (the contract requires one).
 

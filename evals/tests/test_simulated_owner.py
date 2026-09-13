@@ -6,7 +6,7 @@ import simulated_owner
 SCENARIO = {
     "owner_profile": {"name": "Dona Maria", "persona": "52 anos, respostas curtas.", "goal": "Lançar um arroz com frango.",
                       "behavior": ["Aceita o primeiro prato só com a despensa."],
-                      "opening_message": "Oi Dona Fifi! Quero um arroz com frango."},
+                      "opening_message": "Oi Dona Sálvia! Quero um arroz com frango."},
     "facts_to_reveal_only_if_asked": [{"topic": "oven", "answer": "Tenho forno a gás, mas não queria usar."},
                                       {"topic": "launch batch size", "answer": "No lançamento quero fazer 10 porções."}],
     "clarify_answers": [{"question_contains": ["preço"], "choice_position": 2},
@@ -36,23 +36,23 @@ def test_the_persona_prompt_lists_facts_as_reveal_only_when_asked():
     assert "oven: Tenho forno a gás, mas não queria usar." in prompt and "only when" in prompt
 
 
-def test_next_message_sees_fifi_as_the_other_speaker_and_stops_on_the_end_marker():
+def test_next_message_sees_orchestrator_as_the_other_speaker_and_stops_on_the_end_marker():
     seen = {}
 
     def llm(system, messages):
         seen["system"], seen["messages"] = system, messages
         return "Quero 10 porções."
 
-    transcript = [{"speaker": "owner", "text": "Oi Dona Fifi! Quero um arroz com frango."},
-                  {"speaker": "fifi", "text": "Quantas porções no lançamento?"}]
+    transcript = [{"speaker": "owner", "text": "Oi Dona Sálvia! Quero um arroz com frango."},
+                  {"speaker": "orchestrator", "text": "Quantas porções no lançamento?"}]
     assert simulated_owner.next_message(llm, SCENARIO, transcript) == "Quero 10 porções."
-    assert seen["messages"] == [{"role": "assistant", "content": "Oi Dona Fifi! Quero um arroz com frango."},
+    assert seen["messages"] == [{"role": "assistant", "content": "Oi Dona Sálvia! Quero um arroz com frango."},
                                 {"role": "user", "content": "Quantas porções no lançamento?"}]
     assert simulated_owner.next_message(lambda system, messages: " FIM ", SCENARIO, transcript) is None
 
 
 def test_a_clarify_the_scenario_cannot_answer_goes_to_the_persona():
-    # Live trial: fifi asked "Quantas porções ... no lançamento?" with choices 6 / 12; the default "Confirmar" matched no
+    # Live trial: orchestrator asked "Quantas porções ... no lançamento?" with choices 6 / 12; the default "Confirmar" matched no
     # choice, was typed as free text three times, and the flow looped until the clarify timed out.
     seen = {}
 

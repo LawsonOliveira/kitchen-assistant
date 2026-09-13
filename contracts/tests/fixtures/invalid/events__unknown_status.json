@@ -2,7 +2,7 @@
   "trace_id": "trace-1",
   "span_id": "span-1",
   "parent_span_id": null,
-  "agent": "fifi",
+  "agent": "orchestrator",
   "kind": "tool_call",
   "name": "ask_cost_expert",
   "status": "done",

@@ -1,6 +1,6 @@
 """Test doubles shared by the guardrail tests."""
 
-from sabor_guardrails.classifier import Verdict
+from kitchen_guardrails.classifier import Verdict
 
 
 class FakeClassifier:

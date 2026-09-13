@@ -7,25 +7,25 @@ reading it. For each decision: the choice, the alternative rejected and why.
 - [x] Modelo (which model per agent and why)
 - [x] Arquivos de contexto (SOUL.md, `.hermes.md`, child instructions)
 - [x] Ferramentas / MCP (costs-mcp tools and permissions, A2A tools, web search)
-- [x] Estrutura de memória (Hermes memory on fifi only, write guard; business state in Postgres)
+- [x] Estrutura de memória (Hermes memory on orchestrator only, write guard; business state in Postgres)
 - [x] Skills (which skills, when they load)
 
 ## Key decisions (PLAN.md) — decision, rejected alternative, why
 - [x] D1 Hermes from the official Docker image, pinned by tag + digest
 - [x] D2 Five Hermes processes over A2A
-- [x] D3 Strict call tree with per-edge tokens; fifi never calls researcher
-- [x] D4 Only fifi talks to the owner; experts return `questions_for_owner`
+- [x] D3 Strict call tree with per-edge tokens; orchestrator never calls researcher
+- [x] D4 Only orchestrator talks to the owner; experts return `questions_for_owner`
 - [x] D5 researcher: fixed task types, strict schemas, stateless, provenance-checked
 - [x] D6 Typed A2A tools with contract validation
 - [x] D7 All money/quantity logic in costs-mcp (deterministic MCP server)
 - [x] D8 Dedicated Postgres for business state
 - [x] D9 Models per agent
-- [x] D10 Guardrail placement (`sabor_guardrails` plugin)
+- [x] D10 Guardrail placement (`kitchen_guardrails` plugin)
 - [x] D11 Guardrail semantics
 - [x] D12 Output verifier: R$ grounding + Haiku policy, no streaming
 - [x] D13 Indirect injection and tool abuse
 - [x] D14 Write authorization (clarify click)
-- [x] D15 Memory: taste/style only, on fifi, write-guarded
+- [x] D15 Memory: taste/style only, on orchestrator, write-guarded
 - [x] D16 Context files
 - [x] D17 Skills for on-demand procedures
 - [x] D18 Versioned config seeded into a named volume
@@ -60,7 +60,7 @@ reading it. For each decision: the choice, the alternative rejected and why.
 
 ## Accepted risks (PLAN.md) — each stated with its mitigation
 - [x] Input guard lets `uncertain` through
-- [x] Write confirmation decided by fifi's LLM (plus the deterministic click check added in Loop 4)
+- [x] Write confirmation decided by orchestrator's LLM (plus the deterministic click check added in Loop 4)
 - [x] Hermes free-text memory holds owner preferences
 - [x] Langfuse stack always starts (memory requirement)
 - [x] Dedicated Postgres instead of SQLite

@@ -11,7 +11,7 @@ owner_profile:
     - "Before any equipment was discussed she asks how much a ground-beef escondidinho would cost."
     - "Then she says: 'Na verdade, volta naquele outro prato de frango que você tinha falado.'"
     - "She only answers equipment questions when asked, and she does not buy or accept anything."
-  opening_message: "Dona Fifi, me dá umas ideias de prato com frango pro meu cardápio?"
+  opening_message: "Dona Sálvia, me dá umas ideias de prato com frango pro meu cardápio?"
 facts_to_reveal_only_if_asked:
   - topic: "stove burners"
     answer: "Fogão de 4 bocas."

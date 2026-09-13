@@ -21,7 +21,7 @@ jobs:
       - name: placeholder .env (compose requires the variables; nothing here calls a model)
         run: awk -F= '/^[A-Z0-9_]+=$/ { print $1 "=ci-placeholder-" NR; next } { print }' .env.example > .env
       - name: build the agents image once
-        run: docker compose build fifi
+        run: docker compose build orchestrator
       - name: contracts and plugins inside the agents image
         run: make test-contracts && make test-plugins
 

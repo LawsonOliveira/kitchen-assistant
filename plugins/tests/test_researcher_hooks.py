@@ -4,7 +4,7 @@ import dataclasses
 import json
 from types import SimpleNamespace
 
-from sabor_a2a import researcher_hooks as hooks
+from kitchen_a2a import researcher_hooks as hooks
 
 RECIPE = {
     "name": "Arroz com frango", "source_url": "https://receitas.example/arroz-com-frango", "yield_portions": 4,
@@ -195,7 +195,7 @@ def test_children_without_json_are_dropped_without_repair_and_logged(caplog):
 
 def test_a_url_that_web_extract_could_not_fetch_is_not_visited(monkeypatch):
     # web_extract answers blocked or failed URLs with an error entry that still carries the URL.
-    monkeypatch.delenv("SABOR_WEB_FIXTURES_DIR", raising=False)
+    monkeypatch.delenv("KITCHEN_WEB_FIXTURES_DIR", raising=False)
     request("session-1", "recipe_search", "a")
     failed = json.dumps({"results": [{"url": FAKE["source_url"], "title": "", "content": "", "error": "Blocked: private network"}]})
     assert hooks.transform_tool_result(tool_name="web_extract", args={"urls": [FAKE["source_url"]]}, result=failed, session_id="session-1") is None

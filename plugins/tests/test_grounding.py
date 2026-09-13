@@ -1,10 +1,10 @@
-"""Deterministic R$ grounding: every amount Dona Fifi shows must come from an expert display string (D12)."""
+"""Deterministic R$ grounding: every amount Dona Sálvia shows must come from an expert display string (D12)."""
 
 import json
 
 import pytest
 
-from sabor_guardrails.grounding import SessionGrounding, extract_brl
+from kitchen_guardrails.grounding import SessionGrounding, extract_brl
 
 
 @pytest.mark.parametrize(
@@ -55,7 +55,7 @@ def test_the_initial_budget_is_always_grounded():
 
 
 def test_amounts_dona_maria_typed_in_the_session_ground_the_answer():
-    # Live API-server turn: she wrote "paguei R$ 2,99" and Dona Fifi's question repeating her price before registering
+    # Live API-server turn: she wrote "paguei R$ 2,99" and Dona Sálvia's question repeating her price before registering
     # the purchase was blocked as an invented amount.
     grounding = SessionGrounding()
     grounding.add_owner_message("quero registrar 1 caixinha de creme de leite, paguei R$ 2,99")

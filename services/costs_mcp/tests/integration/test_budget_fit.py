@@ -90,7 +90,7 @@ def test_missing_item_without_any_quote_fails_loud(conn):
 
 
 def test_a_quote_returns_its_package_so_the_owner_can_confirm_exactly_that_quote(conn):
-    # Loop 3 scenario 02: without the package, fifi could not send confirm_price_quote and asked the owner again.
+    # Loop 3 scenario 02: without the package, orchestrator could not send confirm_price_quote and asked the owner again.
     quote = quote_creme(conn)
     assert {key: quote[key] for key in ("package_quantity", "package_unit", "package_price", "package_price_display")} == {
         "package_quantity": "200", "package_unit": "g", "package_price": "5.00", "package_price_display": "R$ 5,00"}

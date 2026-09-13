@@ -4,13 +4,13 @@ from decimal import Decimal
 
 import pytest
 
-from sabor_guardrails.cost_cap import CostCap, cost_of_call
+from kitchen_guardrails.cost_cap import CostCap, cost_of_call
 
 PRICES = {"claude-haiku-4-5-20251001": ("1.00", "5.00"), "claude-sonnet-5": ("3.00", "15.00")}
 
 
 def test_cap_minus_epsilon_passes_and_the_cap_blocks():
-    cap = CostCap(Decimal("5.00"), agent="fifi")
+    cap = CostCap(Decimal("5.00"), agent="orchestrator")
     cap.start("t1")
     cap.add_own("t1", Decimal("4.99"))
     assert cap.allows_next_call("t1")
@@ -19,13 +19,13 @@ def test_cap_minus_epsilon_passes_and_the_cap_blocks():
 
 
 def test_spend_reported_by_experts_counts_for_the_turn():
-    cap = CostCap(Decimal("0.06"), agent="fifi")
+    cap = CostCap(Decimal("0.06"), agent="orchestrator")
     cap.start("t1")
     cap.add_own("t1", Decimal("0.02"))
     assert cap.allows_next_call("t1") and cap.remaining("t1") == Decimal("0.04")
     cap.add_reported("t1", Decimal("0.05"), agent="cost_expert")
     assert not cap.allows_next_call("t1") and cap.remaining("t1") == Decimal("-0.01")
-    assert cap.breakdown("t1") == {"fifi": "0.02", "cost_expert": "0.05"}
+    assert cap.breakdown("t1") == {"orchestrator": "0.02", "cost_expert": "0.05"}
 
 
 def test_an_expert_blocks_after_spending_the_remainder_it_received():
@@ -37,7 +37,7 @@ def test_an_expert_blocks_after_spending_the_remainder_it_received():
 
 
 def test_turns_are_independent():
-    cap = CostCap(Decimal("0.05"), agent="fifi")
+    cap = CostCap(Decimal("0.05"), agent="orchestrator")
     cap.start("t1")
     cap.add_own("t1", Decimal("0.05"))
     cap.start("t2")
@@ -55,7 +55,7 @@ def test_a_model_without_a_price_fails_loud():
 
 
 def test_session_costs_follow_the_current_turn_and_count_delegated_children():
-    from sabor_guardrails.cost_cap import SessionCosts
+    from kitchen_guardrails.cost_cap import SessionCosts
 
     costs = SessionCosts(Decimal("0.10"), agent="researcher")
     costs.begin("parent", "turn-1", received_remaining=Decimal("0.05"))
@@ -71,10 +71,10 @@ def test_session_costs_follow_the_current_turn_and_count_delegated_children():
 
 
 def test_session_costs_add_what_experts_report():
-    from sabor_guardrails.cost_cap import SessionCosts
+    from kitchen_guardrails.cost_cap import SessionCosts
 
-    costs = SessionCosts(Decimal("0.06"), agent="fifi")
+    costs = SessionCosts(Decimal("0.06"), agent="orchestrator")
     costs.begin("owner-session", "turn-1")
     costs.add_own("owner-session", Decimal("0.02"))
     costs.add_reported("owner-session", Decimal("0.05"), agent="cost_expert")
-    assert not costs.allows_next_call("owner-session") and costs.breakdown("owner-session") == {"fifi": "0.02", "cost_expert": "0.05"}
+    assert not costs.allows_next_call("owner-session") and costs.breakdown("owner-session") == {"orchestrator": "0.02", "cost_expert": "0.05"}

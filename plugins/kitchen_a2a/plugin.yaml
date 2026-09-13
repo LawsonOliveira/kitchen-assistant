@@ -1,0 +1,9 @@
+name: kitchen_a2a
+version: "0.1.0"
+description: "Sabor da Maria typed A2A tools between agents (orchestrator -> experts -> researcher). Loop 0: plain-text passthrough."
+author: "Sabor da Maria"
+provides_tools:
+  - ask_recipe_expert
+  - ask_cost_expert
+  - ask_marketing_expert
+  - research

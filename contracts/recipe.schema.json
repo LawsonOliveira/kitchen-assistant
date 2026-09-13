@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://sabor.local/contracts/recipe.schema.json",
+  "$id": "https://kitchen.local/contracts/recipe.schema.json",
   "title": "Normalized recipe",
   "description": "No free-text preparation field on purpose: free text is where injected instructions would live (PLAN.md D5).",
   "type": "object",
@@ -16,7 +16,7 @@
       "type": "array",
       "maxItems": 30,
       "uniqueItems": true,
-      "items": { "$ref": "https://sabor.local/contracts/requirements.json" }
+      "items": { "$ref": "https://kitchen.local/contracts/requirements.json" }
     }
   },
   "$defs": {

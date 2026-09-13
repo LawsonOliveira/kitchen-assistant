@@ -1,12 +1,12 @@
-"""Output verifier on fifi: deterministic grounding first, then the policy; uncertain or any failure → blocked (D12)."""
+"""Output verifier on orchestrator: deterministic grounding first, then the policy; uncertain or any failure → blocked (D12)."""
 
 import pytest
 from fakes import FakeClassifier
 
-from sabor_guardrails import messages, output_guard
-from sabor_guardrails.classifier import GuardInfraError
-from sabor_guardrails.grounding import SessionGrounding
-from sabor_guardrails.messages import INFRA_BLOCK_MESSAGE, SCOPE_BLOCK_MESSAGE
+from kitchen_guardrails import messages, output_guard
+from kitchen_guardrails.classifier import GuardInfraError
+from kitchen_guardrails.grounding import SessionGrounding
+from kitchen_guardrails.messages import INFRA_BLOCK_MESSAGE, SCOPE_BLOCK_MESSAGE
 
 
 def grounding():

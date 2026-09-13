@@ -13,8 +13,8 @@ from pathlib import Path
 import pytest
 from jsonschema import Draft202012Validator
 
-import sabor_observability
-from sabor_observability import emit, trace
+import kitchen_observability
+from kitchen_observability import emit, trace
 
 REPO = Path(__file__).resolve().parents[2]
 VALIDATOR = Draft202012Validator(json.loads((REPO / "contracts" / "events.schema.json").read_text()))
@@ -60,7 +60,7 @@ class BrokenLangfuse:
 
 @pytest.fixture(autouse=True)
 def clean_state(monkeypatch, tmp_path):
-    for name in ("SABOR_COCKPIT_URL", "SABOR_COCKPIT_TOKEN", "LANGFUSE_PUBLIC_KEY", "LANGFUSE_SECRET_KEY", "LANGFUSE_BASE_URL"):
+    for name in ("KITCHEN_COCKPIT_URL", "KITCHEN_COCKPIT_TOKEN", "LANGFUSE_PUBLIC_KEY", "LANGFUSE_SECRET_KEY", "LANGFUSE_BASE_URL"):
         monkeypatch.delenv(name, raising=False)
     home = tmp_path / "home"
     (home / "skills" / "pricing-explanation").mkdir(parents=True)
@@ -76,9 +76,9 @@ def clean_state(monkeypatch, tmp_path):
 
 
 def register(monkeypatch, role: str) -> dict:
-    monkeypatch.setenv("SABOR_AGENT_ROLE", role)
+    monkeypatch.setenv("KITCHEN_AGENT_ROLE", role)
     ctx = FakeContext()
-    sabor_observability.register(ctx)
+    kitchen_observability.register(ctx)
     return ctx.hooks
 
 
@@ -174,8 +174,8 @@ def test_every_hook_event_matches_the_event_contract(monkeypatch, capsys):
 
 def test_the_cockpit_receives_each_event_with_its_bearer_token(monkeypatch, cockpit):
     server = cockpit()
-    monkeypatch.setenv("SABOR_COCKPIT_URL", f"http://127.0.0.1:{server.server_port}")
-    monkeypatch.setenv("SABOR_COCKPIT_TOKEN", "cockpit-token")
+    monkeypatch.setenv("KITCHEN_COCKPIT_URL", f"http://127.0.0.1:{server.server_port}")
+    monkeypatch.setenv("KITCHEN_COCKPIT_TOKEN", "cockpit-token")
     event = emit.emit("tool_call", "ask_cost_expert", preview="match_and_cost")
     emit.flush(5)
     assert server.received == [("/events", "Bearer cockpit-token", event)]
@@ -183,8 +183,8 @@ def test_the_cockpit_receives_each_event_with_its_bearer_token(monkeypatch, cock
 
 def test_a_hanging_cockpit_never_delays_the_turn_and_is_logged_once(monkeypatch, cockpit, caplog):
     server = cockpit(delay_s=2.0)
-    monkeypatch.setenv("SABOR_COCKPIT_URL", f"http://127.0.0.1:{server.server_port}")
-    monkeypatch.setenv("SABOR_COCKPIT_TOKEN", "cockpit-token")
+    monkeypatch.setenv("KITCHEN_COCKPIT_URL", f"http://127.0.0.1:{server.server_port}")
+    monkeypatch.setenv("KITCHEN_COCKPIT_TOKEN", "cockpit-token")
     caplog.set_level(logging.INFO)
     started = time.monotonic()
     for index in range(3):
@@ -199,8 +199,8 @@ def test_an_unreachable_cockpit_is_logged_once(monkeypatch, caplog):
     with socket.socket() as probe:
         probe.bind(("127.0.0.1", 0))
         closed_port = probe.getsockname()[1]
-    monkeypatch.setenv("SABOR_COCKPIT_URL", f"http://127.0.0.1:{closed_port}")
-    monkeypatch.setenv("SABOR_COCKPIT_TOKEN", "cockpit-token")
+    monkeypatch.setenv("KITCHEN_COCKPIT_URL", f"http://127.0.0.1:{closed_port}")
+    monkeypatch.setenv("KITCHEN_COCKPIT_TOKEN", "cockpit-token")
     caplog.set_level(logging.INFO)
     for index in range(3):
         emit.emit("tool_call", f"tool-{index}")
@@ -221,7 +221,7 @@ def test_langfuse_failures_are_swallowed_and_logged_once(monkeypatch, caplog):
 def test_langfuse_gets_the_trace_id_model_prompt_hash_tokens_and_cost(monkeypatch, capsys):
     langfuse = RecordingLangfuse()
     monkeypatch.setattr(emit, "_langfuse", lambda: langfuse)
-    hooks = register(monkeypatch, "fifi")
+    hooks = register(monkeypatch, "orchestrator")
     hooks["pre_llm_call"](session_id="owner-1", user_message="Quero um prato com frango e arroz", platform="cli")
     hooks["pre_api_request"](session_id="owner-1", api_request_id="r1", api_call_count=0, model="claude-sonnet-5")
     hooks["post_api_request"](session_id="owner-1", api_request_id="r1", api_call_count=0, model="claude-sonnet-5",
@@ -264,15 +264,15 @@ def test_the_real_sdk_exports_one_trace_across_agents(monkeypatch):
     monkeypatch.setenv("LANGFUSE_SECRET_KEY", "sk-lf-test")
     monkeypatch.setenv("LANGFUSE_BASE_URL", f"http://127.0.0.1:{server.server_port}")
     try:
-        hooks = register(monkeypatch, "fifi")
+        hooks = register(monkeypatch, "orchestrator")
         hooks["pre_llm_call"](session_id="owner-1", user_message="quanto custa o arroz com frango?", platform="cli")
         hooks["pre_tool_call"](tool_name="ask_cost_expert", args={"task": "match_and_cost"}, session_id="owner-1", tool_call_id="c1")
         outgoing = trace.outgoing("owner-1", "ask_cost_expert")
-        monkeypatch.setenv("SABOR_AGENT_ROLE", "cost_expert")  # the same hooks, now as the serving expert
+        monkeypatch.setenv("KITCHEN_AGENT_ROLE", "cost_expert")  # the same hooks, now as the serving expert
         request = dict(EXPERT_REQUEST, trace={**outgoing, "turn_cost_remaining_usd": 5.0})
         hooks["pre_llm_call"](session_id="expert-1", user_message=json.dumps(request), platform="a2a")
         hooks["post_llm_call"](session_id="expert-1", assistant_response="{}", platform="a2a")
-        monkeypatch.setenv("SABOR_AGENT_ROLE", "fifi")
+        monkeypatch.setenv("KITCHEN_AGENT_ROLE", "orchestrator")
         hooks["post_tool_call"](tool_name="ask_cost_expert", result="{}", session_id="owner-1", tool_call_id="c1", duration_ms=5,
                                 status="ok")
         emit._langfuse().flush()
@@ -287,17 +287,17 @@ def test_the_real_sdk_exports_one_trace_across_agents(monkeypatch):
     assert {a.key: a.value.string_value for a in ask.attributes}.get("session.id") == "owner-1"
 
 
-def test_every_agent_enables_sabor_observability_and_never_the_bundled_langfuse_plugin():
+def test_every_agent_enables_kitchen_observability_and_never_the_bundled_langfuse_plugin():
     configs = sorted((REPO / "agents").glob("*/config.yaml"))
     if not configs:
         pytest.skip("agent configs are not baked into the agent image")
     for config in configs:
         text = config.read_text()
-        assert "- sabor_observability" in text and "langfuse" not in text, config
+        assert "- kitchen_observability" in text and "langfuse" not in text, config
 
 
 def test_events_are_not_printed_to_an_interactive_terminal(monkeypatch, capsys):
-    # `make chat` runs `hermes --cli` with fifi's stdout on Dona Maria's terminal: event lines would show her tool
+    # `make chat` runs `hermes --cli` with orchestrator's stdout on Dona Maria's terminal: event lines would show her tool
     # names, ids and result previews between the answers (seen in the Loop 4–6 CLI runs). Container logs keep them.
     monkeypatch.setattr(emit, "_terminal", lambda: True)
     emit.emit("health", "guardrail_selftest", session_id="s1", status="ok")

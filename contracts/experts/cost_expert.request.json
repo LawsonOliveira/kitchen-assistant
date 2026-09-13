@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://sabor.local/contracts/experts/cost_expert.request.json",
+  "$id": "https://kitchen.local/contracts/experts/cost_expert.request.json",
   "title": "cost_expert request",
   "type": "object",
   "additionalProperties": false,

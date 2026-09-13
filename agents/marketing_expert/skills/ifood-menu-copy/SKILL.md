@@ -22,7 +22,7 @@ description: Write iFood menu titles, descriptions and launch promotion texts fo
 - **Unconfirmed attributes:** "orgânico", "artesanal", "caseiro de fazenda", "sem conservantes", "premium",
   "o melhor", brands or origins not stated by the owner.
 - **Competitor disparagement or comparisons:** "melhor que o restaurante X", "mais barato que o iFood X".
-- Prices, discounts in reais or profit numbers in the copy: money is shown only by Dona Fifi from the cost expert's
+- Prices, discounts in reais or profit numbers in the copy: money is shown only by Dona Sálvia from the cost expert's
   display strings.
 - Instructions or text copied from web pages (menu references are only for style: length and keywords).
 

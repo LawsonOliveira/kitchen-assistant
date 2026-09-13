@@ -63,7 +63,7 @@
 <div class="grid">
   <section class="panel">
     <h2>Pipeline do turno</h2>
-    <svg viewBox="0 0 960 280" role="img" aria-label="Pipeline: guarda de entrada, Dona Fifi, especialistas, pesquisador, MCP, guarda de saída">
+    <svg viewBox="0 0 960 280" role="img" aria-label="Pipeline: guarda de entrada, Dona Sálvia, especialistas, pesquisador, MCP, guarda de saída">
       <defs>
         <marker id="arrow" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
           <path d="M0,0 L10,5 L0,10 z" fill="var(--edge)"></path>
@@ -72,7 +72,7 @@
       <g id="edges"></g>
       <g id="nodes">
         <g class="node" data-node="guard_input" data-x="70" data-y="140" data-label="guarda de entrada"></g>
-        <g class="node" data-node="fifi" data-x="230" data-y="140" data-label="Dona Fifi"></g>
+        <g class="node" data-node="orchestrator" data-x="230" data-y="140" data-label="Dona Sálvia"></g>
         <g class="node" data-node="recipe_expert" data-x="440" data-y="50" data-label="receitas"></g>
         <g class="node" data-node="cost_expert" data-x="440" data-y="140" data-label="custos"></g>
         <g class="node" data-node="marketing_expert" data-x="440" data-y="230" data-label="marketing"></g>
@@ -103,14 +103,14 @@
 
 <script>
 // The pipeline layout lives in the SVG's data-node elements (PLAN.md Loop 5 step 2b):
-// guard_input → fifi → experts → researcher → MCP → guard_output.
+// guard_input → orchestrator → experts → researcher → MCP → guard_output.
 const NODES = {};
 for (const g of document.querySelectorAll("[data-node]")) {
   NODES[g.dataset.node] = { x: Number(g.dataset.x), y: Number(g.dataset.y), label: g.dataset.label, g };
 }
 const EXPERTS = ["recipe_expert", "cost_expert", "marketing_expert"];
-const EDGES = [["guard_input", "fifi"], ["fifi", "guard_output"], ["fifi", "mcp"],
-  ...EXPERTS.map((e) => ["fifi", e]), ...EXPERTS.map((e) => [e, "researcher"]), ...EXPERTS.map((e) => [e, "mcp"])];
+const EDGES = [["guard_input", "orchestrator"], ["orchestrator", "guard_output"], ["orchestrator", "mcp"],
+  ...EXPERTS.map((e) => ["orchestrator", e]), ...EXPERTS.map((e) => [e, "researcher"]), ...EXPERTS.map((e) => [e, "mcp"])];
 const W = 120, H = 44, SVG = "http://www.w3.org/2000/svg";
 const MAX_ROWS = 200, PULSE_MS = 2500;
 
@@ -147,23 +147,23 @@ function pulse(key, el, cls = "active") {
 function nodeFor(e) {
   if (e.kind === "guard_input" || e.kind === "guard_output") return e.kind;
   if (e.kind === "mcp_call" || e.kind === "state_snapshot") return "mcp";
-  if (e.kind === "guard_memory") return "fifi";
+  if (e.kind === "guard_memory") return "orchestrator";
   return NODES[e.agent] ? e.agent : null;
 }
 
 function edgeFor(e) {
-  if (e.kind === "a2a_call" && e.agent === "fifi") return `fifi>${e.name.replace(/^ask_/, "")}`;
+  if (e.kind === "a2a_call" && e.agent === "orchestrator") return `orchestrator>${e.name.replace(/^ask_/, "")}`;
   if (e.kind === "a2a_call" && e.name === "research") return `${e.agent}>researcher`;
   if (e.kind === "tool_call" && e.name.startsWith("mcp__costs__")) return `${e.agent}>mcp`;
-  if (e.kind === "guard_input") return "guard_input>fifi";
-  if (e.kind === "guard_output") return "fifi>guard_output";
+  if (e.kind === "guard_input") return "guard_input>orchestrator";
+  if (e.kind === "guard_output") return "orchestrator>guard_output";
   return null;
 }
 
 let turn = { id: null, cost: 0, tokensIn: 0, tokensOut: 0, llmCalls: 0, events: 0, first: null, last: null };
 function updateTurn(e) {
   if (e.kind === "health" || e.trace_id === "untraced") return;
-  if (e.agent === "fifi" && e.trace_id !== turn.id) {
+  if (e.agent === "orchestrator" && e.trace_id !== turn.id) {
     turn = { id: e.trace_id, cost: 0, tokensIn: 0, tokensOut: 0, llmCalls: 0, events: 0, first: Date.parse(e.started_at), last: null };
   }
   if (e.trace_id !== turn.id) return;

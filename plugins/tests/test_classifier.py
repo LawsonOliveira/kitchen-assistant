@@ -4,7 +4,7 @@ import json
 
 import jsonschema
 
-from sabor_guardrails import classifier
+from kitchen_guardrails import classifier
 
 
 class SchemaCheckingLlm:
@@ -23,7 +23,7 @@ class SchemaCheckingLlm:
 
 def test_a_long_category_or_reason_still_gives_the_verdict_truncated():
     # Live: Haiku answered category "cost calculation and purchase confirmation" (42 characters); the schema's
-    # maxLength 40 made the plugin LLM reject the reply, and Dona Fifi answered with the infrastructure message.
+    # maxLength 40 made the plugin LLM reject the reply, and Dona Sálvia answered with the infrastructure message.
     reply = {"verdict": "allow", "category": "cost calculation and purchase confirmation", "reason": "x" * 400}
     verdict = classifier.classify(SchemaCheckingLlm(reply), "output_policy.md", "Oi, Dona Maria!", 10)
     assert verdict.verdict == "allow" and verdict.category == reply["category"][:40] and verdict.reason == "x" * 300

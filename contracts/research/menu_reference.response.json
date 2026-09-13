@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://sabor.local/contracts/research/menu_reference.response.json",
+  "$id": "https://kitchen.local/contracts/research/menu_reference.response.json",
   "title": "researcher response: menu_reference",
   "type": "object",
   "additionalProperties": false,

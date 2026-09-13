@@ -1,4 +1,4 @@
-"""sabor_a2a.client against a fake A2A v1.0 JSON-RPC peer (the shape Hermes' a2a plugin serves)."""
+"""kitchen_a2a.client against a fake A2A v1.0 JSON-RPC peer (the shape Hermes' a2a plugin serves)."""
 
 import json
 import threading
@@ -7,7 +7,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import pytest
 
-from sabor_a2a.client import A2AAuthError, A2AError, A2ATimeout, send_message
+from kitchen_a2a.client import A2AAuthError, A2AError, A2ATimeout, send_message
 
 GOOD_TOKEN = "caller-token"
 

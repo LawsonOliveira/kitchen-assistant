@@ -1,6 +1,6 @@
-# Sabor da Maria — Dona Fifi
+# Sabor da Maria — Dona Sálvia
 
-Assistente conversacional para a Dona Maria, que está abrindo o restaurante *Sabor da Maria* no iFood. A **Dona Fifi**
+Assistente conversacional para a Dona Maria, que está abrindo o restaurante *Sabor da Maria* no iFood. A **Dona Sálvia**
 leva ela da despensa ao cardápio de lançamento:
 
 - pesquisa receitas reais na web;
@@ -38,12 +38,12 @@ Postgres, costs-mcp, cockpit e Langfuse v4) pede **≈16 GiB de RAM**; com 8 GiB
      Não há chave da Anthropic Console.
    - `TAVILY_API_KEY`: busca web.
    - `A2A_TOKEN_*` e `COSTS_MCP_TOKEN_*`: um token aleatório por agente.
-   - `POSTGRES_PASSWORD`, `API_SERVER_KEY`, `SABOR_COCKPIT_TOKEN`.
+   - `POSTGRES_PASSWORD`, `API_SERVER_KEY`, `KITCHEN_COCKPIT_TOKEN`.
    - Segredos do Langfuse (`LANGFUSE_*`). O próprio `.env.example` mostra como gerar cada um.
    - Opcional: `TELEGRAM_BOT_TOKEN` (do @BotFather) e `TELEGRAM_ALLOWED_USERS` (seu id numérico, do @userinfobot).
 2. `make up` constrói e sobe tudo, esperando cada serviço ficar saudável. Na primeira subida, a planilha
    `data/despensa_dona_maria.xlsx` é importada e o Langfuse cria organização, projeto, usuário e chaves.
-3. `make chat` roda o self-test dos guardrails e abre a CLI clássica com a skin da Dona Fifi. Se o self-test falhar,
+3. `make chat` roda o self-test dos guardrails e abre a CLI clássica com a skin da Dona Sálvia. Se o self-test falhar,
    a CLI não abre.
 
 Outros comandos:
@@ -53,35 +53,35 @@ Outros comandos:
 | Telegram | com o token no `.env`, o bot responde só a quem está em `TELEGRAM_ALLOWED_USERS` |
 | http://localhost:8080 | cockpit ao vivo: qual agente, ferramenta e MCP estão ativos, custo do turno, saldo |
 | http://localhost:3000 | Langfuse (usuário e senha do `.env`): um trace por turno, atravessando os contêineres |
-| `make import-pantry FILE=…` | envia uma planilha nova; a Dona Fifi mostra a diferença e só aplica depois de um clique |
+| `make import-pantry FILE=…` | envia uma planilha nova; a Dona Sálvia mostra a diferença e só aplica depois de um clique |
 | `make test`, `make test-plugins`, `make test-contracts`, `make test-integration` | suítes determinísticas (também no CI) |
-| `SABOR_ALLOW_EVAL_RESET=1 make evals` | todas as camadas de eval. **Apaga o estado de negócio** da pilha em execução |
+| `KITCHEN_ALLOW_EVAL_RESET=1 make evals` | todas as camadas de eval. **Apaga o estado de negócio** da pilha em execução |
 
 ## Arquitetura
 
-Cinco processos Hermes conversam por A2A. Só a Dona Fifi fala com a dona. Toda conta de dinheiro e quantidade fica num
+Cinco processos Hermes conversam por A2A. Só a Dona Sálvia fala com a dona. Toda conta de dinheiro e quantidade fica num
 servidor MCP determinístico.
 
 ```mermaid
 flowchart LR
-    owner([Dona Maria]) -- CLI / Telegram --> fifi
-    subgraph fifi_box[fifi · claude-sonnet-5]
-        fifi[Dona Fifi<br/>sabor_guardrails · sabor_a2a · sabor_observability]
+    owner([Dona Maria]) -- CLI / Telegram --> orchestrator
+    subgraph orchestrator_box[orchestrator · claude-sonnet-5]
+        orchestrator[Dona Sálvia<br/>kitchen_guardrails · kitchen_a2a · kitchen_observability]
     end
-    fifi -- ask_recipe_expert --> recipe[recipe_expert<br/>sonnet-5]
-    fifi -- ask_cost_expert --> cost[cost_expert<br/>sonnet-5]
-    fifi -- ask_marketing_expert --> marketing[marketing_expert<br/>haiku-4.5]
+    orchestrator -- ask_recipe_expert --> recipe[recipe_expert<br/>sonnet-5]
+    orchestrator -- ask_cost_expert --> cost[cost_expert<br/>sonnet-5]
+    orchestrator -- ask_marketing_expert --> marketing[marketing_expert<br/>haiku-4.5]
     recipe -- research --> researcher[researcher<br/>haiku-4.5 + filhos em paralelo]
     cost -- research --> researcher
     marketing -- research --> researcher
     researcher -- Tavily --> web((web))
-    fifi -- leitura --> mcp[(costs-mcp<br/>Python, Decimal)]
+    orchestrator -- leitura --> mcp[(costs-mcp<br/>Python, Decimal)]
     recipe -- escrita do seu domínio --> mcp
     cost -- escrita do seu domínio --> mcp
     marketing -- escrita do seu domínio --> mcp
     mcp --> pg[(Postgres)]
-    fifi & recipe & cost & marketing & researcher & mcp -. eventos .-> cockpit[cockpit]
-    fifi & recipe & cost & marketing & researcher -. spans .-> langfuse[Langfuse v4]
+    orchestrator & recipe & cost & marketing & researcher & mcp -. eventos .-> cockpit[cockpit]
+    orchestrator & recipe & cost & marketing & researcher -. spans .-> langfuse[Langfuse v4]
 ```
 
 Um turno com decisão da dona:
@@ -89,8 +89,8 @@ Um turno com decisão da dona:
 ```mermaid
 sequenceDiagram
     participant M as Dona Maria
-    participant F as fifi
-    participant G as sabor_guardrails
+    participant F as orchestrator
+    participant G as kitchen_guardrails
     participant C as cost_expert
     participant X as costs-mcp
     M->>F: "Quero a do meio, R$ 9,90"
@@ -112,7 +112,7 @@ sequenceDiagram
 | Peça | Onde |
 |---|---|
 | Configuração versionada de cada agente (`config.yaml`, `SOUL.md`, skills, skin) | `agents/<agente>/` |
-| Plugins Hermes (A2A tipado, guardrails, observabilidade) | `plugins/sabor_*` |
+| Plugins Hermes (A2A tipado, guardrails, observabilidade) | `plugins/kitchen_*` |
 | Contratos JSON Schema (receita, pesquisa, especialistas, eventos) | `contracts/` |
 | Servidor MCP de custos, com migrations SQL | `services/costs_mcp/` |
 | Cockpit (stdlib + HTML/JS) | `services/cockpit/` |
@@ -121,14 +121,14 @@ sequenceDiagram
 ## As cinco categorias do desafio
 
 ### Modelo
-- **fifi** e **recipe_expert** usam `claude-sonnet-5`: conversa longa com uso de ferramentas, e julgamento de
+- **orchestrator** e **recipe_expert** usam `claude-sonnet-5`: conversa longa com uso de ferramentas, e julgamento de
   viabilidade e substituição.
 - **cost_expert** também usa `claude-sonnet-5`. O plano previa Haiku, mas nos testes ao vivo o Haiku entrou em laço e
   inventou valores ao montar as chamadas do MCP (correção C15).
 - **marketing_expert**, **researcher** (e seus filhos) e o classificador dos guardrails usam
   `claude-haiku-4-5-20251001`: tarefas estruturadas e frequentes, porque a matemática está no MCP.
 - Nas evals, a Dona Maria simulada usa Haiku e o juiz usa Sonnet.
-- **Rejeitado:** Opus para a fifi (custo e latência sem necessidade) e Sonnet em tudo. Trocas de modelo são decididas
+- **Rejeitado:** Opus para a orchestrator (custo e latência sem necessidade) e Sonnet em tudo. Trocas de modelo são decididas
   pelas evals.
 - O acesso é pelo provedor Anthropic nativo do Hermes, autenticado com `CLAUDE_CODE_OAUTH_TOKEN`. Chamadas fora do loop
   do agente (classificador, dona simulada, juiz) passam pelo cliente LLM de plugin / auxiliar do próprio Hermes, com as
@@ -161,7 +161,7 @@ sequenceDiagram
 ### Estrutura de memória
 - **Estado de negócio no Postgres**, via especialistas: despensa, preços, compras, perfil da cozinha, pratos,
   reservas, promoções.
-- **Memória nativa do Hermes só na fifi**, e só para gostos e estilo da dona ("não curte coentro", "prefere explicação
+- **Memória nativa do Hermes só na orchestrator**, e só para gostos e estilo da dona ("não curte coentro", "prefere explicação
   curta"). Toda escrita passa por um guard Haiku que só deixa passar `allow`; fatos de negócio são recusados, porque
   devem ir para o banco.
 - Os especialistas rodam sem memória.
@@ -171,8 +171,8 @@ sequenceDiagram
 ### Skills
 | Skill | Agente | Quando carrega |
 |---|---|---|
-| `constraint-elicitation` | fifi | antes de comprar, aceitar ou precificar um prato: equipamentos, técnicas, tempo por leva, geladeira, gás |
-| `pricing-explanation` | fifi | ao mostrar custos e cenários: custo unitário → custo do prato → por porção → preço, com um exemplo |
+| `constraint-elicitation` | orchestrator | antes de comprar, aceitar ou precificar um prato: equipamentos, técnicas, tempo por leva, geladeira, gás |
+| `pricing-explanation` | orchestrator | ao mostrar custos e cenários: custo unitário → custo do prato → por porção → preço, com um exemplo |
 | `ifood-menu-copy` | marketing_expert | título e descrição dentro dos limites do iFood, sem alegações de saúde ou comparação com concorrente |
 
 As skills mantêm os system prompts curtos e são versionadas e avaliáveis. **Rejeitado:** colocar tudo no `SOUL.md`.
@@ -191,9 +191,9 @@ Cada item: a decisão, a alternativa rejeitada e o porquê. O detalhe está em *
   - guardrails como agentes ou microsserviço: latência e mais um ponto de falha.
 
   Por quê: cada agente tem modelo, prompt, ferramentas e contêiner próprios.
-- **D3 — Árvore de chamadas fixa, com token por aresta; a fifi nunca chama o researcher.** Rejeitado: malha livre.
+- **D3 — Árvore de chamadas fixa, com token por aresta; a orchestrator nunca chama o researcher.** Rejeitado: malha livre.
   Por quê: é auditável, os traces ficam legíveis e texto da web nunca chega a quem fala com a dona.
-- **D4 — Só a fifi fala com a dona; especialistas devolvem `questions_for_owner`.** Rejeitado: repassar
+- **D4 — Só a orchestrator fala com a dona; especialistas devolvem `questions_for_owner`.** Rejeitado: repassar
   `INPUT_REQUIRED` do A2A. Por quê: uma voz e guardrails num lugar só.
 - **D5 — researcher com tipos de tarefa fixos, schemas estritos, sem estado, com verificação de proveniência.**
   Rejeitado: modo de pergunta livre, estado por dona, classificador na saída. Por quê: um schema sem espaço para
@@ -212,11 +212,11 @@ Cada item: a decisão, a alternativa rejeitada e o porquê. O detalhe está em *
   workspace. Por quê: o Hermes consome JSON Schema direto e cada imagem instala só o que usa.
 
 **Guardrails e autorização**
-- **D10 — Guardrails num plugin do Hermes na fifi.** Rejeitado: proxy externo em volta da API do Hermes, que perderia a
+- **D10 — Guardrails num plugin do Hermes na orchestrator.** Rejeitado: proxy externo em volta da API do Hermes, que perderia a
   CLI e a skin. Por quê: o desafio pede customizar o Hermes. Como os hooks falham abertos, cada guard captura as
   próprias exceções e bloqueia, e `make chat` roda um canário antes.
 - **D11 — Semântica dos guards.**
-  - A entrada vê a mensagem da dona mais a última da fifi (até 500 caracteres), porque "sim" sozinho não diz nada.
+  - A entrada vê a mensagem da dona mais a última da orchestrator (até 500 caracteres), porque "sim" sozinho não diz nada.
   - Categorias: fora de escopo **e** manipulação.
   - Veredito `allow | block | uncertain`; score 0–1 foi rejeitado por falta de calibração.
   - `uncertain` passa na entrada e bloqueia na saída.
@@ -224,7 +224,7 @@ Cada item: a decisão, a alternativa rejeitada e o porquê. O detalhe está em *
 - **D12 — Verificador de saída: todo R$ precisa vir de um display string do MCP (ou da própria dona), mais política
   Haiku, sem streaming.** Rejeitado: só LLM, e streaming. Por quê: dinheiro inventado é pego com exatidão; streaming
   mostraria texto antes da verificação.
-- **D13 — Injeção indireta e abuso de ferramentas.** Schemas estritos, isolamento da fifi, allowlists em
+- **D13 — Injeção indireta e abuso de ferramentas.** Schemas estritos, isolamento da orchestrator, allowlists em
   `pre_tool_call`, terminal e arquivos desligados, web tratada como dado não confiável. Rejeitado: aceitar o risco sem
   documentar.
 - **D14 — Autorização de escrita (dona).**
@@ -237,14 +237,14 @@ Cada item: a decisão, a alternativa rejeitada e o porquê. O detalhe está em *
 - **D15 — Memória** (ver [Estrutura de memória](#estrutura-de-memória)).
 - **D16 — Arquivos de contexto** (ver [Arquivos de contexto](#arquivos-de-contexto)).
 - **D17 — Skills para procedimentos sob demanda** (ver [Skills](#skills)).
-- **D30 — Confirmações com botões do `clarify`.** Rejeitado: a fifi interpretar texto livre. Por quê: "ela clicou
+- **D30 — Confirmações com botões do `clarify`.** Rejeitado: a orchestrator interpretar texto livre. Por quê: "ela clicou
   Confirmar" é mais claro que "o LLM acha que ela disse sim".
 - **D37 — Teto de US$ 5,00 por turno, somado entre agentes, sem armazenamento compartilhado.** Rejeitado: teto por
   processo, nenhum teto. Por quê: o Hermes não tem orçamento de custo. O restante viaja no contrato A2A e cada agente
   bloqueia a próxima chamada de modelo quando acaba.
 - **D38 — Timeouts aninhados e mensagens de progresso fixas.** Rejeitado: mensagens intermediárias geradas pelo
   modelo, que seriam texto não verificado. Valores: filhos 120 s + reparo 75 s < servidor do researcher 270 s <
-  especialista→researcher 300 s < servidor do especialista 450 s < fifi→especialista 480 s < turno 930 s (correção C35).
+  especialista→researcher 300 s < servidor do especialista 450 s < orchestrator→especialista 480 s < turno 930 s (correção C35).
 
 **Regras de custo e preço**
 - **D20 — CMV por porção e cenários por CMV% (35/30/25%).** Rejeitado: CMV por receita, multiplicador de markup. Por
@@ -279,7 +279,7 @@ Cada item: a decisão, a alternativa rejeitada e o porquê. O detalhe está em *
 - **D29 — Pesquisa em rodadas de até 3 candidatos, ordenados por cobertura da despensa.** Por quê: o desafio pede "à
   medida que encontrar", e a opinião dela direciona a próxima rodada.
 - **D31 — Importação de planilha:** prévia (diff) → clique → aplica. Validação estrita com `openpyxl`, nomes exatos e
-  todos os erros juntos. Rejeitado: parser XML próprio, e a fifi aplicando importações.
+  todos os erros juntos. Rejeitado: parser XML próprio, e a orchestrator aplicando importações.
 - **D41 — Marketing:** texto do cardápio e promoções, sempre simulados antes pelo cost_expert. Rejeitado: benchmark
   de preços de concorrentes no iFood (termos de uso, preços não verificáveis).
 
@@ -299,7 +299,7 @@ Cada item: a decisão, a alternativa rejeitada e o porquê. O detalhe está em *
 - **D39 — Canais: CLI clássica + Telegram com allowlist.** Rejeitado: CLI própria, TUI Ink, WhatsApp (Cloud API exige
   conta business e webhook público; o bridge não oficial tem risco de banimento).
 - **D40 — Busca web: Tavily.** Rejeitado: Firecrawl (não necessário), rotação sem chave (limites no meio da demo).
-- **D42 — Persona e skin Dona Fifi:** avó ajudante, a dona é a chef.
+- **D42 — Persona e skin Dona Sálvia:** avó ajudante, a dona é a chef.
 - **D43 — Topologia completa primeiro (dona), depois fluxos, guardrails, observabilidade, evals, Telegram/skin,
   README.** Rejeitado: monólito primeiro.
 - **D44 — Testes antes da implementação em todo loop.** No `git log`, cada `test:` com o resumo da execução vermelha
@@ -331,13 +331,13 @@ Cada item: a decisão, a alternativa rejeitada e o porquê. O detalhe está em *
 | Risco | Mitigação |
 |---|---|
 | O guard de entrada deixa `uncertain` passar (disponibilidade primeiro) | o verificador de saída falha fechado; allowlists por agente |
-| A confirmação de escrita depende do LLM da fifi montar o `clarify` | confirmações são cliques; registro determinístico de cliques; caso de red-team "escrita sem clique" |
-| Memória em texto livre do Hermes guarda preferências da dona | guard de escrita que falha fechado; regra de fronteira no `SOUL.md`; só na fifi |
+| A confirmação de escrita depende do LLM da orchestrator montar o `clarify` | confirmações são cliques; registro determinístico de cliques; caso de red-team "escrita sem clique" |
+| Memória em texto livre do Hermes guarda preferências da dona | guard de escrita que falha fechado; regra de fronteira no `SOUL.md`; só na orchestrator |
 | O Langfuse sempre sobe junto (≈16 GiB) | requisito documentado; limites de memória por serviço |
 | Postgres dedicado em vez de SQLite | o núcleo de unidades e dinheiro é puro e testado sem infraestrutura |
 | Topologia completa antes de um monólito | o Loop 0 já foi um fluxo ponta a ponta |
 | Regra do preço mais recente em vez de média ponderada | simplificação documentada |
-| Sem guard no conteúdo da web | schemas estritos, proveniência, researcher sem estado, fifi nunca vê texto da web, allowlists, verificador de saída |
+| Sem guard no conteúdo da web | schemas estritos, proveniência, researcher sem estado, orchestrator nunca vê texto da web, allowlists, verificador de saída |
 
 ## Limitações do Hermes encontradas
 
@@ -361,10 +361,10 @@ Verificadas na imagem fixada `nousresearch/hermes-agent:v2026.9.11`. Cada uma vi
 
 ## Observabilidade
 
-- **Um trace por turno da dona no Langfuse**, atravessando fifi → especialistas → researcher → filhos → ferramentas
+- **Um trace por turno da dona no Langfuse**, atravessando orchestrator → especialistas → researcher → filhos → ferramentas
   `mcp__costs__*`. O `trace_id` é o mesmo do `audit_log`, e o custo e os tokens de cada chamada vêm da tabela de preços.
 - **Cockpit** em http://localhost:8080:
-  - o caminho animado entre guard de entrada, fifi, especialistas, researcher, MCP e guard de saída;
+  - o caminho animado entre guard de entrada, orchestrator, especialistas, researcher, MCP e guard de saída;
   - linha do tempo com duração, tokens e custo;
   - painel de estado (saldo e pratos), atualizado a cada escrita no MCP.
 - **Telemetria é best-effort:** com Langfuse e cockpit parados, o turno responde normalmente.
@@ -373,7 +373,7 @@ Verificadas na imagem fixada `nousresearch/hermes-agent:v2026.9.11`. Cada uma vi
 
 ## Evals e resultados
 
-`SABOR_ALLOW_EVAL_RESET=1 make evals` roda, contra a pilha em execução, as camadas abaixo e escreve
+`KITCHEN_ALLOW_EVAL_RESET=1 make evals` roda, contra a pilha em execução, as camadas abaixo e escreve
 `evals/results/<data>.md`.
 
 | Camada | Como | Limite |
@@ -384,14 +384,14 @@ Verificadas na imagem fixada `nousresearch/hermes-agent:v2026.9.11`. Cada uma vi
 | Cenários multi-turno | 9 cenários × 3 tentativas: a Dona Maria simulada conversa na CLI; graders de estado final e trajetória decidem; juiz Sonnet só alerta | pass^3 ≥ 80% |
 | Red-team | 7 casos (injeção, jailbreak, fora de escopo, página maliciosa, envenenamento de memória, escrita sem clique, alegação enganosa) | vazamento 0% |
 
-Cada rodada vira um *dataset run* no Langfuse (`sabor-scenarios`), ligado aos traces e aos hashes de prompt.
+Cada rodada vira um *dataset run* no Langfuse (`kitchen-scenarios`), ligado aos traces e aos hashes de prompt.
 
-**Avaliador online no Langfuse (LLM-as-judge em turnos amostrados da fifi):** o Langfuse chama o modelo por uma
+**Avaliador online no Langfuse (LLM-as-judge em turnos amostrados da orchestrator):** o Langfuse chama o modelo por uma
 *LLM connection* configurada com chave de API do provedor. Sem chave da Anthropic Console (D46), o juiz roda offline
 no `make evals`, e as notas vão nos metadados do dataset run. Com uma chave:
 1. crie a connection Anthropic em *Settings → LLM Connections*;
-2. crie um evaluator com o template de `evals/rubric.md`, variável `{{output}}` = resposta da fifi, amostragem de 10%
-   dos traces com `name = fifi`;
+2. crie um evaluator com o template de `evals/rubric.md`, variável `{{output}}` = resposta da orchestrator, amostragem de 10%
+   dos traces com `name = orchestrator`;
 3. compare as notas online com as da última rodada offline.
 
 **Resultados:** ver a seção *Latest eval run* abaixo, atualizada a cada rodada completa.

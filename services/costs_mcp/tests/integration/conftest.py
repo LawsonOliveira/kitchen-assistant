@@ -7,7 +7,7 @@ import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
 REAL_WORKBOOK = REPO_ROOT / "data" / "despensa_dona_maria.xlsx"
-TEST_DATABASE = "sabor_test"
+TEST_DATABASE = "kitchen_test"
 EVIDENCE = "Dona Maria disse na conversa"
 
 
@@ -27,7 +27,7 @@ def live_dsn() -> str:
     password = os.environ.get("POSTGRES_PASSWORD") or dotenv.get("POSTGRES_PASSWORD")
     assert password, "POSTGRES_PASSWORD missing from environment and .env"
     port = os.environ.get("POSTGRES_HOST_PORT") or dotenv.get("POSTGRES_HOST_PORT") or "55432"
-    return f"postgresql://sabor:{password}@127.0.0.1:{port}/sabor"
+    return f"postgresql://kitchen:{password}@127.0.0.1:{port}/sabor"
 
 
 @pytest.fixture
@@ -39,7 +39,7 @@ def live_conn():
 
 @pytest.fixture
 def conn():
-    """A fresh `sabor_test` database with migrations and the real workbook seeded — never the live one."""
+    """A fresh `kitchen_test` database with migrations and the real workbook seeded — never the live one."""
     from costs_mcp import db
     from costs_mcp.pantry_import import seed_from_workbook
 

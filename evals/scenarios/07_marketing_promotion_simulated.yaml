@@ -12,7 +12,7 @@ owner_profile:
     - "Then she asks for an iFood description and a launch promotion."
     - "She confirms the description and a promotion only if the simulated numbers still give her a profit."
   opening_message: >
-    Dona Fifi, meu arroz com frango: rende 4 porções, 45 minutos, 400 g de arroz branco tipo 1, 600 g de peito de
+    Dona Sálvia, meu arroz com frango: rende 4 porções, 45 minutos, 400 g de arroz branco tipo 1, 600 g de peito de
     frango, 10 g de alho, 30 ml de óleo de soja e 1 pitada de sal. Precisa de 2 bocas e tenho fogão de 4 bocas.
     Quero colocar no cardápio.
 facts_to_reveal_only_if_asked:

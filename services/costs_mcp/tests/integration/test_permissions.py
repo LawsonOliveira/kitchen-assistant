@@ -45,7 +45,7 @@ def test_domain_errors_use_the_mcp_error_shape_and_are_audited(conn):
 
 
 def test_unknown_token_is_rejected_before_reaching_the_mcp_app():
-    client = TestClient(server.BearerAuth(PlainTextResponse("ok"), {"good-token": "fifi"}))
+    client = TestClient(server.BearerAuth(PlainTextResponse("ok"), {"good-token": "orchestrator"}))
     assert client.get("/mcp").status_code == 401
     assert client.get("/mcp", headers={"Authorization": "Bearer not-a-token"}).status_code == 401
     assert client.get("/mcp", headers={"Authorization": "Bearer good-token"}).status_code == 200

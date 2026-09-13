@@ -1,6 +1,6 @@
-"""Drive the classic Dona Fifi CLI in a pty for eval trials (PLAN.md open question 13).
+"""Drive the classic Dona Sálvia CLI in a pty for eval trials (PLAN.md open question 13).
 
-The API server gives fifi no `clarify` tool, so trials use what Dona Maria uses: `hermes --cli` inside the fifi
+The API server gives orchestrator no `clarify` tool, so trials use what Dona Maria uses: `hermes --cli` inside the orchestrator
 container, rendered with pyte. One CliSession is one Hermes session. The parsing helpers read the rendered lines.
 """
 
@@ -20,7 +20,7 @@ COLS, ROWS = 150, 60
 KEYS = {"enter": "\r", "down": "\x1b[B", "up": "\x1b[A", "ctrl_c": "\x03"}
 BUSY_MARKER = "Ctrl+C cancel"  # shown in the status area while a turn runs
 _SESSION = re.compile(r"Session:\s+(\d{8}_\d{6}_[0-9a-f]{6})")
-_REPLY_HEADER = re.compile(r"^\s*─\s{2}\S.*?\s─{3,}\s*$")  # " ─  🍲 Dona Fifi  ────"
+_REPLY_HEADER = re.compile(r"^\s*─\s{2}\S.*?\s─{3,}\s*$")  # " ─  🍲 Dona Sálvia  ────"
 _RULE = re.compile(r"^\s*─{10,}\s*$")
 _CHOICE = re.compile(r"^(❯ )?(\d+)\. (.*)$")
 
@@ -30,7 +30,7 @@ def session_id(lines: list[str]) -> str | None:
 
 
 def replies(lines: list[str]) -> list[str]:
-    """Bodies of Dona Fifi's reply boxes, in order."""
+    """Bodies of Dona Sálvia's reply boxes, in order."""
     bodies, body = [], None
     for line in lines:
         if body is None:
@@ -103,7 +103,7 @@ class CliSession:
         if self.pid == 0:
             os.chdir(REPO)
             os.environ.update(TERM="xterm-256color", COLUMNS=str(COLS), LINES=str(ROWS))
-            os.execvp("docker", ["docker", "compose", "exec", "-it", "-u", "hermes", "-w", "/workspace", "fifi", "hermes", "--cli"])
+            os.execvp("docker", ["docker", "compose", "exec", "-it", "-u", "hermes", "-w", "/workspace", "orchestrator", "hermes", "--cli"])
         fcntl.ioctl(self.fd, termios.TIOCSWINSZ, struct.pack("HHHH", ROWS, COLS, 0, 0))
         self.alive, self.last_change, self._last_text = True, time.time(), ""
 
@@ -145,7 +145,7 @@ class CliSession:
         self.last_change = time.time()
 
     def wait(self, quiet_seconds: float = 6, timeout_seconds: float = 900) -> str:
-        """Pump output until fifi is idle or a clarify box is open: "idle", "clarify", "exited" or "timeout"."""
+        """Pump output until orchestrator is idle or a clarify box is open: "idle", "clarify", "exited" or "timeout"."""
         started = time.time()
         self._pump(8)
         while time.time() - started < timeout_seconds:
@@ -160,7 +160,7 @@ class CliSession:
         return "timeout"
 
     def close(self) -> None:
-        """/quit first: killing the host-side `docker compose exec` leaves `hermes --cli` running inside fifi."""
+        """/quit first: killing the host-side `docker compose exec` leaves `hermes --cli` running inside orchestrator."""
         if self.alive:
             try:
                 self.send_text("/quit")

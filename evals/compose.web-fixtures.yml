@@ -4,7 +4,7 @@
 services:
   researcher:
     environment:
-      SABOR_WEB_FIXTURES_DIR: /fixtures
+      KITCHEN_WEB_FIXTURES_DIR: /fixtures
       TAVILY_API_KEY: eval-replay-invalid-key  # the real call fails without spending credits; the replay replaces it
     volumes:
       - ./evals/web_fixtures/pages:/fixtures:ro

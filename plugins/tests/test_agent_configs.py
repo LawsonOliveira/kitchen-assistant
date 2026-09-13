@@ -8,7 +8,7 @@ import pytest
 AGENTS = Path(__file__).resolve().parents[2] / "agents"
 
 
-@pytest.mark.parametrize("agent", ["fifi", "recipe_expert", "cost_expert", "marketing_expert", "researcher"])
+@pytest.mark.parametrize("agent", ["orchestrator", "recipe_expert", "cost_expert", "marketing_expert", "researcher"])
 def test_no_agent_offers_the_todo_planner(agent):
     # Live eval trial: recipe_expert called todo_list 12 times; each call is a model round trip that plans nothing.
     disabled = re.search(r"^\s*disabled_toolsets:\s*\[([^\]]*)\]", (AGENTS / agent / "config.yaml").read_text(), flags=re.M)
@@ -16,7 +16,7 @@ def test_no_agent_offers_the_todo_planner(agent):
 
 
 def test_the_orchestrator_is_dona_salvia_and_greets_with_the_owners_words():
-    # PL2/PL3 (owner, 2026-09-13): "fifi" becomes "orchestrator" in code; the persona is Dona Sálvia, greeting
+    # PL2/PL3 (owner, 2026-09-13): "orchestrator" becomes "orchestrator" in code; the persona is Dona Sálvia, greeting
     # "Olá, sou a Sálvia, como posso te ajudar hoje? 🌿".
     orchestrator = AGENTS / "orchestrator"
     skin = (orchestrator / "skins" / "dona-salvia.yaml").read_text()

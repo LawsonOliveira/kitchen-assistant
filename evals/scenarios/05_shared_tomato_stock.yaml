@@ -12,7 +12,7 @@ owner_profile:
     - "She confirms the acceptance of both dishes and any purchase the second dish needs."
     - "She does not need to choose prices in this conversation."
   opening_message: >
-    Dona Fifi, meu primeiro prato é o molho de tomate da vó: rende 4 porções, 50 minutos, 1 kg de tomate, 100 g de
+    Dona Sálvia, meu primeiro prato é o molho de tomate da vó: rende 4 porções, 50 minutos, 1 kg de tomate, 100 g de
     cebola, 10 g de alho, 30 ml de óleo de soja e 1 pitada de sal. No lançamento vou fazer 8 porções.
 facts_to_reveal_only_if_asked:
   - topic: "second dish"

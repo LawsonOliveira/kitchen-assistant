@@ -41,8 +41,8 @@ class FakeConn:
 
 @pytest.fixture(autouse=True)
 def clean_state(monkeypatch):
-    monkeypatch.delenv("SABOR_COCKPIT_URL", raising=False)
-    monkeypatch.delenv("SABOR_COCKPIT_TOKEN", raising=False)
+    monkeypatch.delenv("KITCHEN_COCKPIT_URL", raising=False)
+    monkeypatch.delenv("KITCHEN_COCKPIT_TOKEN", raising=False)
     telemetry.reset()
     yield
     telemetry.flush(5)
@@ -115,8 +115,8 @@ def test_a_hanging_cockpit_never_delays_the_tool_and_is_logged_once(monkeypatch,
     cockpit = http.server.ThreadingHTTPServer(("127.0.0.1", 0), Slow)
     cockpit.daemon_threads = True
     threading.Thread(target=cockpit.serve_forever, daemon=True).start()
-    monkeypatch.setenv("SABOR_COCKPIT_URL", f"http://127.0.0.1:{cockpit.server_port}")
-    monkeypatch.setenv("SABOR_COCKPIT_TOKEN", "cockpit-token")
+    monkeypatch.setenv("KITCHEN_COCKPIT_URL", f"http://127.0.0.1:{cockpit.server_port}")
+    monkeypatch.setenv("KITCHEN_COCKPIT_TOKEN", "cockpit-token")
     caplog.set_level(logging.INFO)
     try:
         started = time.monotonic()

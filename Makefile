@@ -16,7 +16,7 @@ logs:
 # Classic prompt_toolkit CLI (--cli), as the hermes user, from the workspace that holds .hermes.md.
 chat:  # refuses to open the CLI when the guardrail self-test fails (Loop 4 step 8)
 	bash scripts/selftest.sh
-	$(COMPOSE) exec -u hermes -w /workspace -it fifi hermes --cli
+	$(COMPOSE) exec -u hermes -w /workspace -it orchestrator hermes --cli
 
 test:
 	cd services/costs_mcp && $(UV) run pytest tests/unit -q
@@ -29,10 +29,10 @@ test-integration:
 	cd services/costs_mcp && $(UV) run pytest tests/integration -q
 
 test-contracts:
-	$(COMPOSE) run --rm --no-deps fifi $(AGENT_PYTHON) -m pytest /opt/sabor/contracts/tests -q -p no:cacheprovider
+	$(COMPOSE) run --rm --no-deps orchestrator $(AGENT_PYTHON) -m pytest /opt/kitchen/contracts/tests -q -p no:cacheprovider
 
 test-plugins:
-	$(COMPOSE) run --rm --no-deps fifi $(AGENT_PYTHON) -m pytest /opt/sabor/plugins/tests -q -p no:cacheprovider
+	$(COMPOSE) run --rm --no-deps orchestrator $(AGENT_PYTHON) -m pytest /opt/kitchen/plugins/tests -q -p no:cacheprovider
 
 smoke-a2a:
 	bash scripts/smoke_a2a.sh
@@ -43,35 +43,35 @@ smoke-research:  # live: real Tavily and model calls through the researcher cont
 review-conversations:  # PL7: score her real CLI/Telegram conversations since SINCE=YYYY-MM-DD (default 7 days) into evals/reviews and Langfuse
 	cd evals && $(UV) run python review_conversations.py $(if $(SINCE),--since $(SINCE),)
 
-evals:  # every eval layer on the live stack; erases business state, so it needs SABOR_ALLOW_EVAL_RESET=1 (Loop 6). ARGS: --resume, --scenarios, --redteam, -k
+evals:  # every eval layer on the live stack; erases business state, so it needs KITCHEN_ALLOW_EVAL_RESET=1 (Loop 6). ARGS: --resume, --scenarios, --redteam, -k
 	cd evals && $(UV) run python runner.py $(ARGS)
 
-eval-guardrails:  # input guard over evals/guardrail_dataset.jsonl with the real classifier inside fifi (Loop 6)
+eval-guardrails:  # input guard over evals/guardrail_dataset.jsonl with the real classifier inside orchestrator (Loop 6)
 	cd evals && $(UV) run python guardrail_eval.py
 
-eval-reset:  # wipes the running stack's business state before a trial; refuses without SABOR_ALLOW_EVAL_RESET=1 (Loop 6)
+eval-reset:  # wipes the running stack's business state before a trial; refuses without KITCHEN_ALLOW_EVAL_RESET=1 (Loop 6)
 	bash scripts/eval_reset.sh
 
 eval-requirements:  # requirement extraction on fixture pages through researcher-eval (evals/NOTES.md)
 	$(COMPOSE) --profile eval up -d --build --wait researcher-eval
 	cd evals && uv run python requirements_eval.py
 
-import-pantry:  # copy a spreadsheet where Dona Fifi can import it: make import-pantry FILE=path/to/file.xlsx
+import-pantry:  # copy a spreadsheet where Dona Sálvia can import it: make import-pantry FILE=path/to/file.xlsx
 	@test -n "$(FILE)" || { echo "usage: make import-pantry FILE=path/to/file.xlsx"; exit 1; }
-	$(COMPOSE) cp "$(FILE)" fifi:/opt/data/cache/documents/$(notdir $(FILE))
-	$(COMPOSE) exec -T fifi chown hermes:hermes /opt/data/cache/documents/$(notdir $(FILE))
-	@echo "Diga à Dona Fifi: atualizei minha planilha da despensa em /opt/data/cache/documents/$(notdir $(FILE))"
+	$(COMPOSE) cp "$(FILE)" orchestrator:/opt/data/cache/documents/$(notdir $(FILE))
+	$(COMPOSE) exec -T orchestrator chown hermes:hermes /opt/data/cache/documents/$(notdir $(FILE))
+	@echo "Diga à Dona Sálvia: atualizei minha planilha da despensa em /opt/data/cache/documents/$(notdir $(FILE))"
 
-selftest:  # guardrail canary against fifi's API server (Loop 4)
+selftest:  # guardrail canary against orchestrator's API server (Loop 4)
 	bash scripts/selftest.sh
 
 # Hermes silently falls back to its default skin on invalid YAML, so the name must come back from the engine (Loop 7).
 test-skin:
-	$(COMPOSE) exec -T fifi python -c "from hermes_cli.skin_engine import load_skin; s=load_skin('dona-salvia'); assert 'Dona Sálvia' in str(s), 'dona-salvia skin not loaded'"
+	$(COMPOSE) exec -T orchestrator python -c "from hermes_cli.skin_engine import load_skin; s=load_skin('dona-salvia'); assert 'Dona Sálvia' in str(s), 'dona-salvia skin not loaded'"
 
 db-shell:
-	$(COMPOSE) exec postgres psql -U sabor -d sabor
+	$(COMPOSE) exec postgres psql -U kitchen -d kitchen
 
 # Shell inside the pinned Hermes image, to read the installed Hermes source during spikes.
 hermes-shell:
-	$(COMPOSE) run --rm --no-deps --entrypoint sh fifi
+	$(COMPOSE) run --rm --no-deps --entrypoint sh orchestrator

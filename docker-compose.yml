@@ -1,11 +1,11 @@
-name: sabor
+name: kitchen-assistant
 
 # One image for the five Hermes agents; each mounts its versioned config at /seed (PLAN.md D18).
 x-agent: &agent
   build:
     context: .
     dockerfile: agents/Dockerfile
-  image: sabor-agent:local
+  image: kitchen-agent:local
   restart: unless-stopped
   depends_on:
     costs-mcp:
@@ -15,11 +15,11 @@ x-agent-env: &agent-env
   # Claude Code credential for every agent (PLAN.md D46, open question 1: token generated with `claude setup-token`).
   CLAUDE_CODE_OAUTH_TOKEN: ${CLAUDE_CODE_OAUTH_TOKEN:-}
   # Guardrails (Loop 4): required on every agent; the plugin refuses to load without a valid timeout.
-  SABOR_GUARD_TIMEOUT_SECONDS: ${SABOR_GUARD_TIMEOUT_SECONDS:?set SABOR_GUARD_TIMEOUT_SECONDS in .env}
-  SABOR_TURN_COST_CAP_USD: ${SABOR_TURN_COST_CAP_USD:?set SABOR_TURN_COST_CAP_USD in .env}
+  KITCHEN_GUARD_TIMEOUT_SECONDS: ${KITCHEN_GUARD_TIMEOUT_SECONDS:?set KITCHEN_GUARD_TIMEOUT_SECONDS in .env}
+  KITCHEN_TURN_COST_CAP_USD: ${KITCHEN_TURN_COST_CAP_USD:?set KITCHEN_TURN_COST_CAP_USD in .env}
   # Telemetry is best-effort (PLAN.md D32): no agent depends on the cockpit or Langfuse being up.
-  SABOR_COCKPIT_URL: http://cockpit:8080
-  SABOR_COCKPIT_TOKEN: ${SABOR_COCKPIT_TOKEN:?set SABOR_COCKPIT_TOKEN in .env}
+  KITCHEN_COCKPIT_URL: http://cockpit:8080
+  KITCHEN_COCKPIT_TOKEN: ${KITCHEN_COCKPIT_TOKEN:?set KITCHEN_COCKPIT_TOKEN in .env}
   LANGFUSE_BASE_URL: http://langfuse-web:3000
   LANGFUSE_PUBLIC_KEY: ${LANGFUSE_INIT_PROJECT_PUBLIC_KEY:?set LANGFUSE_INIT_PROJECT_PUBLIC_KEY in .env}
   LANGFUSE_SECRET_KEY: ${LANGFUSE_INIT_PROJECT_SECRET_KEY:?set LANGFUSE_INIT_PROJECT_SECRET_KEY in .env}
@@ -65,16 +65,16 @@ services:
     restart: unless-stopped  # a host reboot restarted the agents but left these two stopped
     image: postgres:17.6-alpine
     environment:
-      POSTGRES_USER: sabor
+      POSTGRES_USER: kitchen
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
-      POSTGRES_DB: sabor
+      POSTGRES_DB: kitchen
     ports:
       # Host port is configurable: 5432 is often taken by a local Postgres (PLAN.md open question 6).
       - "127.0.0.1:${POSTGRES_HOST_PORT:-55432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U sabor -d sabor"]
+      test: ["CMD-SHELL", "pg_isready -U kitchen -d kitchen"]
       interval: 5s
       timeout: 3s
       retries: 20
@@ -82,20 +82,20 @@ services:
   costs-mcp:
     restart: unless-stopped  # a host reboot restarted the agents but left these two stopped
     build: services/costs_mcp
-    image: sabor-costs-mcp:local
+    image: kitchen-costs-mcp:local
     environment:
-      DATABASE_URL: postgresql://sabor:${POSTGRES_PASSWORD}@postgres:5432/sabor
+      DATABASE_URL: postgresql://kitchen:${POSTGRES_PASSWORD}@postgres:5432/kitchen
       COSTS_MCP_AGENT_TOKENS: >-
-        fifi:${COSTS_MCP_TOKEN_FIFI:?set COSTS_MCP_TOKEN_FIFI in .env},recipe_expert:${COSTS_MCP_TOKEN_RECIPE_EXPERT:?set COSTS_MCP_TOKEN_RECIPE_EXPERT in .env},cost_expert:${COSTS_MCP_TOKEN_COST_EXPERT:?set COSTS_MCP_TOKEN_COST_EXPERT in .env},marketing_expert:${COSTS_MCP_TOKEN_MARKETING_EXPERT:?set COSTS_MCP_TOKEN_MARKETING_EXPERT in .env}
-      SABOR_SPREADSHEET: /data/despensa_dona_maria.xlsx
-      SABOR_CONTRACTS_DIR: /contracts
-      SABOR_IMPORT_DIR: /opt/data/cache/documents
-      SABOR_COCKPIT_URL: http://cockpit:8080  # mcp_call and state_snapshot events, best-effort (Loop 5 step 4)
-      SABOR_COCKPIT_TOKEN: ${SABOR_COCKPIT_TOKEN:?set SABOR_COCKPIT_TOKEN in .env}
+        orchestrator:${COSTS_MCP_TOKEN_ORCHESTRATOR:?set COSTS_MCP_TOKEN_ORCHESTRATOR in .env},recipe_expert:${COSTS_MCP_TOKEN_RECIPE_EXPERT:?set COSTS_MCP_TOKEN_RECIPE_EXPERT in .env},cost_expert:${COSTS_MCP_TOKEN_COST_EXPERT:?set COSTS_MCP_TOKEN_COST_EXPERT in .env},marketing_expert:${COSTS_MCP_TOKEN_MARKETING_EXPERT:?set COSTS_MCP_TOKEN_MARKETING_EXPERT in .env}
+      KITCHEN_SPREADSHEET: /data/despensa_dona_maria.xlsx
+      KITCHEN_CONTRACTS_DIR: /contracts
+      KITCHEN_IMPORT_DIR: /opt/data/cache/documents
+      KITCHEN_COCKPIT_URL: http://cockpit:8080  # mcp_call and state_snapshot events, best-effort (Loop 5 step 4)
+      KITCHEN_COCKPIT_TOKEN: ${KITCHEN_COCKPIT_TOKEN:?set KITCHEN_COCKPIT_TOKEN in .env}
     volumes:
       - ./data:/data:ro
       - ./contracts:/contracts:ro
-      - fifi_documents:/opt/data/cache/documents:ro  # spreadsheets the owner sends to Dona Fifi (Loop 3 step 4)
+      - orchestrator_documents:/opt/data/cache/documents:ro  # spreadsheets the owner sends to Dona Sálvia (Loop 3 step 4)
     depends_on:
       postgres:
         condition: service_healthy
@@ -105,26 +105,26 @@ services:
       timeout: 3s
       retries: 30
 
-  fifi:
+  orchestrator:
     <<: *agent
     environment:
       <<: *agent-env
-      SABOR_AGENT_ROLE: fifi
-      SABOR_A2A_TOKEN: ${A2A_TOKEN_FIFI:?set A2A_TOKEN_FIFI in .env}
-      COSTS_MCP_TOKEN: ${COSTS_MCP_TOKEN_FIFI}
-      SABOR_IMPORT_DIR: /opt/data/cache/documents
+      KITCHEN_AGENT_ROLE: orchestrator
+      KITCHEN_A2A_TOKEN: ${A2A_TOKEN_ORCHESTRATOR:?set A2A_TOKEN_ORCHESTRATOR in .env}
+      COSTS_MCP_TOKEN: ${COSTS_MCP_TOKEN_ORCHESTRATOR}
+      KITCHEN_IMPORT_DIR: /opt/data/cache/documents
       API_SERVER_ENABLED: "true"  # self-test and evals only (Loop 4 step 7); bound to the container loopback
       API_SERVER_HOST: 127.0.0.1
       API_SERVER_PORT: "8642"
       API_SERVER_KEY: ${API_SERVER_KEY:?set API_SERVER_KEY in .env}
       # Telegram (Loop 7): the gateway starts the channel only with a token, and without an allowlist it refuses
-      # every user; received files land in fifi_documents like CLI imports.
+      # every user; received files land in orchestrator_documents like CLI imports.
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
       TELEGRAM_ALLOWED_USERS: ${TELEGRAM_ALLOWED_USERS:-}
     volumes:
-      - ./agents/fifi:/seed:ro
-      - hermes_fifi:/opt/data
-      - fifi_documents:/opt/data/cache/documents  # where Hermes saves received files; read-only in costs-mcp
+      - ./agents/orchestrator:/seed:ro
+      - hermes_orchestrator:/opt/data
+      - orchestrator_documents:/opt/data/cache/documents  # where Hermes saves received files; read-only in costs-mcp
     healthcheck:  # the API server answers only after the gateway loaded its plugins: `up --wait` then means the self-test can run
       test: ["CMD", "/opt/hermes/.venv/bin/python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8642/health', timeout=3)"]
       interval: 10s
@@ -135,16 +135,16 @@ services:
     <<: *agent
     environment:
       <<: *agent-env
-      SABOR_AGENT_ROLE: recipe_expert
-      SABOR_A2A_TOKEN: ${A2A_TOKEN_RECIPE_EXPERT:?set A2A_TOKEN_RECIPE_EXPERT in .env}
+      KITCHEN_AGENT_ROLE: recipe_expert
+      KITCHEN_A2A_TOKEN: ${A2A_TOKEN_RECIPE_EXPERT:?set A2A_TOKEN_RECIPE_EXPERT in .env}
       COSTS_MCP_TOKEN: ${COSTS_MCP_TOKEN_RECIPE_EXPERT}
       A2A_PORT: "9900"
       A2A_HOST: 0.0.0.0
       A2A_PUBLIC_URL: http://recipe-expert:9900
-      A2A_REPLY_TIMEOUT: "450"  # fifi's client waits 480 s (open question 9)
-      A2A_PEER_TOKENS: fifi:${A2A_TOKEN_FIFI}
-      A2A_TRUSTED_PEERS: fifi
-      A2A_ALLOWED_USERS: fifi
+      A2A_REPLY_TIMEOUT: "450"  # orchestrator's client waits 480 s (open question 9)
+      A2A_PEER_TOKENS: orchestrator:${A2A_TOKEN_ORCHESTRATOR}
+      A2A_TRUSTED_PEERS: orchestrator
+      A2A_ALLOWED_USERS: orchestrator
     volumes:
       - ./agents/recipe_expert:/seed:ro
       - hermes_recipe_expert:/opt/data
@@ -154,16 +154,16 @@ services:
     <<: *agent
     environment:
       <<: *agent-env
-      SABOR_AGENT_ROLE: cost_expert
-      SABOR_A2A_TOKEN: ${A2A_TOKEN_COST_EXPERT:?set A2A_TOKEN_COST_EXPERT in .env}
+      KITCHEN_AGENT_ROLE: cost_expert
+      KITCHEN_A2A_TOKEN: ${A2A_TOKEN_COST_EXPERT:?set A2A_TOKEN_COST_EXPERT in .env}
       COSTS_MCP_TOKEN: ${COSTS_MCP_TOKEN_COST_EXPERT}
       A2A_PORT: "9900"
       A2A_HOST: 0.0.0.0
       A2A_PUBLIC_URL: http://cost-expert:9900
-      A2A_REPLY_TIMEOUT: "450"  # fifi's client waits 480 s (open question 9)
-      A2A_PEER_TOKENS: fifi:${A2A_TOKEN_FIFI}
-      A2A_TRUSTED_PEERS: fifi
-      A2A_ALLOWED_USERS: fifi
+      A2A_REPLY_TIMEOUT: "450"  # orchestrator's client waits 480 s (open question 9)
+      A2A_PEER_TOKENS: orchestrator:${A2A_TOKEN_ORCHESTRATOR}
+      A2A_TRUSTED_PEERS: orchestrator
+      A2A_ALLOWED_USERS: orchestrator
     volumes:
       - ./agents/cost_expert:/seed:ro
       - hermes_cost_expert:/opt/data
@@ -173,16 +173,16 @@ services:
     <<: *agent
     environment:
       <<: *agent-env
-      SABOR_AGENT_ROLE: marketing_expert
-      SABOR_A2A_TOKEN: ${A2A_TOKEN_MARKETING_EXPERT:?set A2A_TOKEN_MARKETING_EXPERT in .env}
+      KITCHEN_AGENT_ROLE: marketing_expert
+      KITCHEN_A2A_TOKEN: ${A2A_TOKEN_MARKETING_EXPERT:?set A2A_TOKEN_MARKETING_EXPERT in .env}
       COSTS_MCP_TOKEN: ${COSTS_MCP_TOKEN_MARKETING_EXPERT}
       A2A_PORT: "9900"
       A2A_HOST: 0.0.0.0
       A2A_PUBLIC_URL: http://marketing-expert:9900
-      A2A_REPLY_TIMEOUT: "450"  # fifi's client waits 480 s (open question 9)
-      A2A_PEER_TOKENS: fifi:${A2A_TOKEN_FIFI}
-      A2A_TRUSTED_PEERS: fifi
-      A2A_ALLOWED_USERS: fifi
+      A2A_REPLY_TIMEOUT: "450"  # orchestrator's client waits 480 s (open question 9)
+      A2A_PEER_TOKENS: orchestrator:${A2A_TOKEN_ORCHESTRATOR}
+      A2A_TRUSTED_PEERS: orchestrator
+      A2A_ALLOWED_USERS: orchestrator
     volumes:
       - ./agents/marketing_expert:/seed:ro
       - hermes_marketing_expert:/opt/data
@@ -193,7 +193,7 @@ services:
     depends_on: []
     environment:
       <<: *agent-env
-      SABOR_AGENT_ROLE: researcher
+      KITCHEN_AGENT_ROLE: researcher
       TAVILY_API_KEY: ${TAVILY_API_KEY:?set TAVILY_API_KEY in .env}
       A2A_PORT: "9900"
       A2A_HOST: 0.0.0.0
@@ -215,8 +215,8 @@ services:
       - "127.0.0.1:${RESEARCHER_EVAL_HOST_PORT:-59900}:9900"  # the host eval runner (make eval-requirements)
     environment:
       <<: *agent-env
-      SABOR_AGENT_ROLE: researcher
-      SABOR_WEB_FIXTURES_DIR: /fixtures
+      KITCHEN_AGENT_ROLE: researcher
+      KITCHEN_WEB_FIXTURES_DIR: /fixtures
       TAVILY_API_KEY: eval-replay-invalid-key  # the real call fails without spending credits; the replay replaces it
       A2A_PORT: "9900"
       A2A_HOST: 0.0.0.0
@@ -233,12 +233,12 @@ services:
 
   cockpit:  # live pipeline view at http://localhost:8080 (PLAN.md D34); nothing depends on it
     build: services/cockpit
-    image: sabor-cockpit:local
+    image: kitchen-cockpit:local
     restart: unless-stopped
     environment:
-      SABOR_COCKPIT_TOKEN: ${SABOR_COCKPIT_TOKEN:?set SABOR_COCKPIT_TOKEN in .env}
-      SABOR_CONTRACTS_DIR: /contracts
-      SABOR_LANGFUSE_URL: http://langfuse-web:3000
+      KITCHEN_COCKPIT_TOKEN: ${KITCHEN_COCKPIT_TOKEN:?set KITCHEN_COCKPIT_TOKEN in .env}
+      KITCHEN_CONTRACTS_DIR: /contracts
+      KITCHEN_LANGFUSE_URL: http://langfuse-web:3000
     volumes:
       - ./contracts:/contracts:ro
     ports:
@@ -276,7 +276,7 @@ services:
       LANGFUSE_INIT_ORG_ID: ${LANGFUSE_INIT_ORG_ID:?set LANGFUSE_INIT_ORG_ID in .env}
       LANGFUSE_INIT_ORG_NAME: Sabor da Maria
       LANGFUSE_INIT_PROJECT_ID: ${LANGFUSE_INIT_PROJECT_ID:?set LANGFUSE_INIT_PROJECT_ID in .env}
-      LANGFUSE_INIT_PROJECT_NAME: Dona Fifi
+      LANGFUSE_INIT_PROJECT_NAME: Dona Sálvia
       LANGFUSE_INIT_PROJECT_PUBLIC_KEY: ${LANGFUSE_INIT_PROJECT_PUBLIC_KEY:?set LANGFUSE_INIT_PROJECT_PUBLIC_KEY in .env}
       LANGFUSE_INIT_PROJECT_SECRET_KEY: ${LANGFUSE_INIT_PROJECT_SECRET_KEY:?set LANGFUSE_INIT_PROJECT_SECRET_KEY in .env}
       LANGFUSE_INIT_USER_EMAIL: ${LANGFUSE_INIT_USER_EMAIL:?set LANGFUSE_INIT_USER_EMAIL in .env}
@@ -368,8 +368,8 @@ services:
 
 volumes:
   postgres_data:
-  fifi_documents:
-  hermes_fifi:
+  orchestrator_documents:
+  hermes_orchestrator:
   hermes_recipe_expert:
   hermes_cost_expert:
   hermes_marketing_expert:

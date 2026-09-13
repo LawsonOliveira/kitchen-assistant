@@ -7,11 +7,11 @@ owner_profile:
   goal: "Launch her shrimp in coconut sauce even if it costs more than the R$ 80,00 left."
   behavior:
     - "She dictates her recipe in the opening message."
-    - "When Dona Fifi shows estimated prices, she corrects them with her own prices."
+    - "When Dona Sálvia shows estimated prices, she corrects them with her own prices."
     - "When told the purchases do not fit the budget, she listens to the alternatives and then decides to raise the budget by exactly the shortfall (never more than R$ 100,00)."
     - "She confirms the purchases and the acceptance of the dish."
   opening_message: >
-    Dona Fifi, meu prato de lançamento vai ser camarão ao molho de coco: rende 4 porções, 60 minutos, 1 kg de camarão,
+    Dona Sálvia, meu prato de lançamento vai ser camarão ao molho de coco: rende 4 porções, 60 minutos, 1 kg de camarão,
     200 ml de leite de coco, 100 g de cebola, 200 g de tomate, 20 ml de azeite de oliva e 1 pitada de sal.
     Quero fazer 8 porções no lançamento.
 facts_to_reveal_only_if_asked:

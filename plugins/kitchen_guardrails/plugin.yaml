@@ -1,0 +1,11 @@
+name: kitchen_guardrails
+version: "0.1.0"
+description: "Sabor da Maria guardrails: input guard, output verifier, memory guard, tool allowlists, click check, per-turn cost cap, progress messages."
+author: "Sabor da Maria"
+hooks:
+  - pre_llm_call
+  - pre_tool_call
+  - transform_tool_result
+  - transform_llm_output
+  - post_api_request
+  - subagent_start

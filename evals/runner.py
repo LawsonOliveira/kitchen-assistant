@@ -2,7 +2,7 @@
 scenarios (pass^3) + red-team, reported against the global DoD thresholds and published to Langfuse as a dataset run.
 
 The rule helpers at the top are unit-tested; main() drives the live stack (it erases business state, so it refuses to
-run without SABOR_ALLOW_EVAL_RESET=1).
+run without KITCHEN_ALLOW_EVAL_RESET=1).
 """
 
 import argparse
@@ -70,14 +70,14 @@ def scenario_trial(scenario: dict, rubric: str, owner_llm, judge) -> dict:
     started = trials.now_iso()
     conversation = trials.converse(scenario, owner_llm)
     audit, events = trials.audit_log(), trials.events_since(started)
-    session = trials.fifi_session(conversation["session_id"]) if conversation["session_id"] else []
+    session = trials.orchestrator_session(conversation["session_id"]) if conversation["session_id"] else []
     with psycopg.connect(trials.dsn()) as connection:
         state = graders.grade_state(scenario, connection)
     trajectory = graders.grade_trajectory(scenario, audit, events, session)
     judged = graders.grade_judge(conversation["transcript"], rubric, judge)
     return {"id": scenario["id"], "session_id": conversation["session_id"], "passed": trial_passed(state, trajectory, judged), "state": state, "trajectory": trajectory,
             "judge": judged, "end_state": conversation["end_state"], "transcript": conversation["transcript"],
-            "trace_ids": sorted({event["trace_id"] for event in events if event.get("agent") == "fifi"}),
+            "trace_ids": sorted({event["trace_id"] for event in events if event.get("agent") == "orchestrator"}),
             "prompt_hashes": sorted({f"{event['agent']}:{event['prompt_hash']}" for event in events if event.get("prompt_hash")}),
             "models": sorted({event["model"] for event in events if event.get("model")})}
 
@@ -95,16 +95,16 @@ def redteam_trial(case: dict, fixed_messages: dict) -> dict:
     started = trials.now_iso()
     with trials.web_fixture_researcher() if "web_fixture_page" in setup else nullcontext():
         conversation = trials.converse(case)
-    expect, replies = case["expect"], [turn["text"] for turn in conversation["transcript"] if turn["speaker"] == "fifi"]
+    expect, replies = case["expect"], [turn["text"] for turn in conversation["transcript"] if turn["speaker"] == "orchestrator"]
     audit, events = trials.audit_log(), trials.events_since(started)
-    session = trials.fifi_session(conversation["session_id"]) if conversation["session_id"] else []
+    session = trials.orchestrator_session(conversation["session_id"]) if conversation["session_id"] else []
     checks = []
     if "final_reply_equals" in expect:
         checks.append({"check": "final_reply_equals", "passed": bool(replies) and replies[-1] == fixed_messages[expect["final_reply_equals"]]})
     if "reply_must_not_contain" in expect:
         checks.append({"check": "reply_must_not_contain", "passed": not any(m in r for r in replies for m in expect["reply_must_not_contain"])})
     if "memory_must_not_contain" in expect:
-        memory = trials.fifi_memory()
+        memory = trials.orchestrator_memory()
         checks.append({"check": "memory_must_not_contain", "passed": not any(m.lower() in memory.lower() for m in expect["memory_must_not_contain"])})
     with psycopg.connect(trials.dsn()) as connection:
         checks += graders.grade_state({"expected_state": expect.get("expected_state", [])}, connection)
@@ -114,7 +114,7 @@ def redteam_trial(case: dict, fixed_messages: dict) -> dict:
 
 
 def publish_to_langfuse(run_name: str, scenario_results: list[dict]) -> str:
-    """One Langfuse dataset item per scenario and one run item per trial, linked to the trial's first fifi trace."""
+    """One Langfuse dataset item per scenario and one run item per trial, linked to the trial's first orchestrator trace."""
     import trials
 
     env = {**trials.dotenv(), **os.environ}
@@ -127,10 +127,10 @@ def publish_to_langfuse(run_name: str, scenario_results: list[dict]) -> str:
         urllib.request.urlopen(request, timeout=30).read()
 
     try:
-        post("datasets", {"name": "sabor-scenarios", "description": "Loop 6 multi-turn scenarios (evals/scenarios)"})
+        post("datasets", {"name": "kitchen-scenarios", "description": "Loop 6 multi-turn scenarios (evals/scenarios)"})
         linked = 0
         for result in scenario_results:
-            post("dataset-items", {"datasetName": "sabor-scenarios", "id": result["id"], "input": {"scenario": result["id"]}})
+            post("dataset-items", {"datasetName": "kitchen-scenarios", "id": result["id"], "input": {"scenario": result["id"]}})
             if result["trace_ids"]:
                 post("dataset-run-items", {"runName": run_name, "datasetItemId": result["id"], "traceId": result["trace_ids"][0],
                                            "metadata": {"trial": result["trial"], "passed": result["passed"], "judge": result["judge"],
@@ -180,8 +180,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--redteam", default="*.yaml", help="glob inside evals/redteam ('none' to skip)")
     parser.add_argument("-k", type=int, default=3)
     args = parser.parse_args(argv)
-    if os.environ.get("SABOR_ALLOW_EVAL_RESET") != "1":
-        print("make evals resets the running stack's business state before every trial; set SABOR_ALLOW_EVAL_RESET=1 to run it.", file=sys.stderr)
+    if os.environ.get("KITCHEN_ALLOW_EVAL_RESET") != "1":
+        print("make evals resets the running stack's business state before every trial; set KITCHEN_ALLOW_EVAL_RESET=1 to run it.", file=sys.stderr)
         return 2
     import yaml
 
@@ -198,7 +198,7 @@ def main(argv: list[str] | None = None) -> int:
 
     def run_guard():
         rows = [json.loads(line) for line in (EVALS / "guardrail_dataset.jsonl").read_text().splitlines() if line.strip()]
-        result = guardrail_eval.metrics([row["expected"] for row in rows], guardrail_eval.run_in_fifi(rows))
+        result = guardrail_eval.metrics([row["expected"] for row in rows], guardrail_eval.run_in_orchestrator(rows))
         return {**result, "meets_threshold": guardrail_eval.meets_threshold(result)}
 
     guard = _cached(run_dir / "layer-guardrails.json", run_guard)
@@ -210,7 +210,7 @@ def main(argv: list[str] | None = None) -> int:
         scenarios[scenario["id"]] = [{**_cached(run_dir / f"{scenario['id']}__{trial}.json", lambda: scenario_trial(scenario, rubric, owner_llm, judge)), "trial": trial}
                                      for trial in range(1, args.k + 1)]
         print(f"{scenario['id']}: {[t['passed'] for t in scenarios[scenario['id']]]}", flush=True)
-    fixed_messages = {key: value for key, value in runpy.run_path(str(REPO / "plugins" / "sabor_guardrails" / "messages.py")).items() if key.endswith("_MESSAGE")}
+    fixed_messages = {key: value for key, value in runpy.run_path(str(REPO / "plugins" / "kitchen_guardrails" / "messages.py")).items() if key.endswith("_MESSAGE")}
     redteam = []
     for path in sorted((EVALS / "redteam").glob(args.redteam)) if args.redteam != "none" else []:
         case = yaml.safe_load(path.read_text())

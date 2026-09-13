@@ -19,12 +19,12 @@ from pathlib import Path
 
 EVALS = Path(__file__).resolve().parent
 REPO = EVALS.parent
-_MESSAGES = runpy.run_path(str(REPO / "plugins" / "sabor_guardrails" / "messages.py"))
+_MESSAGES = runpy.run_path(str(REPO / "plugins" / "kitchen_guardrails" / "messages.py"))
 SCOPE_BLOCK_MESSAGE, INFRA_BLOCK_MESSAGE = _MESSAGES["SCOPE_BLOCK_MESSAGE"], _MESSAGES["INFRA_BLOCK_MESSAGE"]
 REVIEWED_SOURCES = ("cli", "telegram")
 LIMITS = {"latency_p90_seconds": 60, "cost_per_turn_usd": 1.00}  # open question 15 defaults
 SIGNAL_SCORES = ("scope_blocks", "tool_errors", "latency_p90_seconds", "cancel_clicks")
-QUEUE_NAME = "sabor-review"
+QUEUE_NAME = "kitchen-review"
 
 
 def select_sessions(rows: list[dict], since: float, eval_session_ids: set[str]) -> list[str]:
@@ -179,7 +179,7 @@ def main(argv: list[str] | None = None) -> int:
     import trials
 
     since = datetime.strptime(args.since, "%Y-%m-%d").replace(tzinfo=timezone.utc) if args.since else datetime.now(timezone.utc) - timedelta(days=7)
-    rows = json.loads(next(line for line in trials._fifi_python(SESSIONS).splitlines() if line.startswith("ROWS ")).removeprefix("ROWS "))
+    rows = json.loads(next(line for line in trials._orchestrator_python(SESSIONS).splitlines() if line.startswith("ROWS ")).removeprefix("ROWS "))
     sources = set(args.sources.split(","))
     selected = [session for session in select_sessions(rows, since.timestamp(), _eval_session_ids())
                 if next(row for row in rows if row["id"] == session)["source"] in sources]
@@ -187,12 +187,12 @@ def main(argv: list[str] | None = None) -> int:
     env = {**trials.dotenv(), **os.environ}
     langfuse, queue_id, problems, reviews = (None if args.no_langfuse else _langfuse(env)), None, [], []
     for session_id in selected:
-        conversation_turns = turns(trials.fifi_session(session_id))
+        conversation_turns = turns(trials.orchestrator_session(session_id))
         if not conversation_turns:
             continue
         conversation_signals = signals(conversation_turns)
         transcript = [entry for turn in conversation_turns for entry in
-                      ({"speaker": "owner", "text": turn["owner"]}, {"speaker": "fifi", "text": turn["reply"] or ""})]
+                      ({"speaker": "owner", "text": turn["owner"]}, {"speaker": "orchestrator", "text": turn["reply"] or ""})]
         judged = graders.grade_judge(transcript, rubric, judge)
         conversation_alerts = alerts(conversation_signals, by_id[session_id]["cost_usd"])
         reviews.append({"session_id": session_id, "source": by_id[session_id]["source"], "signals": conversation_signals, "judge": judged,

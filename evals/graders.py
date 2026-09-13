@@ -1,7 +1,7 @@
 """Graders for Loop 6 trials (PLAN.md D36): business state, trajectory rules and the judge.
 
 Inputs are what the runner collects after a trial: audit_log rows {at, agent, tool, args, result, error_code} from the
-app Postgres, fifi's session messages {at, role, content, tool_name, tool_args} and the trial's events. State and
+app Postgres, orchestrator's session messages {at, role, content, tool_name, tool_args} and the trial's events. State and
 trajectory decide pass/fail; the judge only raises alerts.
 """
 

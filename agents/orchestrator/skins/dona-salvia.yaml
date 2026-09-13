@@ -1,0 +1,53 @@
+# Dona Sálvia skin for the classic CLI (PLAN.md D42, Loop 7). Copied into $HERMES_HOME/skins by the entrypoint and
+# selected with display.skin in orchestrator's config.yaml. Missing keys inherit Hermes' default skin.
+name: dona-salvia
+description: Dona Sálvia — a vovó ajudante da cozinha, tons de tomate, laranja e mostarda
+
+colors:
+  banner_border: "#C0392B"
+  banner_title: "#F39C12"
+  banner_accent: "#E67E22"
+  banner_dim: "#A67C52"
+  banner_text: "#FDEBD0"
+  ui_accent: "#E67E22"
+  ui_text: "#FDEBD0"
+  ui_border: "#A04000"
+  prompt: "#FDEBD0"
+  input_rule: "#C0392B"
+  response_border: "#E67E22"
+  session_label: "#F39C12"
+  session_border: "#A04000"
+
+spinner:
+  thinking_verbs: ["mexendo a panela", "provando o tempero", "picando cebola", "fazendo as contas no caderninho"]
+
+branding:
+  agent_name: Dona Sálvia
+  welcome: "Olá, sou a Sálvia, como posso te ajudar hoje? 🌿"
+  goodbye: "Até logo! Bom trabalho na cozinha 🌿"
+  response_label: " 🌿 Dona Sálvia "
+  prompt_symbol: "❯"
+  help_header: "(^_^)? Comandos"
+
+tool_prefix: "┊"
+
+banner_logo: |-
+  [bold #C0392B]██████╗  ██████╗ ███╗   ██╗ █████╗     ███████╗ █████╗ ██╗     ██╗   ██╗██╗ █████╗[/]
+  [bold #D35400]██╔══██╗██╔═══██╗████╗  ██║██╔══██╗    ██╔════╝██╔══██╗██║     ██║   ██║██║██╔══██╗[/]
+  [bold #E67E22]██║  ██║██║   ██║██╔██╗ ██║███████║    ███████╗███████║██║     ██║   ██║██║███████║[/]
+  [bold #F39C12]██║  ██║██║   ██║██║╚██╗██║██╔══██║    ╚════██║██╔══██║██║     ╚██╗ ██╔╝██║██╔══██║[/]
+  [bold #F1C40F]██████╔╝╚██████╔╝██║ ╚████║██║  ██║    ███████║██║  ██║███████╗ ╚████╔╝ ██║██║  ██║[/]
+  [bold #B7950B]╚═════╝  ╚═════╝ ╚═╝  ╚═══╝╚═╝  ╚═╝    ╚══════╝╚═╝  ╚═╝╚══════╝  ╚═══╝  ╚═╝╚═╝  ╚═╝[/]
+
+banner_hero: |-
+  [#C0392B]⠀⠀⠀⠀⠀▄▄▄███▄▄▄[/][#FDFEFE]⠀⠀[/]
+  [#C0392B]⠀⠀⠀▄██[/][#F0B27A]▀▀▀▀▀▀▀[/][#C0392B]██▄[/]
+  [#C0392B]⠀⠀⠀█[/][#F5CBA7]  [/][#34495E]o─o[/][#F5CBA7]    [/][#C0392B]█[/][#FDFEFE]⠀⠀[/]
+  [#C0392B]⠀⠀⠀▀[/][#F5CBA7]▄   ‿   ▄[/][#C0392B]▀[/][#FDFEFE]⠀⠀[/]
+  [#F5CBA7]⠀⠀⠀⠀⠀▀▄▄▄▄▄▄▄▀[/][#FDFEFE]⠀⠀[/]
+  [#2E86C1]⠀⠀⠀▄█████████▄[/][#FDFEFE]⠀⠀[/]
+  [#2E86C1]⠀⠀███[/][#FDFEFE]▓▓▓▓▓▓▓[/][#2E86C1]███[/][#FDFEFE]⠀[/]
+  [#2E86C1]⠀⠀███[/][#FDFEFE]▓▓▓[/][#E74C3C]♥[/][#FDFEFE]▓▓▓[/][#2E86C1]███[/][#FDFEFE]⠀[/]
+  [#2E86C1]⠀⠀███[/][#FDFEFE]▓▓▓▓▓▓▓[/][#2E86C1]███[/][#FDFEFE]⠀[/]
+  [#2E86C1]⠀⠀⠀██[/][#FDFEFE]▓▓▓▓▓▓▓[/][#2E86C1]██[/][#FDFEFE]⠀⠀[/]
+  [#5D4037]⠀⠀⠀⠀▀▀     ▀▀[/][#FDFEFE]⠀⠀⠀[/]

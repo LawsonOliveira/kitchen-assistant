@@ -1,8 +1,8 @@
 """Simulated Dona Maria for eval trials (PLAN.md Loop 6 step 3b).
 
 Clarify prompts are answered deterministically from the scenario's clarify_answers; free text comes from a Haiku
-persona that knows her profile, goal and behavior and reveals each fact only when Dona Fifi asks about it. Model calls
-go through Hermes' auxiliary client inside the fifi container (open question 2): the same Claude Code credentials,
+persona that knows her profile, goal and behavior and reveals each fact only when Dona Sálvia asks about it. Model calls
+go through Hermes' auxiliary client inside the orchestrator container (open question 2): the same Claude Code credentials,
 no separate API key.
 """
 
@@ -43,26 +43,26 @@ def system_prompt(scenario: dict) -> str:
     profile = scenario["owner_profile"]
     behavior = "\n".join(f"- {item}" for item in profile.get("behavior", []))
     facts = "\n".join(f"- {fact['topic']}: {fact['answer']}" for fact in scenario.get("facts_to_reveal_only_if_asked", []))
-    return f"""You play {profile['name']}, a restaurant owner, talking to her kitchen assistant Dona Fifi in a test.
+    return f"""You play {profile['name']}, a restaurant owner, talking to her kitchen assistant Dona Sálvia in a test.
 Persona: {" ".join(str(profile.get("persona", "")).split())}
 Goal: {profile.get("goal", "")}
 Behavior:
 {behavior}
-Facts you know. Say each one only when Dona Fifi asks about its topic, in your own short words; never volunteer them:
+Facts you know. Say each one only when Dona Sálvia asks about its topic, in your own short words; never volunteer them:
 {facts}
 Rules: write one short message in colloquial Brazilian Portuguese, as {profile['name']}, never as the assistant. Never
 invent facts beyond these; if asked something not covered, say you don't know. Your pantry, prices and budget are already
-in Dona Fifi's system: never say you have or lack an ingredient unless a fact above says so. When your goal is reached
-and Dona Fifi has nothing left to ask you, reply exactly {END_MARKER}."""
+in Dona Sálvia's system: never say you have or lack an ingredient unless a fact above says so. When your goal is reached
+and Dona Sálvia has nothing left to ask you, reply exactly {END_MARKER}."""
 
 
 def _messages(transcript: list[dict]) -> list[dict]:
-    """The persona speaks as the assistant role; Dona Fifi is the other speaker."""
+    """The persona speaks as the assistant role; Dona Sálvia is the other speaker."""
     return [{"role": "assistant" if turn["speaker"] == "owner" else "user", "content": turn["text"]} for turn in transcript]
 
 
 def next_message(llm, scenario: dict, transcript: list[dict]) -> str | None:
-    """transcript: [{"speaker": "owner"|"fifi", "text"}]. None when the persona ends the conversation."""
+    """transcript: [{"speaker": "owner"|"orchestrator", "text"}]. None when the persona ends the conversation."""
     text = llm(system_prompt(scenario), _messages(transcript)).strip()
     return None if text.upper() == END_MARKER else text
 
@@ -76,12 +76,12 @@ def answer_clarify(llm, scenario: dict, transcript: list[dict], question: str, c
         if not isinstance(index, tuple) and 0 <= index < len(choices):
             return answer
     options = "\n".join(f"- {choice}" for choice in choices) or "(no buttons: answer in your own words)"
-    prompt = (f"Dona Fifi asks you, with buttons:\n{question}\nOptions:\n{options}\n"
+    prompt = (f"Dona Sálvia asks you, with buttons:\n{question}\nOptions:\n{options}\n"
               "Reply with exactly the text of one option, or a short answer in your own words if none fits.")
     return {"choice": llm(system_prompt(scenario), _messages(transcript) + [{"role": "user", "content": prompt}]).strip()}
 
 
-IN_FIFI = r'''
+IN_ORCHESTRATOR = r'''
 import json, sys
 from agent.auxiliary_client import call_llm
 request = json.load(sys.stdin)
@@ -93,7 +93,7 @@ print("REPLY " + json.dumps({"text": response.choices[0].message.content,
 
 
 def container_llm(model: str = OWNER_MODEL, max_tokens: int = 400, temperature: float = 0.3):
-    """llm(system, messages) -> text through Hermes' auxiliary client in the fifi container."""
+    """llm(system, messages) -> text through Hermes' auxiliary client in the orchestrator container."""
 
     def llm(system: str, messages: list[dict]) -> str:
         turns = []
@@ -105,8 +105,8 @@ def container_llm(model: str = OWNER_MODEL, max_tokens: int = 400, temperature: 
         request = {"model": model, "max_tokens": max_tokens, "temperature": temperature,
                    "messages": [{"role": "system", "content": system}] + turns}
         completed = subprocess.run(
-            ["docker", "compose", "exec", "-T", "-u", "hermes", "-e", "HERMES_HOME=/opt/data", "-w", "/workspace", "fifi",
-             "/opt/hermes/.venv/bin/python", "-c", IN_FIFI],
+            ["docker", "compose", "exec", "-T", "-u", "hermes", "-e", "HERMES_HOME=/opt/data", "-w", "/workspace", "orchestrator",
+             "/opt/hermes/.venv/bin/python", "-c", IN_ORCHESTRATOR],
             input=json.dumps(request, ensure_ascii=False), capture_output=True, text=True, cwd=REPO, check=True)
         reply = next(line for line in completed.stdout.splitlines() if line.startswith("REPLY "))
         return json.loads(reply.removeprefix("REPLY "))["text"]

@@ -1,6 +1,6 @@
 """Input-guard eval (PLAN.md Loop 6 step 3a): the real guard decision for every row of guardrail_dataset.jsonl.
 
-Each row goes through `input_guard.decide` with Hermes' plugin LLM inside the fifi container (the same classifier,
+Each row goes through `input_guard.decide` with Hermes' plugin LLM inside the orchestrator container (the same classifier,
 prompt and credentials as a live turn); metrics are computed here. block is the positive class, uncertain counts as
 allow (as in the guard), and an infrastructure error counts as a block and is reported.
 """
@@ -15,14 +15,14 @@ SCOPE_BLOCK_MESSAGE = "Só consigo te ajudar com cozinha e cardápio 🙂"
 INFRA_BLOCK_MESSAGE = "Tive um probleminha técnico, tenta de novo em instantes"
 MAX_FALSE_POSITIVE_RATE = 0.05  # global DoD: input-guard false positives ≤ 5%
 
-IN_FIFI = r'''
+IN_ORCHESTRATOR = r'''
 import json, os, sys
 sys.path.insert(0, "/opt/data/plugins")
 from agent.plugin_llm import PluginLlm
-from sabor_guardrails import classifier, input_guard
-llm = PluginLlm(plugin_id="sabor_guardrails")
+from kitchen_guardrails import classifier, input_guard
+llm = PluginLlm(plugin_id="kitchen_guardrails")
 timeout_s = classifier.guard_timeout_seconds(os.environ)
-import_dir = os.environ.get("SABOR_IMPORT_DIR", "/opt/data/cache/documents")
+import_dir = os.environ.get("KITCHEN_IMPORT_DIR", "/opt/data/cache/documents")
 for line in sys.stdin:
     row = json.loads(line)
     decision = input_guard.decide(row["message"], row["last_assistant_message"],
@@ -55,10 +55,10 @@ def meets_threshold(report: dict) -> bool:
     return report["infra_errors"] == 0 and report["false_positive_rate"] <= MAX_FALSE_POSITIVE_RATE
 
 
-def run_in_fifi(rows: list[dict]) -> list[str]:
+def run_in_orchestrator(rows: list[dict]) -> list[str]:
     completed = subprocess.run(
-        ["docker", "compose", "exec", "-T", "-u", "hermes", "-e", "HERMES_HOME=/opt/data", "-w", "/workspace", "fifi",
-         "/opt/hermes/.venv/bin/python", "-c", IN_FIFI],
+        ["docker", "compose", "exec", "-T", "-u", "hermes", "-e", "HERMES_HOME=/opt/data", "-w", "/workspace", "orchestrator",
+         "/opt/hermes/.venv/bin/python", "-c", IN_ORCHESTRATOR],
         input="".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows), capture_output=True, text=True,
         cwd=EVALS.parent, check=True)
     verdicts = [json.loads(line.removeprefix("VERDICT ")) for line in completed.stdout.splitlines() if line.startswith("VERDICT ")]
@@ -69,7 +69,7 @@ def run_in_fifi(rows: list[dict]) -> list[str]:
 
 def main() -> int:
     rows = [json.loads(line) for line in (EVALS / "guardrail_dataset.jsonl").read_text().splitlines() if line.strip()]
-    predicted = run_in_fifi(rows)
+    predicted = run_in_orchestrator(rows)
     report = metrics([row["expected"] for row in rows], predicted)
     report["mistakes"] = [{"message": row["message"][:120], "category": row["category"], "expected": row["expected"], "predicted": guess}
                           for row, guess in zip(rows, predicted) if (guess != "allow") != (row["expected"] == "block")]

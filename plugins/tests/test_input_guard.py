@@ -1,11 +1,11 @@
-"""Input guard on fifi: owner message + fifi's last message, uncertain → allow, any failure → blocked (D11)."""
+"""Input guard on orchestrator: owner message + orchestrator's last message, uncertain → allow, any failure → blocked (D11)."""
 
 import pytest
 from fakes import FakeClassifier
 
-from sabor_guardrails import classifier, input_guard
-from sabor_guardrails.classifier import GuardInfraError, parse_verdict
-from sabor_guardrails.messages import INFRA_BLOCK_MESSAGE, SCOPE_BLOCK_MESSAGE
+from kitchen_guardrails import classifier, input_guard
+from kitchen_guardrails.classifier import GuardInfraError, parse_verdict
+from kitchen_guardrails.messages import INFRA_BLOCK_MESSAGE, SCOPE_BLOCK_MESSAGE
 
 IMPORT_DIR = "/opt/data/cache/documents"
 
@@ -44,7 +44,7 @@ def test_only_the_first_api_call_of_a_turn_is_classified():
     assert decide("qualquer coisa", fake, api_call_count=2) == input_guard.Decision("next", None) and fake.calls == []
 
 
-def test_owner_message_and_fifis_last_message_truncated_to_500_chars_are_classified():
+def test_owner_message_and_orchestrators_last_message_truncated_to_500_chars_are_classified():
     fake = FakeClassifier("allow")
     decide("sim", fake, last="A senhora tem forno? " + "a" * 600)
     assert "sim" in fake.calls[0] and "A senhora tem forno?" in fake.calls[0] and "a" * 480 not in fake.calls[0]
@@ -75,12 +75,12 @@ def test_parse_verdict_accepts_only_the_output_schema():
             parse_verdict(text)
 
 
-@pytest.mark.parametrize("environ", [{}, {"SABOR_GUARD_TIMEOUT_SECONDS": ""}, {"SABOR_GUARD_TIMEOUT_SECONDS": "30"},
-                                     {"SABOR_GUARD_TIMEOUT_SECONDS": "45"}, {"SABOR_GUARD_TIMEOUT_SECONDS": "dez"}])
+@pytest.mark.parametrize("environ", [{}, {"KITCHEN_GUARD_TIMEOUT_SECONDS": ""}, {"KITCHEN_GUARD_TIMEOUT_SECONDS": "30"},
+                                     {"KITCHEN_GUARD_TIMEOUT_SECONDS": "45"}, {"KITCHEN_GUARD_TIMEOUT_SECONDS": "dez"}])
 def test_a_missing_or_too_long_guard_timeout_is_refused(environ):
     with pytest.raises(ValueError):
         classifier.guard_timeout_seconds(environ)
 
 
 def test_a_timeout_below_the_hook_limit_is_accepted():
-    assert classifier.guard_timeout_seconds({"SABOR_GUARD_TIMEOUT_SECONDS": "10"}) == 10.0
+    assert classifier.guard_timeout_seconds({"KITCHEN_GUARD_TIMEOUT_SECONDS": "10"}) == 10.0

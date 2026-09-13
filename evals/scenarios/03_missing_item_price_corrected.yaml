@@ -7,10 +7,10 @@ owner_profile:
   goal: "Price her own chicken stroganoff recipe."
   behavior:
     - "She dictates her recipe in the opening message."
-    - "When Dona Fifi shows an estimated internet price for creme de leite, she corrects it with the price she pays."
+    - "When Dona Sálvia shows an estimated internet price for creme de leite, she corrects it with the price she pays."
     - "She does not want to buy anything in this conversation; she only wants to know the cost."
   opening_message: >
-    Dona Fifi, quero saber o custo do meu strogonoff de frango: rende 4 porções, leva 40 minutos e usa 600 g de
+    Dona Sálvia, quero saber o custo do meu strogonoff de frango: rende 4 porções, leva 40 minutos e usa 600 g de
     peito de frango, 200 g de creme de leite, 100 g de cebola, 200 g de tomate, 20 ml de óleo de soja e 1 pitada de sal.
 facts_to_reveal_only_if_asked:
   - topic: "price of creme de leite"

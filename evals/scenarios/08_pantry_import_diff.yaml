@@ -8,9 +8,9 @@ owner_profile:
   persona: "Opening her first delivery restaurant on iFood; keeps her pantry spreadsheet up to date."
   goal: "Update the pantry with the new spreadsheet after seeing what changed."
   behavior:
-    - "She tells Dona Fifi where the new spreadsheet is in the opening message."
+    - "She tells Dona Sálvia where the new spreadsheet is in the opening message."
     - "She confirms the import after seeing the changes."
-  opening_message: "Dona Fifi, atualizei minha planilha da despensa: /opt/data/cache/documents/despensa_tomate_price.xlsx. Confere o que mudou e atualiza pra mim?"
+  opening_message: "Dona Sálvia, atualizei minha planilha da despensa: /opt/data/cache/documents/despensa_tomate_price.xlsx. Confere o que mudou e atualiza pra mim?"
 facts_to_reveal_only_if_asked:
   - topic: "what changed"
     answer: "Só o tomate ficou mais caro, paguei R$ 20,00 nos 2 kg."

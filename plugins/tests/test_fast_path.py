@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from sabor_a2a import fast_path
+from kitchen_a2a import fast_path
 
 CONFIRMATION = {"choice": "Confirmar", "summary": "Comprar 1 pacote de 2 kg de tomate por R$ 16,00"}
 

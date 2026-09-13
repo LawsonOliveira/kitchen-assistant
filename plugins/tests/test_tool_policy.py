@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from sabor_guardrails import progress, tool_policy
+from kitchen_guardrails import progress, tool_policy
 
 READ = ["get_pantry", "get_state_summary", "check_pantry_match", "get_launch_menu"]
 SKILLS = ["skill_view", "skills_list"]
@@ -15,7 +15,7 @@ def mcp(tools):
 
 
 MATRIX = {
-    "fifi": ["clarify", "memory", "ask_recipe_expert", "ask_cost_expert", "ask_marketing_expert", *SKILLS, *mcp(READ)],
+    "orchestrator": ["clarify", "memory", "ask_recipe_expert", "ask_cost_expert", "ask_marketing_expert", *SKILLS, *mcp(READ)],
     "recipe_expert": ["research", *SKILLS, *mcp(READ + ["check_viability", "register_candidate_dish", "reject_candidate_dish",
                                                          "set_launch_batch_portions", "record_measure_quote", "confirm_measure", "find_cached_recipes", "cache_recipes", "confirm_dish_requirement", "accept_dish",
                                                          "update_kitchen_profile"])],
@@ -80,7 +80,7 @@ def test_a_new_clarify_replaces_unused_clicks_and_sessions_are_separate():
     assert not ledger.consume("s1") and ledger.consume("s2")
 
 
-def test_fifi_cannot_send_owner_confirmation_without_a_click():
+def test_orchestrator_cannot_send_owner_confirmation_without_a_click():
     ledger = tool_policy.ClickLedger()
     request = {"task": "register_purchase", "payload": {}, "owner_confirmation": {"choice": "Confirmar", "summary": "Comprar tomate"}}
     assert tool_policy.check_click(ledger, "s1", "ask_cost_expert", request) == {"action": "block", "message": tool_policy.CLICK_REQUIRED_MESSAGE}

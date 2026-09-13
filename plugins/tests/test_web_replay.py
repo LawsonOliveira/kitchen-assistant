@@ -3,8 +3,8 @@
 import json
 from pathlib import Path
 
-from sabor_a2a import researcher_hooks as hooks
-from sabor_a2a import web_replay
+from kitchen_a2a import researcher_hooks as hooks
+from kitchen_a2a import web_replay
 
 PAGES = Path(__file__).resolve().parents[2] / "evals" / "web_fixtures" / "pages"
 MARMITA_URL = web_replay.FIXTURE_BASE_URL + "marmita_quatro_bocas.html"
@@ -34,7 +34,7 @@ def test_other_tools_are_not_replayed():
 
 
 def test_researcher_replays_web_tools_and_counts_fixture_urls_as_visited(monkeypatch):
-    monkeypatch.setenv("SABOR_WEB_FIXTURES_DIR", str(PAGES))
+    monkeypatch.setenv("KITCHEN_WEB_FIXTURES_DIR", str(PAGES))
     hooks.pre_llm_call(session_id="session-1", user_message=json.dumps({"task_type": "recipe_search", "items": ["marmita"]}), platform="a2a")
     hooks.subagent_start(parent_session_id="session-1", child_session_id="child-1")
     replayed = hooks.transform_tool_result(tool_name="web_extract", args={"urls": [MARMITA_URL]},
@@ -44,5 +44,5 @@ def test_researcher_replays_web_tools_and_counts_fixture_urls_as_visited(monkeyp
 
 
 def test_without_the_fixtures_variable_the_real_result_is_kept(monkeypatch):
-    monkeypatch.delenv("SABOR_WEB_FIXTURES_DIR", raising=False)
+    monkeypatch.delenv("KITCHEN_WEB_FIXTURES_DIR", raising=False)
     assert hooks.transform_tool_result(tool_name="web_search", args={"query": "x"}, result='{"success": true}', session_id="s") is None

@@ -6,7 +6,7 @@ description: Normalize a web recipe to the Sabor da Maria contract.
 # Recipe normalization
 
 Use this whenever a recipe from `research` must become the recipe contract
-(`contracts/recipe.schema.json`) before it is sent to Dona Fifi.
+(`contracts/recipe.schema.json`) before it is sent to Dona Sálvia.
 
 1. **Pantry names.** Call `get_pantry` once and copy the exact pantry name into `pantry_match`
    (e.g. "arroz" -> "Arroz branco tipo 1", "frango" -> "Peito de frango"). If nothing in the pantry is the same
