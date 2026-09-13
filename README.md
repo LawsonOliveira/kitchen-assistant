@@ -69,7 +69,7 @@ flowchart LR
         fifi[Dona Fifi<br/>sabor_guardrails · sabor_a2a · sabor_observability]
     end
     fifi -- ask_recipe_expert --> recipe[recipe_expert<br/>sonnet-5]
-    fifi -- ask_cost_expert --> cost[cost_expert<br/>haiku-4.5]
+    fifi -- ask_cost_expert --> cost[cost_expert<br/>sonnet-5]
     fifi -- ask_marketing_expert --> marketing[marketing_expert<br/>haiku-4.5]
     recipe -- research --> researcher[researcher<br/>haiku-4.5 + filhos em paralelo]
     cost -- research --> researcher
@@ -123,7 +123,9 @@ sequenceDiagram
 ### Modelo
 - **fifi** e **recipe_expert** usam `claude-sonnet-5`: conversa longa com uso de ferramentas, e julgamento de
   viabilidade e substituição.
-- **cost_expert**, **marketing_expert**, **researcher** (e seus filhos) e o classificador dos guardrails usam
+- **cost_expert** também usa `claude-sonnet-5`. O plano previa Haiku, mas nos testes ao vivo o Haiku entrou em laço e
+  inventou valores ao montar as chamadas do MCP (correção C15).
+- **marketing_expert**, **researcher** (e seus filhos) e o classificador dos guardrails usam
   `claude-haiku-4-5-20251001`: tarefas estruturadas e frequentes, porque a matemática está no MCP.
 - Nas evals, a Dona Maria simulada usa Haiku e o juiz usa Sonnet.
 - **Rejeitado:** Opus para a fifi (custo e latência sem necessidade) e Sonnet em tudo. Trocas de modelo são decididas
