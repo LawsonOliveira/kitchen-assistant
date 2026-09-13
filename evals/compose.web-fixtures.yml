@@ -1,0 +1,10 @@
+# Red-team 04 only (evals/runner.py): the live researcher replays evals/web_fixtures/pages instead of the web, like the
+# researcher-eval service (correction C27). The runner recreates researcher with this override for that case and
+# recreates it without the override right after.
+services:
+  researcher:
+    environment:
+      SABOR_WEB_FIXTURES_DIR: /fixtures
+      TAVILY_API_KEY: eval-replay-invalid-key  # the real call fails without spending credits; the replay replaces it
+    volumes:
+      - ./evals/web_fixtures/pages:/fixtures:ro
