@@ -2,7 +2,7 @@ COMPOSE := docker compose
 UV := uv
 AGENT_PYTHON := /opt/hermes/.venv/bin/python
 
-.PHONY: up down logs chat test test-integration test-contracts test-plugins smoke-a2a smoke-research eval-requirements import-pantry selftest test-skin eval-reset db-shell hermes-shell
+.PHONY: up down logs chat test test-integration test-contracts test-plugins smoke-a2a smoke-research eval-requirements import-pantry selftest test-skin eval-reset eval-guardrails db-shell hermes-shell
 
 up:
 	$(COMPOSE) up -d --build --wait
@@ -39,6 +39,9 @@ smoke-a2a:
 
 smoke-research:  # live: real Tavily and model calls through the researcher contract
 	bash scripts/smoke_research.sh
+
+eval-guardrails:  # input guard over evals/guardrail_dataset.jsonl with the real classifier inside fifi (Loop 6)
+	cd evals && $(UV) run python guardrail_eval.py
 
 eval-reset:  # wipes the running stack's business state before a trial; refuses without SABOR_ALLOW_EVAL_RESET=1 (Loop 6)
 	bash scripts/eval_reset.sh
