@@ -2251,6 +2251,20 @@ evidence, what was changed, and where. Open questions that were "default applied
   for a R$ 13,89 purchase. Red: missing key. It now returns `budget_remaining_after_purchase_display`.
   Seen, no change: the recipe listed cebola, alho and tomate "a gosto", so their costs were the small D23 estimates
   (1 g), and Dona Sálvia did not label them as estimates although the pricing-explanation skill asks her to.
+- **C64 — Full run, first hour: scenario 01 trial 1 passed; the run stopped on memory.** Run `20260913-192309`: costs
+  unit and integration pass, guard 75/75 (false-positive rate 0); requirement extraction failed at equipment recall 83%
+  (5/6): researcher-eval returned no recipe for `batata_frita_air_fryer.html`, which passed in the previous two runs —
+  the layer reruns on resume. Scenario 01 trial 1 passed (judge mean 4.5): the owner noticed the missing pepper under the
+  new coverage, the dish was accepted at R$ 8,90 with clicks, the menu copy saved. Two defects, tests first:
+  (1) "… Obrigada mesmo!  FIM" did not end the conversation and goodbyes ran to the 14-message cap (red: 1 failed); a
+  reply ending with the upper-case marker now ends it. (2) In trial 2, recipe-normalization named
+  `contracts/recipe.schema.json`, a file skill_view cannot open; recipe_expert went looking for it (skills_list,
+  skill_manage, `research` with the placeholder items "__unused__" and "dummy", which researcher answered in prose) and
+  registering the owner's dictated recipe took 17 minutes. Red: 1 failed (a test that every file a skill names exists);
+  the skill now spells out the contract's fields and says a dictated recipe needs no research. At 20:19 the host
+  watchdog stopped trial 2 with 208 MiB available (swap full; VS Code, two Claude Code processes and Firefox besides the
+  stack; the orchestrator container grew from 510 to 800 MiB during the trial). Owner decision: close other programs
+  and keep Langfuse on for the rest of the run; the agent keeps its own checks light while trials run.
 
 ## Post-loop changes (owner requests, 2026-09-13)
 Requested by the owner while Loops 6–8 were running, test-first, each recorded as a correction. **Order decided by the
