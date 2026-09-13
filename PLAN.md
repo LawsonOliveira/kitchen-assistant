@@ -2176,6 +2176,18 @@ evidence, what was changed, and where. Open questions that were "default applied
   runs alongside the first model call and a block discards that answer. (5) No agent offers `todo_list`. Green: plugins +
   contracts 337 (1 skipped). Live gains are measured when Loop 6 resumes.
 
+- **C58 — PL7: `make review-conversations` (path A).** Tests first (red: collection error; then rounding 1 and stable
+  ids 1). `evals/review_conversations.py` reads the orchestrator's CLI and Telegram sessions from `state.db` (skipping
+  eval trials, whose results now record their session id), splits them into turns, computes signals (blocked messages
+  she had to rephrase, tool errors, Cancelar clicks, p90 turn latency, cost per turn from Hermes' own estimate), scores
+  each conversation with the rubric judge, writes session scores into Langfuse with stable ids (a rerun updates them),
+  queues flagged conversations in the `sabor-review` annotation queue, and writes `evals/reviews/<date>.md` plus
+  guard-dataset drafts under `evals/proposals/<date>/` (both gitignored: they hold her conversations). Live, on the
+  owner's Telegram test conversation: 3 turns, judge mean 3.75, alert "p90 turn latency 93.4 s > 60 s", 8 scores stored
+  once after two reruns, the session queued once. Langfuse facts found on the way: an annotation queue needs at least one
+  score config (the review creates numeric 1–5 configs for the rubric criteria), and score deletion through the API is
+  asynchronous.
+
 ## Post-loop changes (owner requests, 2026-09-13)
 Requested by the owner while Loops 6–8 were running, test-first, each recorded as a correction. **Order decided by the
 owner:** Loop 6 pauses; Loop 7 (the owner's Telegram checks) and Loop 8 finish, then PL1–PL9, then Loop 6 resumes and
