@@ -294,3 +294,14 @@ def test_every_agent_enables_sabor_observability_and_never_the_bundled_langfuse_
     for config in configs:
         text = config.read_text()
         assert "- sabor_observability" in text and "langfuse" not in text, config
+
+
+def test_events_are_not_printed_to_an_interactive_terminal(monkeypatch, capsys):
+    # `make chat` runs `hermes --cli` with fifi's stdout on Dona Maria's terminal: event lines would show her tool
+    # names, ids and result previews between the answers (seen in the Loop 4–6 CLI runs). Container logs keep them.
+    monkeypatch.setattr(emit, "_terminal", lambda: True)
+    emit.emit("health", "guardrail_selftest", session_id="s1", status="ok")
+    assert printed_events(capsys) == []
+    monkeypatch.setattr(emit, "_terminal", lambda: False)
+    emit.emit("health", "guardrail_selftest", session_id="s1", status="ok")
+    assert [event["name"] for event in printed_events(capsys)] == ["guardrail_selftest"]
