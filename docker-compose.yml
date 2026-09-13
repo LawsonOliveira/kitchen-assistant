@@ -62,6 +62,7 @@ x-a2a-server-healthcheck: &a2a-healthcheck
 
 services:
   postgres:
+    restart: unless-stopped  # a host reboot restarted the agents but left these two stopped
     image: postgres:17.6-alpine
     environment:
       POSTGRES_USER: sabor
@@ -79,6 +80,7 @@ services:
       retries: 20
 
   costs-mcp:
+    restart: unless-stopped  # a host reboot restarted the agents but left these two stopped
     build: services/costs_mcp
     image: sabor-costs-mcp:local
     environment:
