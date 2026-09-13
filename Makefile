@@ -21,6 +21,7 @@ chat:  # refuses to open the CLI when the guardrail self-test fails (Loop 4 step
 test:
 	cd services/costs_mcp && $(UV) run pytest tests/unit -q
 	cd services/cockpit && $(UV) run pytest tests -q
+	cd evals && $(UV) run pytest -q
 
 # Reads the live app database seeded by `make up`.
 test-integration:
