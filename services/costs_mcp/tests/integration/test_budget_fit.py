@@ -32,6 +32,14 @@ def test_missing_item_is_priced_in_whole_packages(conn):
         "R$ 10,00", "R$ 80,00", True, None)
 
 
+def test_budget_fit_states_what_remains_after_buying(conn):
+    # Smoke trial 01 (2026-09-13): with only budget_remaining_display (R$ 80,00, before buying) Dona Sálvia told the owner
+    # "depois da compra ainda sobram R$ 80,00" for a R$ 13,89 purchase.
+    dish = creme_dish(conn)
+    quote_creme(conn)
+    assert operations.check_budget_fit(conn, dish)["budget_remaining_after_purchase_display"] == "R$ 70,00"
+
+
 def test_budget_fit_reports_the_shortfall(conn):
     dish = creme_dish(conn)
     quote_creme(conn, price="50.00")

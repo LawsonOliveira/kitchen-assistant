@@ -110,3 +110,20 @@ def test_launch_batch_must_be_a_positive_integer(conn):
             operations.set_launch_batch_portions(conn, dish, portions, "quero mudar")
         assert error.value.code == "invalid_portions"
     assert launch_batch(conn, dish) == 4
+
+
+def test_a_to_taste_ingredient_missing_from_the_pantry_lowers_the_coverage(conn):
+    # Smoke trial 01 (2026-09-13): cebola, alho, tomate, sal and pimenta-do-reino "a gosto" were left out of the coverage,
+    # so a recipe that still needed pimenta-do-reino was shown as "Cobertura da despensa: 100%", and the owner, who wanted a
+    # pantry-only dish, accepted it and bought the pepper.
+    from conftest import EVIDENCE, ingredient, make_recipe, viable_profile
+
+    from costs_mcp import operations
+
+    viable_profile(conn)
+    in_pantry = make_recipe([ingredient("Peito de frango", 500, "g"), ingredient("Sal", None, "to_taste")], name="Frango com sal")
+    needs_pepper = make_recipe([ingredient("Peito de frango", 500, "g"), ingredient("Pimenta-do-reino", None, "to_taste", None)],
+                               name="Frango com pimenta")
+    coverage = [operations.check_pantry_match(conn, operations.register_candidate_dish(conn, recipe, 4, 4, EVIDENCE)["dish_id"])
+                ["pantry_coverage_pct"] for recipe in (in_pantry, needs_pepper)]
+    assert coverage == [100, 50]
