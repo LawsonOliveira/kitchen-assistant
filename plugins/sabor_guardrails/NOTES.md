@@ -55,3 +55,11 @@ Claude Code credentials — no separate key. Overriding the model needs
 parsed verdicts in 2.0–4.9 s with token usage (`cost_usd=None`). This is the route open question 2's approved default
 names as the fallback; the plan's `SABOR_GUARD_API_KEY` is therefore not used, and the manual "invalid key" check
 becomes an invalid guard model (a model outside `allowed_models` raises `PluginLlmTrustError` → `GuardInfraError`).
+
+## 6. Which hooks see `clarify` and `memory` (found in the Loop 4 live run)
+
+`clarify` and `memory` are inline agent tools (`agent/inline_tool_executors.py`): the tool executor runs
+`pre_tool_call` and emits the terminal `post_tool_call` for them, but they never pass through
+`model_tools.handle_function_call`, so `transform_tool_result` does not fire. The click ledger therefore records
+clarify answers in `post_tool_call`; the memory guard stays in `pre_tool_call`. Registry tools (`ask_*`, costs MCP)
+keep using `transform_tool_result`.

@@ -149,11 +149,18 @@ def register(ctx) -> None:
             log.exception("sabor_guardrails: tool policy failed; blocking %s", tool_name)
             return {"action": "block", "message": tool_policy.BLOCKED_MESSAGE}
 
+    def post_tool_call(tool_name="", result=None, session_id="", **_):
+        """clarify is an inline agent tool: Hermes fires post_tool_call for it, never transform_tool_result."""
+        if tool_name != "clarify":
+            return
+        try:
+            ledger.record_clarify(session_id, result)
+        except Exception:
+            log.exception("sabor_guardrails: could not record the clarify answer")
+
     def transform_tool_result(tool_name="", result=None, session_id="", **_):
         try:
-            if tool_name == "clarify":
-                ledger.record_clarify(session_id, result)
-            elif tool_name in tool_policy.ASK_TOOLS or tool_name.startswith("mcp__costs__"):
+            if tool_name in tool_policy.ASK_TOOLS or tool_name.startswith("mcp__costs__"):
                 groundings.setdefault(session_id, SessionGrounding()).add_from_tool_result(result)
                 if tool_name in tool_policy.ASK_TOOLS:
                     spent = _first_json_object(result if isinstance(result, str) else json.dumps(result)).get("cost_usd_spent")
@@ -178,6 +185,7 @@ def register(ctx) -> None:
     ctx.register_hook("post_api_request", post_api_request)
     ctx.register_middleware("llm_execution", llm_execution)
     if role == "fifi":
+        ctx.register_hook("post_tool_call", post_tool_call)
         ctx.register_hook("transform_tool_result", transform_tool_result)
         ctx.register_hook("transform_llm_output", transform_llm_output)
 
