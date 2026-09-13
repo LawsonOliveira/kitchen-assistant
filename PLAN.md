@@ -2265,6 +2265,13 @@ evidence, what was changed, and where. Open questions that were "default applied
   watchdog stopped trial 2 with 208 MiB available (swap full; VS Code, two Claude Code processes and Firefox besides the
   stack; the orchestrator container grew from 510 to 800 MiB during the trial). Owner decision: close other programs
   and keep Langfuse on for the rest of the run; the agent keeps its own checks light while trials run.
+- **C65 — Memory on the owner's machine, second attempt.** Resumed at 20:31 with 1.56 GiB available: requirement
+  extraction passed on the rerun (the air-fryer miss did not recur); the watchdog stopped scenario 01 trial 2 again at
+  20:39 (428 MiB available; Firefox had been reopened, Langfuse web had grown back to 775 MiB). Tried, measured and
+  reverted: Node heap caps for Langfuse web (512 MiB crashed at startup with "JavaScript heap out of memory"; 768 MiB
+  started at 848 MiB RSS) and worker (384 MiB → 449 MiB RSS), and a 512 MiB `max_server_memory_usage` for ClickHouse
+  (loaded, 608 MiB RSS) — none used less memory than before, so the compose file is unchanged. Next (owner proposal): move this
+  work from VS Code to the Claude Code CLI and close VS Code (≈ 0.6 GiB), then resume the run.
 
 ## Post-loop changes (owner requests, 2026-09-13)
 Requested by the owner while Loops 6–8 were running, test-first, each recorded as a correction. **Order decided by the
