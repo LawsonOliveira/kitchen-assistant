@@ -86,3 +86,25 @@ def test_eval_reset_starts_the_agents_after_a_verified_seed(tmp_path):
     seed_check = next(index for index, call in enumerate(calls) if "count(*) FROM ingredients" in call)
     agents_up = max(index for index, call in enumerate(calls) if " up " in f" {call} " and "recipe-expert" in call)
     assert seed_check < agents_up
+
+
+def test_a_relative_resume_directory_is_read_from_the_repository_root():
+    # make evals runs the runner from evals/, so "--resume evals/results/<run>" created evals/evals/results/<run> and
+    # started every layer again.
+    assert runner.run_directory("evals/results/20260913-175812") == REPO / "evals/results/20260913-175812"
+    assert runner.run_directory("/somewhere/run") == Path("/somewhere/run")
+    assert runner.run_directory(None).parent == REPO / "evals/results"
+
+
+def test_host_memory_available_is_read_from_meminfo_in_mib():
+    meminfo = "MemTotal:        7841056 kB\nMemFree:          188000 kB\nMemAvailable:     409600 kB\nSwapFree:  250000 kB\n"
+    assert runner.memory_available_mib(meminfo) == 400
+
+
+def test_the_memory_watchdog_fires_once_after_two_consecutive_samples_under_the_floor():
+    # Three host freezes on 2026-09-13 (7.6 GiB of RAM): a trial pushed the desktop into swap thrashing and only the
+    # power button got it back. One low sample (a page-cache dip) is not enough.
+    samples = iter([900, 300, 900, 300, 300, 900])
+    fired = []
+    runner.watch_memory(lambda: next(samples), fired.append, floor_mib=450, interval_s=0)
+    assert fired == [300]
