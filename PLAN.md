@@ -2107,6 +2107,24 @@ evidence, what was changed, and where. Open questions that were "default applied
   test uses a mean of 3.25, because four integer criteria cannot average the plan's 3.4; `make eval-reset` is
   `scripts/eval_reset.sh`.
 
+- **C50 — Events never reach Dona Maria's terminal.** `sabor_observability` printed every event as a JSON line on
+  stdout, which in `make chat` is her terminal: the Loop 4–6 CLI runs showed tool names, ids and result previews
+  between her answers. `emit` now prints only when stdout is not a TTY (container logs keep every event; the cockpit
+  and Langfuse are unchanged). Tests first (red: 1 failed). The eval runner therefore reads events from the cockpit.
+- **C51 — Open question 11's default: `set_launch_batch_portions`.** Tests first (red: integration 4, contracts 1,
+  tool policy 1): a candidate's launch batch changes with her words (positive integer; an accepted dish keeps the batch
+  its reservation was made for → `not_candidate`); only recipe_expert may call it (`TOOL_PERMISSIONS`, the guardrail
+  allowlist and its MCP tool list); recipe_expert task `set_launch_batch` requires her statement; fifi's and
+  recipe_expert's prompts use it instead of registering the same recipe twice.
+- **C52 — How the Loop 6 runner works (open question 13's default).** Each trial is one `hermes --cli` session in a
+  pty (`evals/cli_session.py`); clarify boxes are answered with keys per `clarify_answers`, free text comes from the
+  Haiku persona (`evals/simulated_owner.py`), and both the persona and the Sonnet judge run through Hermes' auxiliary
+  client inside fifi (open question 2). After a trial the runner reads `audit_log`, fifi's session from `state.db`,
+  fifi's memory files and the cockpit's event buffer. Red-team 07's prose setup is executed through costs-mcp's
+  operations (reference dish accepted at 30%), and red-team 04 recreates researcher with
+  `evals/compose.web-fixtures.yml` so the malicious fixture page is what it reads. Results are cached per trial in
+  `evals/results/<timestamp>/`, so `make evals ARGS="--resume …"` continues an interrupted run.
+
 ## Final manual step (owner — after Loop 8, not executed by the agent)
 Kept here so it is not forgotten: no loop creates a GitHub remote or submits the challenge.
 - [ ] Create the GitHub repository, add it as `origin` and push.
@@ -2207,7 +2225,7 @@ Queued during implementation (each: what it blocks, the question, the default if
    lightweight complement to D14 (not the rejected proposal/approval tokens bound to parameter hashes)?
    **Default if unanswered:** yes, implemented test-first in Loop 4 step 6b next to the tool allowlist, recorded as
    a correction; until then the prompt rule and the contract requirement (C29) stand.
-11. **OPEN** — **Affects** Loop 3 flows where the owner changes how many portions she will launch (nothing is blocked
+11. **DEFAULT APPLIED** (2026-09-13, correction C51) — **Affects** Loop 3 flows where the owner changes how many portions she will launch (nothing is blocked
    meanwhile): there is no operation to change a candidate's `launch_batch_portions`, so in scenario 02 (second
    attempt), when the purchases exceeded the budget and the owner chose fewer portions, recipe_expert registered a
    second candidate of the same recipe and the first stayed as an orphan candidate (rejecting it would record a
@@ -2216,7 +2234,7 @@ Queued during implementation (each: what it blocks, the question, the default if
    her words), exposed as recipe_expert task `set_launch_batch`?
    **Default if unanswered:** yes — test-first in costs-mcp (candidate only; accepted dishes keep their reservation),
    added to TOOL_PERMISSIONS, the recipe_expert contract and fifi's prompt, recorded as a correction.
-12. **OPEN** — **Blocks** Loop 7's Telegram manual checks (`evals/manual/loop7_telegram.md` rows 1–7) and therefore
+12. **ANSWERED** (owner, 2026-09-13: token and allowlist added to `.env`; `getMe` answers for the bot and fifi's gateway logs "Connected to Telegram (polling mode)") — **Blocked** Loop 7's Telegram manual checks (`evals/manual/loop7_telegram.md` rows 1–7) and therefore
    Loop 7's DoD "reference dish priced end to end over Telegram"; the skin, the fixture and the compose wiring are
    done. `.env` has no `TELEGRAM_BOT_TOKEN` or `TELEGRAM_ALLOWED_USERS`. Can you create a bot with @BotFather, put
    its token in `.env` as `TELEGRAM_BOT_TOKEN`, put your numeric Telegram user id (from @userinfobot) in
