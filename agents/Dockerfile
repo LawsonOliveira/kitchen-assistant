@@ -2,7 +2,9 @@
 # Official Hermes image pinned by tag and digest (PLAN.md D1, agents/NOTES.md).
 FROM nousresearch/hermes-agent:v2026.9.11@sha256:9469b3e78b9545b6d576eb8887a95352e9a0ea83730eaf31431cf862ca1010e1
 
-RUN uv pip install --python /opt/hermes/.venv/bin/python "pytest==8.4.2" "jsonschema==4.26.0"
+# langfuse 4.15.2: Python SDK v4, fully supported by self-hosted Langfuse v4; its OpenTelemetry, httpx and pydantic
+# requirements are already bundled in the image (plugins/sabor_observability/NOTES.md).
+RUN uv pip install --python /opt/hermes/.venv/bin/python "pytest==8.4.2" "jsonschema==4.26.0" "langfuse==4.15.2"
 
 COPY plugins /opt/sabor/plugins
 COPY contracts /opt/sabor/contracts

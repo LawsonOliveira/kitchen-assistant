@@ -43,10 +43,16 @@ def _error(code: str, message: str, **details) -> str:
     return json.dumps({"error": {"code": code, "message": message, "details": details}}, ensure_ascii=False)
 
 
-def _trace() -> dict:
-    # TODO(Loop 5 step 3): propagate the owner turn's trace; TODO(Loop 4 step 6c): the turn's real remaining budget.
-    return {"trace_id": uuid.uuid4().hex, "parent_span_id": None,
-            "turn_cost_remaining_usd": float(os.environ.get("SABOR_TURN_COST_CAP_USD", "5.00"))}
+def _trace(session_id: str = "", tool_name: str = "") -> dict:
+    """This turn's trace under the calling tool's span (sabor_observability, D32). TODO(Loop 4 step 6c): the turn's real
+    remaining budget."""
+    try:
+        from sabor_observability import trace
+
+        context = trace.outgoing(session_id, tool_name)
+    except Exception:  # observability disabled or broken: the request still goes out, with a trace of its own
+        context = {"trace_id": uuid.uuid4().hex, "parent_span_id": None}
+    return {**context, "turn_cost_remaining_usd": float(os.environ.get("SABOR_TURN_COST_CAP_USD", "5.00"))}
 
 
 def _call(peer: str, request: dict, request_schema, response_schema) -> str:
@@ -67,22 +73,22 @@ def _call(peer: str, request: dict, request_schema, response_schema) -> str:
         return _error("a2a_failure", str(error))
 
 
-def _research(args: dict, **_) -> str:
+def _research(args: dict, session_id: str = "", **_) -> str:
     from .validation import CONTRACTS_DIR
 
     task_type = args.get("task_type")
     if task_type not in RESEARCH_TASK_TYPES:
         return _error("unknown_task_type", f"task_type must be one of {RESEARCH_TASK_TYPES}")
-    request = {"task_type": task_type, "trace": _trace(), "items": list(args.get("items") or [])}
+    request = {"task_type": task_type, "trace": _trace(session_id, "research"), "items": list(args.get("items") or [])}
     return _call("researcher", request, CONTRACTS_DIR / "research" / f"{task_type}.request.json",
                  CONTRACTS_DIR / "research" / f"{task_type}.response.json")
 
 
 def _ask(expert: str):
-    def handler(args: dict, **_) -> str:
+    def handler(args: dict, session_id: str = "", **_) -> str:
         from .validation import CONTRACTS_DIR
 
-        request = {"task": args.get("task"), "trace": _trace(), "owner_confirmation": args.get("owner_confirmation"),
+        request = {"task": args.get("task"), "trace": _trace(session_id, f"ask_{expert}"), "owner_confirmation": args.get("owner_confirmation"),
                    "owner_statement": args.get("owner_statement"), "payload": args.get("payload") or {}}
         return _call(expert, request, CONTRACTS_DIR / "experts" / f"{expert}.request.json",
                      CONTRACTS_DIR / "experts" / f"{expert}.response.json")
