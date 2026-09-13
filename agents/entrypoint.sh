@@ -6,6 +6,11 @@ set -eu
 : "${SABOR_AGENT_ROLE:?SABOR_AGENT_ROLE must be set}"
 
 cp /seed/config.yaml "$HERMES_HOME/config.yaml"
+# Secrets Hermes may have generated into its own .env win over the container environment (loaded with
+# override=True); compose is the single source for the keys we manage, so drop Hermes' copies (PLAN.md C39).
+if [ -f "$HERMES_HOME/.env" ]; then
+  sed -i '/^API_SERVER_KEY=/d' "$HERMES_HOME/.env"
+fi
 cp /seed/SOUL.md "$HERMES_HOME/SOUL.md"
 
 for kind in skills skins; do

@@ -81,8 +81,8 @@ services:
       - ./agents/fifi:/seed:ro
       - hermes_fifi:/opt/data
       - fifi_documents:/opt/data/cache/documents  # where Hermes saves received files; read-only in costs-mcp
-    healthcheck:
-      test: ["CMD", "pgrep", "-f", "gateway run"]
+    healthcheck:  # the API server answers only after the gateway loaded its plugins: `up --wait` then means the self-test can run
+      test: ["CMD", "/opt/hermes/.venv/bin/python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8642/health', timeout=3)"]
       interval: 10s
       timeout: 5s
       retries: 30
