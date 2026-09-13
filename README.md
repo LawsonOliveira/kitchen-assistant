@@ -128,7 +128,7 @@ sequenceDiagram
 - **marketing_expert**, **researcher** (e seus filhos) e o classificador dos guardrails usam
   `claude-haiku-4-5-20251001`: tarefas estruturadas e frequentes, porque a matemática está no MCP.
 - Nas evals, a Dona Maria simulada usa Haiku e o juiz usa Sonnet.
-- **Rejeitado:** Opus para a orchestrator (custo e latência sem necessidade) e Sonnet em tudo. Trocas de modelo são decididas
+- **Rejeitado:** Opus para o orchestrator (custo e latência sem necessidade) e Sonnet em tudo. Trocas de modelo são decididas
   pelas evals.
 - O acesso é pelo provedor Anthropic nativo do Hermes, autenticado com `CLAUDE_CODE_OAUTH_TOKEN`. Chamadas fora do loop
   do agente (classificador, dona simulada, juiz) passam pelo cliente LLM de plugin / auxiliar do próprio Hermes, com as
@@ -161,7 +161,7 @@ sequenceDiagram
 ### Estrutura de memória
 - **Estado de negócio no Postgres**, via especialistas: despensa, preços, compras, perfil da cozinha, pratos,
   reservas, promoções.
-- **Memória nativa do Hermes só na orchestrator**, e só para gostos e estilo da dona ("não curte coentro", "prefere explicação
+- **Memória nativa do Hermes só no orchestrator**, e só para gostos e estilo da dona ("não curte coentro", "prefere explicação
   curta"). Toda escrita passa por um guard Haiku que só deixa passar `allow`; fatos de negócio são recusados, porque
   devem ir para o banco.
 - Os especialistas rodam sem memória.
@@ -191,9 +191,9 @@ Cada item: a decisão, a alternativa rejeitada e o porquê. O detalhe está em *
   - guardrails como agentes ou microsserviço: latência e mais um ponto de falha.
 
   Por quê: cada agente tem modelo, prompt, ferramentas e contêiner próprios.
-- **D3 — Árvore de chamadas fixa, com token por aresta; a orchestrator nunca chama o researcher.** Rejeitado: malha livre.
+- **D3 — Árvore de chamadas fixa, com token por aresta; o orchestrator nunca chama o researcher.** Rejeitado: malha livre.
   Por quê: é auditável, os traces ficam legíveis e texto da web nunca chega a quem fala com a dona.
-- **D4 — Só a orchestrator fala com a dona; especialistas devolvem `questions_for_owner`.** Rejeitado: repassar
+- **D4 — Só o orchestrator (a Dona Sálvia) fala com a dona; especialistas devolvem `questions_for_owner`.** Rejeitado: repassar
   `INPUT_REQUIRED` do A2A. Por quê: uma voz e guardrails num lugar só.
 - **D5 — researcher com tipos de tarefa fixos, schemas estritos, sem estado, com verificação de proveniência.**
   Rejeitado: modo de pergunta livre, estado por dona, classificador na saída. Por quê: um schema sem espaço para
@@ -212,11 +212,11 @@ Cada item: a decisão, a alternativa rejeitada e o porquê. O detalhe está em *
   workspace. Por quê: o Hermes consome JSON Schema direto e cada imagem instala só o que usa.
 
 **Guardrails e autorização**
-- **D10 — Guardrails num plugin do Hermes na orchestrator.** Rejeitado: proxy externo em volta da API do Hermes, que perderia a
+- **D10 — Guardrails num plugin do Hermes no orchestrator.** Rejeitado: proxy externo em volta da API do Hermes, que perderia a
   CLI e a skin. Por quê: o desafio pede customizar o Hermes. Como os hooks falham abertos, cada guard captura as
   próprias exceções e bloqueia, e `make chat` roda um canário antes.
 - **D11 — Semântica dos guards.**
-  - A entrada vê a mensagem da dona mais a última da orchestrator (até 500 caracteres), porque "sim" sozinho não diz nada.
+  - A entrada vê a mensagem da dona mais a última do orchestrator (até 500 caracteres), porque "sim" sozinho não diz nada.
   - Categorias: fora de escopo **e** manipulação.
   - Veredito `allow | block | uncertain`; score 0–1 foi rejeitado por falta de calibração.
   - `uncertain` passa na entrada e bloqueia na saída.
@@ -224,7 +224,7 @@ Cada item: a decisão, a alternativa rejeitada e o porquê. O detalhe está em *
 - **D12 — Verificador de saída: todo R$ precisa vir de um display string do MCP (ou da própria dona), mais política
   Haiku, sem streaming.** Rejeitado: só LLM, e streaming. Por quê: dinheiro inventado é pego com exatidão; streaming
   mostraria texto antes da verificação.
-- **D13 — Injeção indireta e abuso de ferramentas.** Schemas estritos, isolamento da orchestrator, allowlists em
+- **D13 — Injeção indireta e abuso de ferramentas.** Schemas estritos, isolamento do orchestrator, allowlists em
   `pre_tool_call`, terminal e arquivos desligados, web tratada como dado não confiável. Rejeitado: aceitar o risco sem
   documentar.
 - **D14 — Autorização de escrita (dona).**
@@ -237,7 +237,7 @@ Cada item: a decisão, a alternativa rejeitada e o porquê. O detalhe está em *
 - **D15 — Memória** (ver [Estrutura de memória](#estrutura-de-memória)).
 - **D16 — Arquivos de contexto** (ver [Arquivos de contexto](#arquivos-de-contexto)).
 - **D17 — Skills para procedimentos sob demanda** (ver [Skills](#skills)).
-- **D30 — Confirmações com botões do `clarify`.** Rejeitado: a orchestrator interpretar texto livre. Por quê: "ela clicou
+- **D30 — Confirmações com botões do `clarify`.** Rejeitado: o orchestrator interpretar texto livre. Por quê: "ela clicou
   Confirmar" é mais claro que "o LLM acha que ela disse sim".
 - **D37 — Teto de US$ 5,00 por turno, somado entre agentes, sem armazenamento compartilhado.** Rejeitado: teto por
   processo, nenhum teto. Por quê: o Hermes não tem orçamento de custo. O restante viaja no contrato A2A e cada agente
@@ -279,7 +279,7 @@ Cada item: a decisão, a alternativa rejeitada e o porquê. O detalhe está em *
 - **D29 — Pesquisa em rodadas de até 3 candidatos, ordenados por cobertura da despensa.** Por quê: o desafio pede "à
   medida que encontrar", e a opinião dela direciona a próxima rodada.
 - **D31 — Importação de planilha:** prévia (diff) → clique → aplica. Validação estrita com `openpyxl`, nomes exatos e
-  todos os erros juntos. Rejeitado: parser XML próprio, e a orchestrator aplicando importações.
+  todos os erros juntos. Rejeitado: parser XML próprio, e o orchestrator aplicando importações.
 - **D41 — Marketing:** texto do cardápio e promoções, sempre simulados antes pelo cost_expert. Rejeitado: benchmark
   de preços de concorrentes no iFood (termos de uso, preços não verificáveis).
 
@@ -331,8 +331,8 @@ Cada item: a decisão, a alternativa rejeitada e o porquê. O detalhe está em *
 | Risco | Mitigação |
 |---|---|
 | O guard de entrada deixa `uncertain` passar (disponibilidade primeiro) | o verificador de saída falha fechado; allowlists por agente |
-| A confirmação de escrita depende do LLM da orchestrator montar o `clarify` | confirmações são cliques; registro determinístico de cliques; caso de red-team "escrita sem clique" |
-| Memória em texto livre do Hermes guarda preferências da dona | guard de escrita que falha fechado; regra de fronteira no `SOUL.md`; só na orchestrator |
+| A confirmação de escrita depende do LLM do orchestrator montar o `clarify` | confirmações são cliques; registro determinístico de cliques; caso de red-team "escrita sem clique" |
+| Memória em texto livre do Hermes guarda preferências da dona | guard de escrita que falha fechado; regra de fronteira no `SOUL.md`; só no orchestrator |
 | O Langfuse sempre sobe junto (≈16 GiB) | requisito documentado; limites de memória por serviço |
 | Postgres dedicado em vez de SQLite | o núcleo de unidades e dinheiro é puro e testado sem infraestrutura |
 | Topologia completa antes de um monólito | o Loop 0 já foi um fluxo ponta a ponta |
@@ -386,11 +386,11 @@ Verificadas na imagem fixada `nousresearch/hermes-agent:v2026.9.11`. Cada uma vi
 
 Cada rodada vira um *dataset run* no Langfuse (`kitchen-scenarios`), ligado aos traces e aos hashes de prompt.
 
-**Avaliador online no Langfuse (LLM-as-judge em turnos amostrados da orchestrator):** o Langfuse chama o modelo por uma
+**Avaliador online no Langfuse (LLM-as-judge em turnos amostrados do orchestrator):** o Langfuse chama o modelo por uma
 *LLM connection* configurada com chave de API do provedor. Sem chave da Anthropic Console (D46), o juiz roda offline
 no `make evals`, e as notas vão nos metadados do dataset run. Com uma chave:
 1. crie a connection Anthropic em *Settings → LLM Connections*;
-2. crie um evaluator com o template de `evals/rubric.md`, variável `{{output}}` = resposta da orchestrator, amostragem de 10%
+2. crie um evaluator com o template de `evals/rubric.md`, variável `{{output}}` = resposta do orchestrator, amostragem de 10%
    dos traces com `name = orchestrator`;
 3. compare as notas online com as da última rodada offline.
 
