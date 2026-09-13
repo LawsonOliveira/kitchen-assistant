@@ -158,12 +158,16 @@ def register(ctx) -> None:
         except Exception:
             log.exception("sabor_guardrails: could not record the clarify answer")
 
-    def transform_tool_result(tool_name="", result=None, session_id="", **_):
+    def transform_tool_result(tool_name="", args=None, result=None, session_id="", **_):
         try:
             if tool_name in tool_policy.ASK_TOOLS or tool_name.startswith("mcp__costs__"):
                 groundings.setdefault(session_id, SessionGrounding()).add_from_tool_result(result)
                 if tool_name in tool_policy.ASK_TOOLS:
-                    spent = _first_json_object(result if isinstance(result, str) else json.dumps(result)).get("cost_usd_spent")
+                    data = _first_json_object(result if isinstance(result, str) else json.dumps(result))
+                    error = data.get("error") if isinstance(data.get("error"), dict) else {}
+                    if (args or {}).get("owner_confirmation") and error.get("code") in tool_policy.NOT_SENT_ERRORS:
+                        ledger.refund(session_id)  # the click was checked, but the request never reached the expert
+                    spent = data.get("cost_usd_spent")
                     if isinstance(spent, (int, float)) and spent > 0:
                         costs.add_reported(session_id, Decimal(str(spent)), agent=tool_name.removeprefix("ask_"))
         except Exception:

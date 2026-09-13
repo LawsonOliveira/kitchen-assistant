@@ -51,6 +51,9 @@ def _answers(result) -> list[str]:
     return [str(data.get("user_response", ""))]
 
 
+NOT_SENT_ERRORS = {"invalid_request", "missing_token"}  # sabor_a2a errors raised before the request leaves fifi
+
+
 class ClickLedger:
     """Unused Confirmar answers per fifi session; a new clarify replaces whatever was left from the previous one."""
 
@@ -61,6 +64,10 @@ class ClickLedger:
     def record_clarify(self, session_id: str, result) -> None:
         with self._lock:
             self._clicks[session_id] = sum(1 for answer in _answers(result) if _CONFIRMAR.match(answer.strip()))
+
+    def refund(self, session_id: str) -> None:
+        with self._lock:
+            self._clicks[session_id] = self._clicks.get(session_id, 0) + 1
 
     def consume(self, session_id: str) -> bool:
         with self._lock:
