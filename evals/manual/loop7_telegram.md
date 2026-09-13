@@ -18,3 +18,9 @@ business state reset to the seeded spreadsheet.
 | 8 | `make chat` in a terminal of at least 95 columns | the Dona Fifi banner (sign and grandma stirring a pot, in color), PT-BR welcome, thinking verbs such as "mexendo a panela" |
 
 ## Runs
+
+- 2026-09-13 (agent): row 8 done — `make test-skin` passes and the CLI at 150 columns shows the DONA FIFI logo, the
+  grandma hero, the PT-BR welcome and the 🍲 Dona Fifi reply label. Telegram wiring checked: the bot token answers
+  `getMe`, the allowlist is one numeric id, fifi's gateway logs "Connected to Telegram (polling mode)", and received
+  files are cached in `$HERMES_HOME/cache/documents` (`gateway/platforms/base.py`), the `fifi_documents` volume that
+  costs-mcp imports from. Rows 1–7 need messages sent from Telegram accounts: pending the owner.

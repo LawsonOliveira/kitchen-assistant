@@ -1722,13 +1722,13 @@ flowchart TD
 - Regression — command: `make test-plugins && make test-integration`.
 
 **Steps**
-- [ ] 1. *(sequential)* Write the skin test target, build `despensa_no_precos.xlsx`, write the manual
+- [x] 1. *(sequential)* Write the skin test target, build `despensa_no_precos.xlsx`, write the manual
   checklist; run red; commit `test: L7 …`.
-- [ ] 2. *(parallel with each other)*
-  - [ ] a) Telegram: fifi env `TELEGRAM_BOT_TOKEN`, `TELEGRAM_ALLOWED_USERS`; confirm that files
+- [x] 2. *(parallel with each other)*
+  - [x] a) Telegram: fifi env `TELEGRAM_BOT_TOKEN`, `TELEGRAM_ALLOWED_USERS`; confirm that files
     received over Telegram land in the Loop 3 `fifi_documents` volume (`SABOR_IMPORT_DIR`) and that
     the fifi import flow triggers from the gateway note.
-  - [ ] b) `agents/fifi/skins/dona-fifi.yaml`: `agent_name: Dona Fifi`; `banner_logo` ("DONA FIFI"
+  - [x] b) `agents/fifi/skins/dona-fifi.yaml`: `agent_name: Dona Fifi`; `banner_logo` ("DONA FIFI"
     sign, hex colors); `banner_hero` (block-character grandma stirring a pot, several `[#hex]…[/]`
     spans per line: headscarf, face, glasses, apron, pot, steam); PT-BR `welcome`/`goodbye`;
     `spinner.thinking_verbs: ["mexendo a panela", "provando o tempero", "picando cebola",
@@ -1736,7 +1736,7 @@ flowchart TD
 - [ ] 3. *(sequential)* Run the tests and the manual checklist.
 
 **Definition of Done for this loop**
-- [ ] Tests above were written before the implementation steps
+- [x] Tests above were written before the implementation steps
 - [ ] Steps completed
 - [ ] Tests above pass
 - [ ] Reference dish priced end to end over Telegram
