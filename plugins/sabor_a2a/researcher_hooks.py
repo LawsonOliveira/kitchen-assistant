@@ -61,11 +61,15 @@ _request_type: dict[str, str] = {}
 _parent: dict[str, str] = {}
 _visited: dict[str, set[str]] = {}
 _merged: dict[str, dict] = {}
+_web_calls: dict[tuple[str, str], int] = {}
+# PL9 lever 3: a child needs one search and one extract, plus a re-read when its reply is repaired.
+CHILD_WEB_CALLS = 3
+CHILD_BUDGET_MESSAGE = "research budget for this item is used: reply now with the JSON object from the pages you already read"
 
 
 def reset() -> None:
     with _lock:
-        _request_type.clear(), _parent.clear(), _visited.clear(), _merged.clear()
+        _request_type.clear(), _parent.clear(), _visited.clear(), _merged.clear(), _web_calls.clear()
 
 
 def _root(session_id: str) -> str:
@@ -96,9 +100,14 @@ def pre_llm_call(session_id: str = "", user_message: str = "", platform: str = "
     return None
 
 
-def pre_tool_call(tool_name: str = "", **_):
+def pre_tool_call(tool_name: str = "", session_id: str = "", **_):
     if tool_name == "delegate_task":
         return {"action": "block", "message": "use fan_out_research: a background delegation cannot answer this request"}
+    if tool_name in ("web_search", "web_extract") and session_id in _parent:  # only research children are capped
+        with _lock:
+            calls = _web_calls[(session_id, tool_name)] = _web_calls.get((session_id, tool_name), 0) + 1
+        if calls > CHILD_WEB_CALLS:
+            return {"action": "block", "message": CHILD_BUDGET_MESSAGE}
     return None
 
 
