@@ -24,3 +24,8 @@ business state reset to the seeded spreadsheet.
   `getMe`, the allowlist is one numeric id, fifi's gateway logs "Connected to Telegram (polling mode)", and received
   files are cached in `$HERMES_HOME/cache/documents` (`gateway/platforms/base.py`), the `fifi_documents` volume that
   costs-mcp imports from. Rows 1–7 need messages sent from Telegram accounts: pending the owner.
+- 2026-09-13 (owner): tested the bot on Telegram ("ficou muito bom") and asked to consider the checklist done. Observed in
+  the owner's session: greeting answered (Dona Fifi persona), the real workbook sent as a document → import preview with
+  no changes (row 6's expected diff, reached through an upload), a carbonara suggestion with pantry coverage. Not observed
+  by the agent, accepted by the owner: rows 1 (account outside the allowlist), 3–4 (Tomate price change + Confirmar),
+  5 (workbook without Precos) and 7 (reference dish priced over Telegram).

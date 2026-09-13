@@ -1738,13 +1738,16 @@ flowchart TD
     spans per line: headscarf, face, glasses, apron, pot, steam); PT-BR `welcome`/`goodbye`;
     `spinner.thinking_verbs: ["mexendo a panela", "provando o tempero", "picando cebola",
     "fazendo as contas no caderninho"]`; `display.skin: dona-fifi` in fifi config.
-- [ ] 3. *(sequential)* Run the tests and the manual checklist.
+- [x] 3. *(sequential)* Run the tests and the manual checklist.
+
+> **Telegram checklist accepted by the owner (2026-09-13):** after testing the bot ("ficou muito bom") the owner
+> asked to consider the checklist done; the rows not observed by the agent are recorded in `evals/manual/loop7_telegram.md`.
 
 **Definition of Done for this loop**
 - [x] Tests above were written before the implementation steps
-- [ ] Steps completed
-- [ ] Tests above pass
-- [ ] Reference dish priced end to end over Telegram
+- [x] Steps completed
+- [x] Tests above pass
+- [x] Reference dish priced end to end over Telegram
 
 ---
 
@@ -2205,12 +2208,16 @@ and compose project), because they touch almost every file and restart the stack
   skin and owner-facing messages). Scope today: 568 occurrences of "fifi" in ~70 tracked files (compose service,
   `agents/fifi/`, `SABOR_AGENT_ROLE`, `A2A_TOKEN_FIFI`/`COSTS_MCP_TOKEN_FIFI`, volumes `hermes_fifi` and
   `fifi_documents`, event `agent` values, cockpit nodes, contracts tests, eval scenarios). **Decided (owner):** start
-  clean — no volume data is migrated; the `.env` keys are renamed in place.
+  clean — no volume data is migrated; the `.env` keys are renamed in place. **Scope decided (owner, 2026-09-13): "tudo
+  para kitchen"** — besides `fifi` → `orchestrator`, every technical `sabor` identifier becomes `kitchen`: `SABOR_*`
+  environment variables → `KITCHEN_*` (including her `.env` keys), the Postgres user and database, the contracts'
+  `sabor.local` ids, image and container names. The restaurant name "Sabor da Maria" is business text and stays.
 - **PL3 — Persona Dona Sálvia.** Every "Fifi" becomes "Sálvia" (prompts, fixed messages, skin, scenarios, red-team
   texts, README); skin `dona-salvia` with a "DONA SALVIA" logo. The Telegram bot is already `salvia_assistant_bot`. The hero art keeps only the grandma: the pot, spoon and steam were removed (owner, done early).
   **Decided (owner):** the greeting is "Olá, sou a Sálvia, como posso te ajudar hoje? 🌿".
 - **PL4 — Repository folder `kitchen-assistant/`.** **Decided (owner):** spelled `kitchen-assistant`; the compose
-  project follows the new name (new containers and volumes, starting clean as in PL2).
+  project follows the new name (new containers and volumes, starting clean as in PL2). **Revised (owner,
+  2026-09-13):** the folder itself stays `ifood` (the agent runs inside it); only the compose project and names change.
   Claude Code keeps its project memory per folder path, so the memory files must be copied to the new project.
 - **PL5 — Plugin prefix.** `sabor_*` is the project namespace ("Sabor da Maria"): Hermes imports directory plugins into
   one `hermes_plugins.<name>` namespace next to its bundled plugins (`observability/langfuse`, `telegram_platform`, …)
