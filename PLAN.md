@@ -2008,6 +2008,16 @@ evidence, what was changed, and where. Open questions that were "default applied
   superseded). The same attempt was cut by a network outage to the model provider, which also exhausted fifi's
   `max_turns: 30` iteration budget on retries; scenario 02 is rerun from a reset state.
 
+- **C36 — An accepted dish counts its own reservation as available.** Loop 3 scenario 05: after the tomato sauce
+  was accepted (reserving all 2 kg of Tomate), `check_budget_fit` on the sauce reported those 2 kg as missing,
+  because available stock already subtracts every reservation including the dish's own; Dona Fifi offered to buy
+  tomatoes for both dishes. Tests first (red: 1 failed): `_pantry_match` adds the dish's own reservations back
+  (`db.reservations`).
+- **C37 — Smaller prompt and contract frictions from scenarios 02–05.** The `ask_*` task guide now shows short enum
+  values ("status: available|unavailable"; test first, red: 1 failed) after fifi sent `status: "confirmed"` twice;
+  `register_purchase.source_url` is optional (a missing key made fifi ask the owner for a store link); fifi's
+  prompt asks `budget_fit` first and `price_missing_item` only for ingredients reported without a price.
+
 ## Final manual step (owner — after Loop 8, not executed by the agent)
 Kept here so it is not forgotten: no loop creates a GitHub remote or submits the challenge.
 - [ ] Create the GitHub repository, add it as `origin` and push.
