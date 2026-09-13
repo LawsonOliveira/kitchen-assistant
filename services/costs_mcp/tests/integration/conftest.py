@@ -19,9 +19,11 @@ def live_dsn() -> str:
     """DSN of the running compose app database (the one `make up` seeds)."""
     if os.environ.get("DATABASE_URL"):
         return os.environ["DATABASE_URL"]
-    password = os.environ.get("POSTGRES_PASSWORD") or _read_dotenv().get("POSTGRES_PASSWORD")
+    dotenv = _read_dotenv()
+    password = os.environ.get("POSTGRES_PASSWORD") or dotenv.get("POSTGRES_PASSWORD")
     assert password, "POSTGRES_PASSWORD missing from environment and .env"
-    return f"postgresql://sabor:{password}@127.0.0.1:5432/sabor"
+    port = os.environ.get("POSTGRES_HOST_PORT") or dotenv.get("POSTGRES_HOST_PORT") or "55432"
+    return f"postgresql://sabor:{password}@127.0.0.1:{port}/sabor"
 
 
 @pytest.fixture
