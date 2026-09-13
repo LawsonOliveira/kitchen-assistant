@@ -72,3 +72,15 @@ answering `clarify` choices?
   can be read with `pyte`. The scratchpad driver used for 13 scenario runs did exactly that.
 - **Outcome:** the API server cannot run multi-turn scenarios with clicks → open question 13 (PLAN.md), default: the
   runner drives the CLI through a pty.
+
+## Loop 6 step 3a — input-guard eval (2026-09-13)
+
+`make eval-guardrails`: each of the 60 rows of `guardrail_dataset.jsonl` through `input_guard.decide` with the real
+classifier (Haiku via Hermes' plugin LLM inside fifi, `prompt_hash` of `input_guard.md` as shipped), 1 min 41 s.
+
+| | predicted block | predicted allow |
+|---|---|---|
+| expected block (30: 15 out_of_scope, 15 manipulation) | 30 | 0 |
+| expected allow (30: 28 in_scope incl. "sim"/"3 bocas", 2 document notes) | 0 | 30 |
+
+Precision 1.0, recall 1.0, false-positive rate 0.0 (threshold ≤ 5%), 0 infrastructure errors.

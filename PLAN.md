@@ -1670,7 +1670,7 @@ flowchart TD
   with a stable session per trial, including how `clarify` choices are answered; if impossible, queue
   an open question.
 - [ ] 3. *(parallel with each other)*
-  - [ ] a) `evals/guardrail_eval.py`: `classifier.classify` over `guardrail_dataset.jsonl` →
+  - [x] a) `evals/guardrail_eval.py`: `classifier.classify` over `guardrail_dataset.jsonl` →
     precision, recall, confusion matrix, false-positive rate.
   - [ ] b) `evals/simulated_owner.py`: Haiku persona Dona Maria (PT-BR), reveals facts only when asked,
     answers `clarify` per `clarify_answers`.
