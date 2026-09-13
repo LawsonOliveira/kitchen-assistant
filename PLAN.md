@@ -2130,6 +2130,19 @@ evidence, what was changed, and where. Open questions that were "default applied
   `evals/compose.web-fixtures.yml` so the malicious fixture page is what it reads. Results are cached per trial in
   `evals/results/<timestamp>/`, so `make evals ARGS="--resume …"` continues an interrupted run.
 
+- **C53 — The live runner's first smoke runs.** Each finding became a fix, tests first where the code allows:
+  - the costs integration layer read leftover state (38 ingredients) → the runner resets before it;
+  - a trial ran on an empty pantry: a turn from an interrupted trial wrote "limão" right after the TRUNCATE and
+    costs-mcp seeds only an empty database → `make eval-reset` stops the agents first and fails loud when the seed did
+    not run (red: 2 failed);
+  - scenario 01's default "Confirmar" was typed as free text into a clarify with the choices 6 / 12 portions, three
+    times → the simulated owner answers every clarify the scenario cannot, and free-text prompts are typed directly
+    (red: 4 + 1 failed); the persona also stopped describing pantry items the scenario never gave;
+  - Hermes' default sequential tool deadline (420 s) cut `ask_recipe_expert` while sabor_a2a still waited 480 s →
+    fifi `timeouts.tools.sequential_call: 540` (red: 1 failed);
+  - closing a trial left `hermes --cli` running inside fifi → sessions end with `/quit` (and the reset stops fifi);
+  - researcher-eval stayed up after its layer → the runner stops it.
+
 ## Post-loop changes (owner requests, 2026-09-13)
 Requested by the owner while Loops 6–8 were running, test-first, each recorded as a correction. **Order decided by the
 owner:** Loop 6 pauses; Loop 7 (the owner's Telegram checks) and Loop 8 finish, then PL1–PL9, then Loop 6 resumes and
