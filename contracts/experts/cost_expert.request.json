@@ -315,8 +315,7 @@
                   "package_quantity",
                   "package_unit",
                   "package_price",
-                  "price_source",
-                  "source_url"
+                  "price_source"
                 ],
                 "properties": {
                   "dish_id": {
@@ -372,7 +371,8 @@
                       "null"
                     ],
                     "maxLength": 500,
-                    "pattern": "^https?://[^\\s]+$"
+                    "pattern": "^https?://[^\\s]+$",
+                    "description": "optional: the page of a web price; omit for spreadsheet or owner prices"
                   }
                 }
               }

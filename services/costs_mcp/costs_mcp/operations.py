@@ -162,6 +162,8 @@ def _required_by_ingredient(lines, dish) -> dict[int, tuple[dict, Decimal]]:
 def _pantry_match(conn, dish) -> dict:
     lines, unmatched, conversions = _resolve_lines(conn, dish["recipe"])
     available = db.available_stock(conn)
+    for ingredient_id, reserved in db.reservations(conn, dish["id"]).items():  # an accepted dish already holds its launch batch
+        available[ingredient_id] = available.get(ingredient_id, Decimal(0)) + reserved
     have, missing = [], []
     for ingredient_id, (row, required) in _required_by_ingredient(lines, dish).items():
         free = available.get(ingredient_id, Decimal(0))

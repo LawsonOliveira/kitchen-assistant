@@ -119,6 +119,11 @@ def available_stock(conn) -> dict[int, Decimal]:
     return {row["ingredient_id"]: row["quantity_base"] for row in _all(conn, "SELECT ingredient_id, quantity_base FROM available_stock")}
 
 
+def reservations(conn, dish_id: int) -> dict[int, Decimal]:
+    return {row["ingredient_id"]: row["quantity_base"]
+            for row in _all(conn, "SELECT ingredient_id, quantity_base FROM dish_reservations WHERE dish_id = %s", (dish_id,))}
+
+
 def conversion_factors(conn) -> dict[tuple[str, str], tuple[Decimal, str]]:
     rows = _all(
         conn,
