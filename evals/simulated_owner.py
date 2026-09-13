@@ -7,6 +7,7 @@ no separate API key.
 """
 
 import json
+import re
 import subprocess
 from pathlib import Path
 
@@ -68,7 +69,8 @@ def _messages(transcript: list[dict]) -> list[dict]:
 def next_message(llm, scenario: dict, transcript: list[dict]) -> str | None:
     """transcript: [{"speaker": "owner"|"orchestrator", "text"}]. None when the persona ends the conversation."""
     text = llm(system_prompt(scenario), _messages(transcript)).strip()
-    return None if text.upper() == END_MARKER else text
+    # The persona often appends the marker to a goodbye ("Obrigada mesmo! FIM"); only the upper-case word ends it.
+    return None if text.upper() == END_MARKER or re.search(rf"(^|\s){END_MARKER}$", text) else text
 
 
 def answer_clarify(llm, scenario: dict, transcript: list[dict], question: str, choices: list[str]) -> dict:
