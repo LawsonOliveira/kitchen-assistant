@@ -2,7 +2,7 @@ COMPOSE := docker compose
 UV := uv
 AGENT_PYTHON := /opt/hermes/.venv/bin/python
 
-.PHONY: up down logs chat test test-integration test-contracts test-plugins smoke-a2a smoke-research db-shell hermes-shell
+.PHONY: up down logs chat test test-integration test-contracts test-plugins smoke-a2a smoke-research eval-requirements db-shell hermes-shell
 
 up:
 	$(COMPOSE) up -d --build --wait
@@ -36,6 +36,10 @@ smoke-a2a:
 
 smoke-research:  # live: real Tavily and model calls through the researcher contract
 	bash scripts/smoke_research.sh
+
+eval-requirements:  # requirement extraction on fixture pages through researcher-eval (evals/NOTES.md)
+	$(COMPOSE) --profile eval up -d --build --wait researcher-eval
+	cd evals && uv run python requirements_eval.py
 
 db-shell:
 	$(COMPOSE) exec postgres psql -U sabor -d sabor

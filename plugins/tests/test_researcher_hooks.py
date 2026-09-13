@@ -153,7 +153,7 @@ def test_visited_urls_with_parentheses_and_escaped_slashes_are_recognized():
     recipe = dict(RECIPE, source_url=url)
     request("session-1", "recipe_search", "a", "b")
     hooks.transform_tool_result(tool_name="web_search", result=json.dumps({"data": {"web": [{"url": url, "title": "x"}]}}), session_id="session-1")
-    hooks.transform_tool_result(tool_name="web_extract", result='{"results": [{"url": "https://site.example\\/receita"}]}', session_id="session-1")
+    hooks.transform_tool_result(tool_name="web_extract", result='{"results": [{"url": "https://site.example\\/receita", "content": "Receita"}]}', session_id="session-1")
     other = dict(RECIPE, source_url="https://site.example/receita")
     reply = hooks.fan_out(FakeLifecycle(json.dumps(recipe), json.dumps(other)), Request, "session-1", "recipe_search", ["a", "b"])
     assert reply["results"] == [recipe, other]

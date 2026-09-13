@@ -6,6 +6,7 @@ RUN uv pip install --python /opt/hermes/.venv/bin/python "pytest==8.4.2" "jsonsc
 
 COPY plugins /opt/sabor/plugins
 COPY contracts /opt/sabor/contracts
+COPY evals/web_fixtures /opt/sabor/evals/web_fixtures
 COPY agents/entrypoint.sh /opt/sabor/entrypoint.sh
 RUN chmod 755 /opt/sabor/entrypoint.sh && mkdir -p /workspace && chown hermes:hermes /workspace
 

@@ -1364,7 +1364,7 @@ flowchart TD
   `normalize_recipe(url | recipe)`, both calling `research("recipe_search", …)`.
 - [x] 5. *(sequential)* `research` on experts and `ask_recipe_expert` on fifi switch to
   `call_with_contract`.
-- [ ] 6. *(sequential)* Spike, recorded in `evals/NOTES.md`: researcher in eval mode reaches a fixture
+- [x] 6. *(sequential)* Spike, recorded in `evals/NOTES.md`: researcher in eval mode reaches a fixture
   site — preferred: `web-fixtures` container (compose profile `eval`) serving the pages plus a
   SearXNG-compatible `/search?format=json`, researcher started with `SEARXNG_URL` and `web_extract`
   able to fetch that host; fallback: replay recorded results through `transform_tool_result`. Then
@@ -1375,8 +1375,8 @@ flowchart TD
 
 **Definition of Done for this loop**
 - [x] Tests above were written before the implementation steps
-- [ ] Steps completed
-- [ ] Tests above pass
+- [x] Steps completed
+- [x] Tests above pass
 - [x] One real research → normalized recipe inspected by eye
 
 ---
@@ -1934,6 +1934,28 @@ evidence, what was changed, and where. Open questions that were "default applied
   candidates are not yet ranked by `check_pantry_match` (Loop 3); it listed `grill` for a pan-cooked recipe
   (a requirement-extraction error the Loop 2 eval measures); and it listed tap water as a missing ingredient,
   so the recipe-normalization skill now leaves tap water out.
+
+- **C27 — Requirement eval replays fixture pages inside researcher; no fixture container.** Loop 2 step 6
+  spike, recorded in `evals/NOTES.md`: the pinned Hermes has no local extract backend (SearXNG is search-only;
+  exa, tavily, parallel, firecrawl, keenable and perplexity are remote services that cannot reach a compose
+  container), and a `pre_tool_call` block reaches the model as a tool error. So the plan's fallback is used:
+  `plugins/sabor_a2a/web_replay.py` (tests first — red: collection error) returns fixture pages for
+  `web_search` (ranked by title words) and `web_extract` (visible text at `https://fixtures.sabor.test/<page>`),
+  and researcher's `transform_tool_result` serves it and records those URLs as visited when
+  `SABOR_WEB_FIXTURES_DIR` is set. Only the `researcher-eval` service (compose profile `eval`) sets it; it
+  mounts the pages read-only, gets an invalid Tavily key (the real call fails without spending credits before
+  the replay replaces its result), accepts only recipe_expert's token and publishes A2A on 127.0.0.1:59900 for
+  the host runner `evals/requirements_eval.py` (uv project `evals/pyproject.toml`), run by
+  `make eval-requirements`. `evals/web_fixtures/server.py` and its Dockerfile are not created. The agent image
+  also bakes `evals/web_fixtures` so `make test-plugins` finds the pages. First run: recall 100% on equipment
+  (6/6), techniques (3/3) and operations (2/2), prep time exact on 9 of 9 pages; extra requirements reported
+  but not scored: `stove_burners>=1` on three pages and `max_batch_time_minutes>=240` on the slow-cooked beef.
+
+- **C28 — Only pages web_extract really fetched count as visited.** While building the replay, Hermes'
+  `web_extract` turned out to answer blocked or failed URLs with `{"url", "content": "", "error"}`
+  (`tools/web_tools_extract.py`), and the provenance filter collected every URL in a result — so a child that
+  asked to extract an invented URL would have made it "visited". Tests first (red: 1 failed): URLs from
+  `web_search` still all count, but from `web_extract` only entries with content and no error.
 
 ## Final manual step (owner — after Loop 8, not executed by the agent)
 Kept here so it is not forgotten: no loop creates a GitHub remote or submits the challenge.

@@ -11,12 +11,15 @@ source_url was not returned by web_search/web_extract in the same request is dro
 
 import json
 import logging
+import os
 import re
 import threading
 import time
+from pathlib import Path
 
 from jsonschema import Draft202012Validator
 
+from . import web_replay
 from .validation import ContractError, bundled_schema, parse_json_object
 
 CHILD_MODEL = "claude-haiku-4-5-20251001"
@@ -115,15 +118,32 @@ def _urls(value) -> set[str]:
     return _urls(decoded) if isinstance(decoded, (dict, list)) else {url.rstrip(".,;") for url in _URL.findall(value)}
 
 
-def transform_tool_result(tool_name: str = "", result=None, session_id: str = "", **_) -> None:
-    # Observer only (returns None, so the result is unchanged). Not post_tool_call: Hermes suppresses that hook while
-    # a tool is running, and the web children run inside fan_out_research.
+def _fetched_urls(tool_name: str, result) -> set[str]:
+    """Every URL web_search returned, but only the pages web_extract really fetched: Hermes answers a blocked or
+    failed URL with an entry {"url", "content": "", "error"} that still carries the URL."""
+    if tool_name == "web_search":
+        return _urls(result)
+    try:
+        data = json.loads(result) if isinstance(result, str) else result
+    except ValueError:
+        return set()
+    entries = data.get("results") if isinstance(data, dict) else None
+    return {entry["url"] for entry in entries if isinstance(entry, dict) and isinstance(entry.get("url"), str)
+            and entry.get("content") and not entry.get("error")} if isinstance(entries, list) else set()
+
+
+def transform_tool_result(tool_name: str = "", args: dict | None = None, result=None, session_id: str = "", **_):
+    # Not post_tool_call: Hermes suppresses that hook while a tool is running, and the web children run inside
+    # fan_out_research (C18). Returns None (result unchanged) except in the eval profile, which replays fixture
+    # pages (C27).
     if tool_name not in ("web_search", "web_extract"):
         return None
-    urls = _urls(result)
+    fixtures_dir = os.environ.get("SABOR_WEB_FIXTURES_DIR")
+    replayed = web_replay.replay(Path(fixtures_dir), tool_name, args) if fixtures_dir else None
+    urls = _fetched_urls(tool_name, replayed if replayed is not None else result)
     with _lock:
         _visited.setdefault(_root(session_id), set()).update(urls)
-    return None
+    return replayed
 
 
 def _error(code: str, message: str) -> dict:

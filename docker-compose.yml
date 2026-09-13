@@ -152,6 +152,30 @@ services:
       - hermes_researcher:/opt/data
     healthcheck: *a2a-healthcheck
 
+  researcher-eval:  # Loop 2 eval only (profile eval): researcher replaying fixture pages (evals/NOTES.md, correction C27)
+    <<: *agent
+    profiles: [eval]
+    depends_on: []
+    ports:
+      - "127.0.0.1:${RESEARCHER_EVAL_HOST_PORT:-59900}:9900"  # the host eval runner (make eval-requirements)
+    environment:
+      <<: *agent-env
+      SABOR_AGENT_ROLE: researcher
+      SABOR_WEB_FIXTURES_DIR: /fixtures
+      TAVILY_API_KEY: eval-replay-invalid-key  # the real call fails without spending credits; the replay replaces it
+      A2A_PORT: "9900"
+      A2A_HOST: 0.0.0.0
+      A2A_PUBLIC_URL: http://researcher-eval:9900
+      A2A_REPLY_TIMEOUT: "240"
+      A2A_PEER_TOKENS: recipe_expert:${A2A_TOKEN_RECIPE_EXPERT}
+      A2A_TRUSTED_PEERS: recipe_expert
+      A2A_ALLOWED_USERS: recipe_expert
+    volumes:
+      - ./agents/researcher:/seed:ro
+      - ./evals/web_fixtures/pages:/fixtures:ro
+      - hermes_researcher_eval:/opt/data
+    healthcheck: *a2a-healthcheck
+
 volumes:
   postgres_data:
   hermes_fifi:
@@ -159,3 +183,4 @@ volumes:
   hermes_cost_expert:
   hermes_marketing_expert:
   hermes_researcher:
+  hermes_researcher_eval:

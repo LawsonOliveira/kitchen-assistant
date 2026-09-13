@@ -1,0 +1,9 @@
+[project]
+name = "sabor-evals"
+version = "0.1.0"
+description = "Offline evals for Sabor da Maria (PLAN.md Loops 2 and 6)"
+requires-python = ">=3.12"
+dependencies = ["jsonschema==4.26.0"]
+
+[tool.uv]
+package = false
