@@ -19,7 +19,8 @@ def note(path: str, name: str = "despensa.xlsx") -> str:
             f"of asking the user to paste the contents.]")
 
 
-def decide(message, fake, last="", api_call_count=0):
+# Hermes counts model calls from 1: agent/turn_iteration_prep.py increments api_call_count before each call.
+def decide(message, fake, last="", api_call_count=1):
     return input_guard.decide(message, last, fake, api_call_count=api_call_count, import_dir=IMPORT_DIR)
 
 
@@ -40,7 +41,7 @@ def test_any_failure_blocks_with_the_infra_message(error):
 
 def test_only_the_first_api_call_of_a_turn_is_classified():
     fake = FakeClassifier("block")
-    assert decide("qualquer coisa", fake, api_call_count=1) == input_guard.Decision("next", None) and fake.calls == []
+    assert decide("qualquer coisa", fake, api_call_count=2) == input_guard.Decision("next", None) and fake.calls == []
 
 
 def test_owner_message_and_fifis_last_message_truncated_to_500_chars_are_classified():
