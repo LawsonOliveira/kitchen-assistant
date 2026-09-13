@@ -17,7 +17,8 @@ def mcp(tools):
 MATRIX = {
     "fifi": ["clarify", "memory", "ask_recipe_expert", "ask_cost_expert", "ask_marketing_expert", *SKILLS, *mcp(READ)],
     "recipe_expert": ["research", *SKILLS, *mcp(READ + ["check_viability", "register_candidate_dish", "reject_candidate_dish",
-                                                         "confirm_dish_requirement", "accept_dish", "update_kitchen_profile"])],
+                                                         "set_launch_batch_portions", "confirm_dish_requirement", "accept_dish",
+                                                         "update_kitchen_profile"])],
     "cost_expert": ["research", *SKILLS, *mcp(READ + ["compute_dish_cost", "check_budget_fit", "simulate_promotion", "record_price_quote",
                                                        "set_dish_packaging", "register_purchase", "adjust_budget", "correct_price",
                                                        "set_conversion_factor", "select_price_scenario", "import_pantry"])],
