@@ -2138,25 +2138,25 @@ recorded as a correction. Findings below were measured on the running stack; ope
 - **PL2 — Rename `fifi` to `orchestrator` in code.** The persona name lives only in the orchestrator's `SOUL.md` (and the
   skin and owner-facing messages). Scope today: 568 occurrences of "fifi" in ~70 tracked files (compose service,
   `agents/fifi/`, `SABOR_AGENT_ROLE`, `A2A_TOKEN_FIFI`/`COSTS_MCP_TOKEN_FIFI`, volumes `hermes_fifi` and
-  `fifi_documents`, event `agent` values, cockpit nodes, contracts tests, eval scenarios). Decisions: migrate the
-  volumes' data (sessions, memory, received documents) or start clean; rename the `.env` keys in place.
+  `fifi_documents`, event `agent` values, cockpit nodes, contracts tests, eval scenarios). **Decided (owner):** start
+  clean — no volume data is migrated; the `.env` keys are renamed in place.
 - **PL3 — Persona Dona Sálvia.** Every "Fifi" becomes "Sálvia" (prompts, fixed messages, skin, scenarios, red-team
-  texts, README); greeting "Olá, sou a Sálvia, como posso te ajudar hoje? 🌿"; skin `dona-salvia` with a "DONA SALVIA"
-  logo. The Telegram bot is already `salvia_assistant_bot`. Decision: "Sálvia" or "Dona Sálvia" in the greeting.
-- **PL4 — Repository folder `kitchen-assistant/`.** Decisions: exact spelling (the request wrote "kitchen-assistent");
-  whether the compose project name changes from `sabor` (new containers and volumes, so the data must be migrated).
+  texts, README); skin `dona-salvia` with a "DONA SALVIA" logo. The Telegram bot is already `salvia_assistant_bot`.
+  **Decided (owner):** the greeting is "Olá, sou a Sálvia, como posso te ajudar hoje? 🌿".
+- **PL4 — Repository folder `kitchen-assistant/`.** **Decided (owner):** spelled `kitchen-assistant`; the compose
+  project follows the new name (new containers and volumes, starting clean as in PL2).
   Claude Code keeps its project memory per folder path, so the memory files must be copied to the new project.
 - **PL5 — Plugin prefix.** `sabor_*` is the project namespace ("Sabor da Maria"): Hermes imports directory plugins into
   one `hermes_plugins.<name>` namespace next to its bundled plugins (`observability/langfuse`, `telegram_platform`, …)
   and `sabor_observability` also registers plain module names, so generic names could collide. Decision: the new prefix
-  that goes with the new project name (for example `kitchen_a2a`, `kitchen_guardrails`, `kitchen_observability`).
+  that goes with the new project name. **Decided (owner):** `kitchen_a2a`, `kitchen_guardrails`, `kitchen_observability`.
 - **PL6 — Measures in the database, researched when missing.** Today `HOUSEHOLD_MEASURES` and `SMALL_ESTIMATES` are
   fixed dicts in `services/costs_mcp/costs_mcp/measures.py`; owner-given factors already live in `conversion_factors`.
   Plan: a `measures` table seeded from the current dicts, with `source` (`seed` | `web_estimate` | `owner_confirmed`),
   `source_url` and `evidence`; when a recipe uses an unknown measure, recipe_expert asks researcher (a new
-  `measure_lookup` task type with provenance) and records it. Decision (D23 rejected LLM-guessed densities): whether a
-  web measure is usable in CMV right away, flagged as an estimate in the explanation, or only after the owner confirms
-  it, as prices do (D27).
+  `measure_lookup` task type with provenance) and records it. **Decided (owner):** the table and the research flow.
+  Still open (D23 rejected LLM-guessed densities): whether a web measure is usable in CMV right away, flagged as an
+  estimate in the explanation, or only after the owner confirms it, as prices do (D27).
 - **PL7 — Continuous improvement from the owner's real conversations.** Today nothing reads her past conversations:
   `make evals` uses synthetic scenarios, and the Langfuse online evaluator waits on open question 14. Plan:
   `evals/review_conversations.py` (`make review-conversations`) reads the orchestrator's sessions (CLI and Telegram) and
@@ -2167,7 +2167,7 @@ recorded as a correction. Findings below were measured on the running stack; ope
 - **PL8 — RAG.** There is no embedding or vector retrieval today. Retrieval is live web search with strict extraction
   (researcher), structured SQL through costs-mcp, Hermes' memory snapshot and on-demand skills. Candidate: a recipe
   cache in Postgres (researched recipes reused across rounds and conversations; cuts research latency and cost), keyed
-  by normalized title first, with `pgvector` only if semantic matching proves necessary.
+  by normalized title first, with `pgvector` only if semantic matching proves necessary. **Decided (owner):** yes.
 - **PL9 — Latency.** Measured from the cockpit buffer during the first eval trial: orchestrator model call p50 3.9 s
   (max 8.6 s); `ask_recipe_expert` p50 6.4 s, up to 214 s when it researches; recipe_expert → researcher p50 44 s (max
   69 s); researcher fan-out p50 18 s, with 120 Haiku calls in the window; `ask_cost_expert` p50 23 s while the MCP
@@ -2176,7 +2176,8 @@ recorded as a correction. Findings below were measured on the running stack; ope
   without a model loop); (2) the orchestrator batching independent `ask_*` calls in one response (Hermes already runs a
   batch of tool calls concurrently, up to 8 workers); (3) research caps and the PL8 recipe cache; (4) the input guard run
   concurrently with the first model call, discarding the answer when it blocks; (5) disabling `todo_list` on experts
-  (recipe_expert called it 12 times). Each lever is measured before and after with the eval runner.
+  (recipe_expert called it 12 times). Each lever is measured before and after with the eval runner. **Decided
+  (owner):** all five levers.
 
 ## Final manual step (owner — after Loop 8, not executed by the agent)
 Kept here so it is not forgotten: no loop creates a GitHub remote or submits the challenge.
