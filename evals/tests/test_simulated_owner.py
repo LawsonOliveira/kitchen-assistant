@@ -51,6 +51,15 @@ def test_next_message_sees_orchestrator_as_the_other_speaker_and_stops_on_the_en
     assert simulated_owner.next_message(lambda system, messages: " FIM ", SCENARIO, transcript) is None
 
 
+def test_a_goodbye_that_ends_with_the_end_marker_ends_the_conversation():
+    # Full run, scenario 01 trial 1: "... Obrigada mesmo!  FIM" did not end the conversation, and the persona and Dona
+    # Sálvia exchanged goodbyes until the 14-message cap.
+    transcript = [{"speaker": "orchestrator", "text": "Prontinho, Dona Maria!"}]
+    assert simulated_owner.next_message(lambda system, messages: "Tá ótimo, Dona Sálvia! Obrigada mesmo!  FIM", SCENARIO, transcript) is None
+    assert simulated_owner.next_message(lambda system, messages: "Então salva, e depois a gente vê o fim do mês.", SCENARIO,
+                                        transcript) == "Então salva, e depois a gente vê o fim do mês."
+
+
 def test_a_clarify_the_scenario_cannot_answer_goes_to_the_persona():
     # Live trial: orchestrator asked "Quantas porções ... no lançamento?" with choices 6 / 12; the default "Confirmar" matched no
     # choice, was typed as free text three times, and the flow looped until the clarify timed out.
