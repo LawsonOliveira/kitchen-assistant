@@ -1197,7 +1197,7 @@ flowchart TD
 ```
 
 **Steps**
-- [ ] 1. *(sequential)* Write every test in **Tests** above (unit tests with
+- [x] 1. *(sequential)* Write every test in **Tests** above (unit tests with
   `tests/unit/conftest.py` building workbook fixtures programmatically; integration tests
   `test_budget.py`, `test_stock_reservation.py`, `test_viability.py`, `test_price_corrections.py`,
   `test_permissions.py`, `test_import_pantry.py`, `test_dish_lifecycle.py`, `test_budget_fit.py`, and the rewritten

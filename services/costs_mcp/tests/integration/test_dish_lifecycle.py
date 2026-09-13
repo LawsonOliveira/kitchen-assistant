@@ -1,0 +1,81 @@
+from decimal import Decimal
+
+import pytest
+from conftest import EVIDENCE, ingredient, make_recipe, pantry_stock, viable_profile
+
+from costs_mcp import operations
+from costs_mcp.operations import DomainError
+
+RICE = [ingredient("Arroz branco tipo 1", 400, "g")]
+
+
+def buy_rice(conn, dish_id):
+    return operations.register_purchase(
+        conn, ingredient_name="Arroz branco tipo 1", kind="food", packages=1, package_quantity="1",
+        package_unit="kg", package_price="5.00", price_source="owner_confirmed", source_url=None,
+        dish_id=dish_id, evidence=EVIDENCE,
+    )
+
+
+def dish_status(conn, dish_id):
+    return conn.execute("SELECT status, rejected_reason FROM dishes WHERE id = %s", (dish_id,)).fetchone()
+
+
+def test_food_purchase_requires_a_dish(conn):
+    with pytest.raises(DomainError) as error:
+        buy_rice(conn, None)
+    assert error.value.code == "dish_required"
+
+
+def test_packaging_purchase_needs_no_dish(conn):
+    operations.register_purchase(
+        conn, ingredient_name="Marmita 500 ml", kind="packaging", packages=1, package_quantity="50",
+        package_unit="un", package_price="25.00", price_source="owner_confirmed", source_url=None,
+        dish_id=None, evidence=EVIDENCE,
+    )
+
+
+def test_no_purchase_for_a_dish_she_cannot_cook(conn):
+    viable_profile(conn)
+    dish = operations.register_candidate_dish(conn, make_recipe(RICE, ["oven"]), 4, 4, EVIDENCE)["dish_id"]
+    with pytest.raises(DomainError) as error:
+        buy_rice(conn, dish)
+    assert error.value.code == "viability_failed"
+
+    operations.update_kitchen_profile(conn, "oven", None, "available", "tenho forno")
+    buy_rice(conn, dish)
+    operations.accept_dish(conn, dish)
+    assert dish_status(conn, dish)[0] == "accepted"
+    assert pantry_stock(conn, "Arroz branco tipo 1") == Decimal("5000")  # purchases never mutate pantry_stock
+
+
+def test_rejected_dish_cannot_be_accepted(conn):
+    viable_profile(conn)
+    dish = operations.register_candidate_dish(conn, make_recipe(RICE), 4, 4, EVIDENCE)["dish_id"]
+    operations.reject_candidate_dish(conn, dish, "não gosta de fritura", EVIDENCE)
+    assert dish_status(conn, dish) == ("rejected", "não gosta de fritura")
+    with pytest.raises(DomainError) as error:
+        operations.accept_dish(conn, dish)
+    assert error.value.code == "not_candidate"
+
+
+def test_price_scenario_needs_an_accepted_dish(conn):
+    dish = operations.register_candidate_dish(conn, make_recipe(RICE), 4, 4, EVIDENCE)["dish_id"]
+    with pytest.raises(DomainError) as error:
+        operations.select_price_scenario(conn, dish, "0.35")
+    assert error.value.code == "not_accepted"
+
+
+def test_invalid_recipe_is_refused(conn):
+    recipe = make_recipe(RICE)
+    del recipe["ingredients"]
+    with pytest.raises(DomainError) as error:
+        operations.register_candidate_dish(conn, recipe, 4, 4, EVIDENCE)
+    assert error.value.code == "invalid_recipe"
+
+
+@pytest.mark.parametrize("yield_portions, launch_batch_portions", [(0, 4), (4, 0)])
+def test_non_positive_portions_are_refused(conn, yield_portions, launch_batch_portions):
+    with pytest.raises(DomainError) as error:
+        operations.register_candidate_dish(conn, make_recipe(RICE), yield_portions, launch_batch_portions, EVIDENCE)
+    assert error.value.code == "invalid_portions"
