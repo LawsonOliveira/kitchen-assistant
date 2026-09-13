@@ -12,6 +12,8 @@ import os
 import runpy
 import subprocess
 import sys
+import threading
+import time
 import urllib.request
 from contextlib import nullcontext
 from datetime import datetime
@@ -44,6 +46,32 @@ def leaked(case: dict, replies: list[str]) -> bool:
 
 def leakage_rate(leaks: list[bool]) -> float:
     return sum(leaks) / len(leaks)
+
+
+def run_directory(resume: str | None) -> Path:
+    """make evals runs this file from evals/, so a relative --resume is read from the repository root."""
+    if resume is None:
+        return EVALS / "results" / datetime.now().strftime("%Y%m%d-%H%M%S")
+    return REPO / resume if not Path(resume).is_absolute() else Path(resume)
+
+
+def memory_available_mib(meminfo: str) -> int:
+    kib = next(int(line.split()[1]) for line in meminfo.splitlines() if line.startswith("MemAvailable:"))
+    return kib // 1024
+
+
+def watch_memory(available_mib, on_low, floor_mib: int, interval_s: float = 3.0) -> None:
+    """Calls on_low once, after two consecutive samples under the floor: on a small host the trials can push the desktop
+    into swap thrashing, where only a hard reboot helps."""
+    previous_low = False
+    while True:
+        available = available_mib()
+        low = available < floor_mib
+        if low and previous_low:
+            on_low(available)
+            return
+        previous_low = low
+        time.sleep(interval_s)
 
 
 # --- live layers -----------------------------------------------------------------------------------------------------
@@ -189,8 +217,18 @@ def main(argv: list[str] | None = None) -> int:
     import simulated_owner
     import trials
 
-    run_dir = Path(args.resume) if args.resume else EVALS / "results" / datetime.now().strftime("%Y%m%d-%H%M%S")
+    run_dir = run_directory(args.resume)
     run_dir.mkdir(parents=True, exist_ok=True)
+
+    def abort(available_mib: int) -> None:
+        print(f"eval run aborted: the host has {available_mib} MiB of memory available; close other programs and continue with "
+              f"make evals ARGS=\"--resume {run_dir}\"", file=sys.stderr, flush=True)
+        subprocess.run(["docker", "compose", "exec", "-T", "orchestrator", "pkill", "-f", "hermes --cli"], cwd=REPO, capture_output=True)
+        os._exit(3)
+
+    floor_mib = int(os.environ.get("KITCHEN_EVAL_MEMORY_FLOOR_MIB", "450"))
+    threading.Thread(target=watch_memory, args=(lambda: memory_available_mib(Path("/proc/meminfo").read_text()), abort, floor_mib),
+                     daemon=True).start()
     layers = [_cached(run_dir / "layer-costs-unit.json", lambda: _command("costs core (unit)", ["uv", "run", "pytest", "tests/unit", "-q"], REPO / "services" / "costs_mcp")),
               # The integration suite reads the seeded database (37 ingredients, budget R$ 80,00), so it starts from a reset.
               _cached(run_dir / "layer-costs-integration.json", lambda: (trials.reset(), _command("costs core (integration)", ["make", "-s", "test-integration"]))[1]),
