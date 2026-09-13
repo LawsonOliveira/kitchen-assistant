@@ -2143,6 +2143,13 @@ evidence, what was changed, and where. Open questions that were "default applied
   - closing a trial left `hermes --cli` running inside fifi → sessions end with `/quit` (and the reset stops fifi);
   - researcher-eval stayed up after its layer → the runner stops it.
 
+- **C54 — PL1: small talk is in scope.** The owner's "como você está?" had been blocked. Tests first: six small-talk rows
+  in `guardrail_dataset.jsonl` (red with the real classifier: 5 blocked, false-positive rate 13.9%). `input_guard.md`
+  now allows greetings, thanks, compliments, how her day went and questions about who the assistant is (answered in a
+  sentence, then back to the kitchen); `output_policy.md` no longer treats "sou uma assistente virtual" as a leak.
+  Green: 66/66 rows correct (false-positive rate 0, recall 1.0); output rechecks twice per case: greeting and
+  virtual-assistant replies → allow; prompt leak, health claim and off-topic code → block.
+
 ## Post-loop changes (owner requests, 2026-09-13)
 Requested by the owner while Loops 6–8 were running, test-first, each recorded as a correction. **Order decided by the
 owner:** Loop 6 pauses; Loop 7 (the owner's Telegram checks) and Loop 8 finish, then PL1–PL9, then Loop 6 resumes and
