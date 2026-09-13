@@ -2160,6 +2160,22 @@ evidence, what was changed, and where. Open questions that were "default applied
   Confirmar/Cancelar and routes her own number to `set_conversion_factor`. The eval reset keeps only seeded measures.
   Green: unit 80, integration 72, plugins + contracts 315 (1 skipped), evals 50.
 
+- **C56 — PL8: recipe cache.** Tests first (red: integration 6, tool policy 1). Migration `004_recipe_cache.sql`
+  (one row per source URL, refreshed on re-cache); `cache_recipes` stores only contract-valid web recipes (the owner's
+  own are refused with `not_a_web_recipe`); `find_cached_recipes` matches every word of the subject against the
+  normalized title (case and accents ignored), skips `exclude_dish_names`, newest first, capped; recipe_expert looks
+  the cache up before research and fills it after. Green: integration 78.
+- **C57 — PL9: latency levers.** Tests first (red: fast path collection error, agent configs 6, guard concurrency 1).
+  (1) cost_expert's `llm_execution` fast path answers budget_fit, match_and_cost, select_price_scenario,
+  simulate_promotion, correct_price, confirm_price_quote, register_purchase, adjust_budget and both pantry-import tasks
+  through Hermes' own tool dispatch (allowlist, trace, relay and telemetry hooks still run), without a model loop;
+  click-required tasks without a click, tasks needing research or judgment and any tool error go to the model.
+  (2) fifi's prompt batches independent expert requests in one reply. (3) Research children get three calls per web
+  tool, then answer from what they read — enforced in researcher's `pre_tool_call`, because Hermes launches lifecycle
+  children with a fixed `DEFAULT_MAX_ITERATIONS` (a config-key test was replaced, red: 1 failed). (4) fifi's input guard
+  runs alongside the first model call and a block discards that answer. (5) No agent offers `todo_list`. Green: plugins +
+  contracts 337 (1 skipped). Live gains are measured when Loop 6 resumes.
+
 ## Post-loop changes (owner requests, 2026-09-13)
 Requested by the owner while Loops 6–8 were running, test-first, each recorded as a correction. **Order decided by the
 owner:** Loop 6 pauses; Loop 7 (the owner's Telegram checks) and Loop 8 finish, then PL1–PL9, then Loop 6 resumes and
