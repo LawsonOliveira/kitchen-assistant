@@ -60,6 +60,26 @@ def test_web_estimate_cannot_enter_cmv_until_confirmed(conn):
     assert creme["price_source"] == "owner_confirmed"
 
 
+def test_launch_menu_lists_accepted_dishes_and_the_shopping_list(conn):
+    from conftest import reference_recipe
+
+    viable_profile(conn)
+    dish = operations.register_candidate_dish(conn, reference_recipe(), 4, 4, EVIDENCE)["dish_id"]
+    operations.accept_dish(conn, dish)
+    operations.select_price_scenario(conn, dish, "0.35")
+    operations.register_purchase(
+        conn, ingredient_name="Creme de leite", kind="food", packages=2, package_quantity="200", package_unit="g",
+        package_price="5.00", price_source="owner_confirmed", source_url=None, dish_id=dish, evidence=EVIDENCE,
+    )
+    menu = operations.get_launch_menu(conn)
+    [item] = menu["dishes"]
+    assert (item["name"], item["display_price"], item["cmv_per_portion_display"]) == ("Arroz com frango", "R$ 7,90", "R$ 2,72")
+    [purchase] = menu["shopping_list"]
+    assert (purchase["ingredient"], purchase["packages"], purchase["subtotal_display"]) == ("Creme de leite", 2, "R$ 10,00")
+    assert purchase["dish_names"] == ["Arroz com frango"]
+    assert (menu["purchases_total_display"], menu["budget_remaining_display"]) == ("R$ 10,00", "R$ 70,00")
+
+
 def test_missing_item_without_any_quote_fails_loud(conn):
     dish = creme_dish(conn, extra=[ingredient("Queijo coalho", 200, "g", None)])
     quote_creme(conn)
