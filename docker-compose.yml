@@ -276,7 +276,10 @@ services:
       LANGFUSE_INIT_USER_EMAIL: ${LANGFUSE_INIT_USER_EMAIL:?set LANGFUSE_INIT_USER_EMAIL in .env}
       LANGFUSE_INIT_USER_NAME: Dona Maria
       LANGFUSE_INIT_USER_PASSWORD: ${LANGFUSE_INIT_USER_PASSWORD:?set LANGFUSE_INIT_USER_PASSWORD in .env}
-    mem_limit: 1g
+      # Under a 1 GiB limit Node sized its heap at ~512 MiB and the web container died at startup with "JavaScript heap
+      # out of memory" (5 restarts in the first live run); heap and limit raised together.
+      NODE_OPTIONS: --max-old-space-size=1024
+    mem_limit: 1536m
 
   langfuse-worker:
     image: langfuse/langfuse-worker:4.35.0
