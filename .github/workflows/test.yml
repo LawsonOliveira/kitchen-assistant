@@ -1,0 +1,38 @@
+# Deterministic suites only (PLAN.md Loop 8 step 2b): no LLM evals and no API keys in CI.
+name: tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  host:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: costs-mcp unit, cockpit and eval grader tests
+        run: make test
+
+  agents-image:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: placeholder .env (compose requires the variables; nothing here calls a model)
+        run: awk -F= '/^[A-Z0-9_]+=$/ { print $1 "=ci-placeholder-" NR; next } { print }' .env.example > .env
+      - name: build the agents image once
+        run: docker compose build fifi
+      - name: contracts and plugins inside the agents image
+        run: make test-contracts && make test-plugins
+
+  integration:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: placeholder .env
+        run: awk -F= '/^[A-Z0-9_]+=$/ { print $1 "=ci-placeholder-" NR; next } { print }' .env.example > .env
+      - name: Postgres and costs-mcp (it seeds the spreadsheet on start)
+        run: docker compose up -d --build --wait postgres costs-mcp
+      - name: costs-mcp integration tests against the seeded database
+        run: make test-integration
