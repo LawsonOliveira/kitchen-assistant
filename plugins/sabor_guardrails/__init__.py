@@ -91,7 +91,7 @@ def register(ctx) -> None:
                 owner, last_assistant = _owner_and_last_assistant(request)
                 decision = input_guard.decide(owner, last_assistant, classify_with("input_guard.md"),
                                               api_call_count=api_call_count, import_dir=import_dir)
-                if api_call_count == 0:
+                if api_call_count == 1:
                     _emit("guard_input", "input_guard", status="blocked" if decision.action == "block" else "ok",
                           session_id=session_id, prompt_hash=classifier.prompt_hash("input_guard.md"))
                 if decision.action == "block":

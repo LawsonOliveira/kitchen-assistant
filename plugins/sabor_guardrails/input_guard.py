@@ -32,7 +32,7 @@ def strip_import_note(message: str, import_dir: str) -> str:
 
 
 def decide(owner_message: str, last_assistant_message: str, classify, *, api_call_count: int, import_dir: str) -> Decision:
-    if api_call_count != 0:  # one verdict per owner turn, not per model call
+    if api_call_count != 1:  # one verdict per owner turn, on its first model call (Hermes counts from 1)
         return Decision("next", None)
     try:
         message = strip_import_note(owner_message or "", import_dir)

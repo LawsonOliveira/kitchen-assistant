@@ -28,7 +28,8 @@ itself.
 Only the agent turn loop reaches `llm_execution` middleware. Context compression, session titles and plugin LLM calls
 (including our own classifier) go through `agent.auxiliary_client.call_llm`, which never runs it. The one other
 `AIAgent` helper is the curator (`platform="curator"`), disabled by correction C9. Rule: skip when `platform` is
-`subagent` or `curator`, and classify only when `api_call_count == 0`.
+`subagent` or `curator`, and classify only when `api_call_count == 1` (Hermes increments the count before each
+call in `agent/turn_iteration_prep.py`; the first live self-test showed that `== 0` never matches).
 
 ## 3. Usage and cost for the cap
 
