@@ -325,6 +325,13 @@ def record_price_quote(conn, ingredient_name: str, kind: str, package_quantity, 
         raise DomainError("invalid_kind", "kind must be food or packaging", kind=kind)
     quantity_base, base_unit = _quantity_base(package_quantity, package_unit)
     price = _money(package_price, "package_price")
+    known = db.ingredient_by_name(conn, ingredient_name)
+    current = db.current_price(conn, known["id"]) if known else None
+    if source == "web_estimate" and current is not None and current["source"] != "web_estimate":
+        # Estimates are only for missing items (D27): never replace a price from the spreadsheet or the owner.
+        raise DomainError("price_already_known", f"{ingredient_name!r} already has a {current['source']} price",
+                          ingredient=ingredient_name, price_source=current["source"],
+                          unit_cost_display=format_unit_cost(current["total_price_paid"], current["quantity_purchased_base"], known["base_unit"]))
     with conn.transaction():
         row = _ingredient_or_create(conn, ingredient_name, kind, base_unit)
         db.supersede_price(conn, row["id"])
