@@ -19,6 +19,7 @@ chat:
 
 test:
 	cd services/costs_mcp && $(UV) run pytest tests/unit -q
+	cd services/cockpit && $(UV) run pytest tests -q
 
 # Reads the live app database seeded by `make up`.
 test-integration:
