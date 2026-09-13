@@ -1425,9 +1425,9 @@ flowchart TD
   reference dish conversation shows R$ 7,90 / 9,90 / 10,90 and follows the pricing-explanation steps.
 
 **Steps**
-- [ ] 1. *(sequential)* Author the scenarios and rubric above; run red; commit `test: L3 …`.
-- [ ] 2. *(parallel with each other)*
-  - [ ] a) fifi: `SOUL.md` (English) — persona Dona Fifi, reply in PT-BR, colloquial and didactic; only
+- [x] 1. *(sequential)* Author the scenarios and rubric above; run red; commit `test: L3 …`.
+- [x] 2. *(parallel with each other)*
+  - [x] a) fifi: `SOUL.md` (English) — persona Dona Fifi, reply in PT-BR, colloquial and didactic; only
     fifi talks to the owner; never state money that is not an MCP display string; business facts go
     to experts, Hermes memory only for taste/style (boundary rule, D15); research in rounds (ask
     recipe_expert for ≤ 3 candidates excluding rejected ones, present each with pantry coverage and
@@ -1445,7 +1445,7 @@ flowchart TD
     cost_display`, `recipe_cmv_display ÷ yield = cmv_per_portion_display`, minimum `CMV ÷ 0,90`, each
     scenario with what she receives (0,90·P) and profit, profit after packaging and minimum with
     packaging; only display strings; let her choose).
-  - [ ] b) cost_expert: `SOUL.md` tasks `match_and_cost(dish_id)` (→ `check_pantry_match`,
+  - [x] b) cost_expert: `SOUL.md` tasks `match_and_cost(dish_id)` (→ `check_pantry_match`,
     `compute_dish_cost`), `price_missing_item(dish_id, ingredient)` (→ `research("ingredient_price")`,
     `record_price_quote(web_estimate)`, return MCP display strings), `confirm_price_quote`
     (→ `record_price_quote(owner_confirmed)` with `owner_confirmation` or an `owner_statement`
@@ -1454,23 +1454,23 @@ flowchart TD
     `select_price_scenario`, `simulate_promotion`, `import_pantry_preview(file_path)`,
     `import_pantry_apply(import_id)`; writes only with `owner_confirmation` (or `owner_statement` for
     evidence-only tools); returns MCP display strings verbatim; expert contract subschemas for each task.
-  - [ ] c) marketing_expert: `SOUL.md` + `skills/ifood-menu-copy/SKILL.md` (title ≤ 60, description
+  - [x] c) marketing_expert: `SOUL.md` + `skills/ifood-menu-copy/SKILL.md` (title ≤ 60, description
     ≤ 250; forbidden: health/nutrition claims, unconfirmed attributes such as "orgânico" or
     "artesanal", competitor disparagement); tasks `write_menu_copy(dish_id)`,
     `propose_promotion(dish_id)`, `save_menu_copy`, `register_promotion` (only with
     `owner_confirmation`); may call `research("menu_reference")`; contract subschemas.
-  - [ ] d) recipe_expert: `SOUL.md` extended with `record_kitchen_fact(owner_statement)` →
+  - [x] d) recipe_expert: `SOUL.md` extended with `record_kitchen_fact(owner_statement)` →
     `update_kitchen_profile`; `register_candidate(recipe, yield_portions, launch_batch_portions,
     owner_statement)`; `reject_candidate(dish_id, owner_statement)`; `confirm_requirement(dish_id,
     requirement, owner_statement)`; `accept(dish_id)` (only with `owner_confirmation`);
     `suggest_dishes` ranks by `pantry_coverage_pct` and returns `missing_ingredients[]` per candidate,
     preferring fewer missing items when `budget_remaining` is low; contract subschemas.
-- [ ] 3. *(sequential)* fifi confirmation protocol: before any click-required tool (table), call
+- [x] 3. *(sequential)* fifi confirmation protocol: before any click-required tool (table), call
   `clarify(question=<summary with display strings>, choices=["Confirmar","Cancelar"])`; on Confirmar
   send the expert request with `owner_confirmation`; on Cancelar send nothing. Promotion flow:
   marketing proposes → cost_expert `simulate_promotion` → fifi shows numbers → click → marketing
   `register_promotion`.
-- [ ] 4. *(sequential)* Config: fifi `memory.memory_enabled: true`; experts and researcher
+- [x] 4. *(sequential)* Config: fifi `memory.memory_enabled: true`; experts and researcher
   `memory.memory_enabled: false`, `memory.user_profile_enabled: false`, `memory` in
   `agent.disabled_toolsets`; fifi `agent.max_turns: 30`, `agent.run_budget_seconds: 240`; A2A client
   timeouts fifi→experts 150 s, experts→researcher 120 s; shared volume `fifi_documents` mounted
@@ -1478,13 +1478,13 @@ flowchart TD
   read-only in `costs-mcp` at the same path, `SABOR_IMPORT_DIR` set to that path in both;
   `make import-pantry FILE=…` copies the file there with `docker compose cp` and prints the
   in-container path for the owner to tell Dona Fifi.
-- [ ] 5. *(sequential)* Run the post-implementation checks from **Tests**.
+- [x] 5. *(sequential)* Run the post-implementation checks from **Tests**.
 
 **Definition of Done for this loop**
-- [ ] Tests above were written before the implementation steps
-- [ ] Steps completed
-- [ ] Tests above pass
-- [ ] Complete brief flow demonstrated end to end in the CLI
+- [x] Tests above were written before the implementation steps
+- [x] Steps completed
+- [x] Tests above pass
+- [x] Complete brief flow demonstrated end to end in the CLI
 
 ---
 
