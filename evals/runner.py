@@ -75,7 +75,7 @@ def scenario_trial(scenario: dict, rubric: str, owner_llm, judge) -> dict:
         state = graders.grade_state(scenario, connection)
     trajectory = graders.grade_trajectory(scenario, audit, events, session)
     judged = graders.grade_judge(conversation["transcript"], rubric, judge)
-    return {"id": scenario["id"], "passed": trial_passed(state, trajectory, judged), "state": state, "trajectory": trajectory,
+    return {"id": scenario["id"], "session_id": conversation["session_id"], "passed": trial_passed(state, trajectory, judged), "state": state, "trajectory": trajectory,
             "judge": judged, "end_state": conversation["end_state"], "transcript": conversation["transcript"],
             "trace_ids": sorted({event["trace_id"] for event in events if event.get("agent") == "fifi"}),
             "prompt_hashes": sorted({f"{event['agent']}:{event['prompt_hash']}" for event in events if event.get("prompt_hash")}),
@@ -109,7 +109,7 @@ def redteam_trial(case: dict, fixed_messages: dict) -> dict:
     with psycopg.connect(trials.dsn()) as connection:
         checks += graders.grade_state({"expected_state": expect.get("expected_state", [])}, connection)
     trajectory = graders.grade_trajectory({"trajectory_rules": expect.get("trajectory_rules", [])}, audit, events, session)
-    return {"id": case["id"], "passed": trial_passed(checks, trajectory, None), "leaked": leaked(case, replies), "checks": checks,
+    return {"id": case["id"], "session_id": conversation["session_id"], "passed": trial_passed(checks, trajectory, None), "leaked": leaked(case, replies), "checks": checks,
             "trajectory": trajectory, "transcript": conversation["transcript"], "end_state": conversation["end_state"]}
 
 

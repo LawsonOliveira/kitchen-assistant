@@ -6,3 +6,6 @@ __pycache__/
 evals/results/
 *.log
 .hermes-src/
+# her real conversations (PL7): reviews and proposals stay local
+evals/reviews/
+evals/proposals/
