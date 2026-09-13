@@ -53,6 +53,13 @@ def _command(name: str, argv: list[str], cwd: Path = REPO) -> dict:
     return {"layer": name, "passed": completed.returncode == 0, "tail": (completed.stdout + completed.stderr)[-1500:]}
 
 
+def _requirements_layer() -> dict:
+    result = _command("requirement extraction", ["make", "-s", "eval-requirements"])
+    # researcher-eval (~220 MiB) is not used by the trials; the Docker VM needs the memory.
+    subprocess.run(["docker", "compose", "--profile", "eval", "stop", "researcher-eval"], cwd=REPO, capture_output=True)
+    return result
+
+
 def scenario_trial(scenario: dict, rubric: str, owner_llm, judge) -> dict:
     import psycopg
 
@@ -187,7 +194,7 @@ def main(argv: list[str] | None = None) -> int:
     layers = [_cached(run_dir / "layer-costs-unit.json", lambda: _command("costs core (unit)", ["uv", "run", "pytest", "tests/unit", "-q"], REPO / "services" / "costs_mcp")),
               # The integration suite reads the seeded database (37 ingredients, budget R$ 80,00), so it starts from a reset.
               _cached(run_dir / "layer-costs-integration.json", lambda: (trials.reset(), _command("costs core (integration)", ["make", "-s", "test-integration"]))[1]),
-              _cached(run_dir / "layer-requirements.json", lambda: _command("requirement extraction", ["make", "-s", "eval-requirements"]))]
+              _cached(run_dir / "layer-requirements.json", _requirements_layer)]
 
     def run_guard():
         rows = [json.loads(line) for line in (EVALS / "guardrail_dataset.jsonl").read_text().splitlines() if line.strip()]
