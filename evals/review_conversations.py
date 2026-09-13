@@ -63,7 +63,7 @@ def turns(messages: list[dict]) -> list[dict]:
                 result[-1]["clarify_answers"] += [str(entry.get("user_response", "")) for entry in data.get("responses", []) if isinstance(entry, dict)]
             elif (code := _error_code(data)) is not None:
                 result[-1]["tool_errors"].append(code)
-    return [{**turn, "seconds": turn["ended"] - turn["started"]} for turn in result]
+    return [{**turn, "seconds": round(turn["ended"] - turn["started"], 1)} for turn in result]
 
 
 def signals(conversation_turns: list[dict]) -> dict:
