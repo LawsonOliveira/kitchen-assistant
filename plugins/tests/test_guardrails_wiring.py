@@ -83,3 +83,15 @@ def test_a_request_that_reached_the_expert_keeps_the_click_spent(fifi):
 
 def test_without_a_clarify_the_click_required_request_is_blocked(fifi):
     assert ask_with_click(fifi) == [{"action": "block", "message": CLICK_REQUIRED_MESSAGE}]
+
+
+def test_the_owner_message_of_each_turn_grounds_her_own_amounts(fifi, monkeypatch):
+    from sabor_guardrails import classifier
+    from sabor_guardrails.messages import SCOPE_BLOCK_MESSAGE
+
+    monkeypatch.setattr(classifier, "classify", lambda *args, **kwargs: classifier.Verdict("allow", "", ""))
+    fire(fifi, "pre_llm_call", session_id="s1", turn_id="t1", user_message="paguei R$ 2,99 na caixinha", platform="api_server")
+    echo = "Vou registrar a caixinha por R$ 2,99, pode confirmar?"
+    assert fire(fifi, "transform_llm_output", response_text=echo, session_id="s1", platform="api_server") == [echo]
+    assert fire(fifi, "transform_llm_output", response_text="O total fica R$ 5,98.", session_id="s1",
+                platform="api_server") == [SCOPE_BLOCK_MESSAGE]

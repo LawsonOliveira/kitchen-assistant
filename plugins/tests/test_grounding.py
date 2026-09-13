@@ -52,3 +52,11 @@ def test_only_display_fields_ground_an_amount():
 
 def test_the_initial_budget_is_always_grounded():
     assert SessionGrounding().ungrounded("A senhora tem R$ 80,00 de orçamento") == set()
+
+
+def test_amounts_dona_maria_typed_in_the_session_ground_the_answer():
+    # Live API-server turn: she wrote "paguei R$ 2,99" and Dona Fifi's question repeating her price before registering
+    # the purchase was blocked as an invented amount.
+    grounding = SessionGrounding()
+    grounding.add_owner_message("quero registrar 1 caixinha de creme de leite, paguei R$ 2,99")
+    assert grounding.ungrounded("Vou registrar 1 caixinha por R$ 2,99 e o total fica R$ 5,98, pode confirmar?") == {"R$ 5,98"}
