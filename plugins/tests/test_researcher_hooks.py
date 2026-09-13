@@ -157,3 +157,37 @@ def test_visited_urls_with_parentheses_and_escaped_slashes_are_recognized():
     other = dict(RECIPE, source_url="https://site.example/receita")
     reply = hooks.fan_out(FakeLifecycle(json.dumps(recipe), json.dumps(other)), Request, "session-1", "recipe_search", ["a", "b"])
     assert reply["results"] == [recipe, other]
+
+
+LONG_NAME = dict(RECIPE, ingredients=[dict(RECIPE["ingredients"][0], name="peito de frango grande, sem pele e sem osso, cozido e desfiado")])
+
+
+def test_a_schema_invalid_child_reply_gets_one_repair_child_with_the_errors():
+    # Live run: 2 of 3 children were dropped for a 61-character ingredient name and a null quantity.
+    request("session-1", "recipe_search", "a")
+    visit("session-1", RECIPE["source_url"])
+    lifecycle = FakeLifecycle(json.dumps(LONG_NAME), json.dumps(RECIPE))
+    reply = hooks.fan_out(lifecycle, Request, "session-1", "recipe_search", ["a"])
+    assert reply["results"] == [RECIPE] and len(lifecycle.launched) == 2
+    repair = lifecycle.launched[1]
+    assert "too long" in repair.context and LONG_NAME["ingredients"][0]["name"] in repair.context
+    assert repair.allowed_toolsets == ("web",) and "never guess" in repair.goal
+
+
+def test_a_repair_that_is_still_invalid_is_dropped():
+    request("session-1", "recipe_search", "a")
+    visit("session-1", RECIPE["source_url"])
+    lifecycle = FakeLifecycle(json.dumps(LONG_NAME), json.dumps(LONG_NAME))
+    assert hooks.fan_out(lifecycle, Request, "session-1", "recipe_search", ["a"])["results"] == []
+    assert len(lifecycle.launched) == 2  # one repair only
+
+
+def test_children_without_json_are_dropped_without_repair_and_logged(caplog):
+    # Nothing to repair: asking a model to produce JSON from no data invites invented values.
+    request("session-1", "ingredient_price", "a", "b", "c")
+    lifecycle = FakeLifecycle("não achei o preço", "FAILED", "TIMEOUT")
+    with caplog.at_level("WARNING"):
+        assert hooks.fan_out(lifecycle, Request, "session-1", "ingredient_price", ["a", "b", "c"])["results"] == []
+    assert len(lifecycle.launched) == 3
+    assert [r.getMessage().split(": ", 1)[0] for r in caplog.records] == ["research child dropped (ingredient_price)"] * 3
+    assert "not a JSON object" in caplog.text and "FAILED" in caplog.text and "timed out" in caplog.text
