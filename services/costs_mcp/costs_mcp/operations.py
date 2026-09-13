@@ -178,7 +178,8 @@ def _pantry_match(conn, dish) -> dict:
         else:
             missing.append({"ingredient": row["name"], "short_base": plain(required - free), "base_unit": row["base_unit"],
                             "short_display": _quantity_display(required - free, row["base_unit"])})
-    counted = [item for item in dish["recipe"]["ingredients"] if item["unit"] != "to_taste"]
+    # Every recipe line counts, a gosto included: a seasoning she does not have still has to be bought.
+    counted = dish["recipe"]["ingredients"]
     coverage = Decimal(len(have)) / Decimal(len(counted)) * 100 if counted else Decimal(100)
     return {"have": have, "missing": missing, "unmatched": unmatched, "conversions_needed": conversions,
             "pantry_coverage_pct": int(coverage.quantize(Decimal(1), rounding=ROUND_HALF_UP))}
@@ -424,6 +425,7 @@ def check_budget_fit(conn, dish_id: int) -> dict:
                           ingredient=match["conversions_needed"][0]["ingredient"], conversions=match["conversions_needed"])
     remaining = db.budget_status(conn)["remaining"]
     return {"missing_items": items, "total_display": format_brl(total), "budget_remaining_display": format_brl(remaining),
+            "budget_remaining_after_purchase_display": format_brl(remaining - total) if total <= remaining else None,
             "fits": total <= remaining, "shortfall_display": None if total <= remaining else format_brl(total - remaining)}
 
 
