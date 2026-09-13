@@ -2164,6 +2164,12 @@ recorded as a correction. Findings below were measured on the running stack; ope
   latency, cost), and writes a report with concrete proposals: prompt or skill changes, new guard-dataset rows for false
   positives such as PL1, new scenario YAML for failures. Proposals are reviewed by a person and implemented test-first,
   never applied automatically. Decisions: frequency and retention of her conversations (LGPD).
+  Local Langfuse findings (probed 2026-09-13 on the running v4 stack): writing scores works — `POST
+  /api/public/scores` with a trace id stored a numeric score in ClickHouse; annotation queues, datasets and score
+  configs answer; reading traces, sessions and scores through the public API does not (`events_only` mode); LLM
+  connections accept the adapters anthropic, openai, azure, bedrock, google-vertex-ai and google-ai-studio with a
+  secret key, so an in-Langfuse evaluator needs either a provider key (open question 14) or an OpenAI-compatible
+  endpoint reachable from the compose network.
 - **PL8 — RAG.** There is no embedding or vector retrieval today. Retrieval is live web search with strict extraction
   (researcher), structured SQL through costs-mcp, Hermes' memory snapshot and on-demand skills. Candidate: a recipe
   cache in Postgres (researched recipes reused across rounds and conversations; cuts research latency and cost), keyed
