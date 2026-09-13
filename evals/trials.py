@@ -82,18 +82,20 @@ def setup_reference_dish() -> None:
                    capture_output=True, text=True)
 
 
-def _answer_clarify(session, clarify_answers: list[dict], transcript: list[dict]) -> None:
+def _answer_clarify(session, case: dict, owner_llm, transcript: list[dict]) -> None:
+    """Scenario answers first; the persona decides the rest (red-team cases have no persona: their defaults are typed)."""
     clarify = cli_session.parse_clarify(session.lines())
-    answer = simulated_owner.clarify_answer(clarify_answers, clarify["question"])
-    index = simulated_owner.choice_index(answer, clarify["choices"])
-    transcript.append({"speaker": "fifi", "text": f"[pergunta com opções] {clarify['question']} — {' / '.join(clarify['choices'])}"})
-    if isinstance(index, tuple):
-        session.press(cli_session.keys_to(clarify["selected"], clarify["other"]))
-        session.send_text(index[1])
-        label = index[1]
+    if owner_llm is None:
+        answer = simulated_owner.clarify_answer(case.get("clarify_answers") or [{"default": "Cancelar"}], clarify["question"])
     else:
-        session.press(cli_session.keys_to(clarify["selected"], index))
-        label = clarify["choices"][index]
+        answer = simulated_owner.answer_clarify(owner_llm, case, transcript, clarify["question"], clarify["choices"])
+    index = simulated_owner.choice_index(answer, clarify["choices"])
+    if not isinstance(index, tuple) and not 0 <= index < len(clarify["choices"]):
+        index = ("other", str(answer.get("choice", "")))
+    transcript.append({"speaker": "fifi", "text": f"[pergunta com opções] {clarify['question']} — {' / '.join(clarify['choices'])}"})
+    for kind, value in cli_session.clarify_actions(clarify, index):
+        session.press(value) if kind == "keys" else session.send_text(value)
+    label = index[1] if isinstance(index, tuple) else clarify["choices"][index]
     transcript.append({"speaker": "owner", "text": f"[escolheu] {label}"})
 
 
@@ -112,7 +114,7 @@ def converse(case: dict, owner_llm=None) -> dict:
             owner_messages += 1
             session.send_text(pending)
             while (state := session.wait()) == "clarify":
-                _answer_clarify(session, case.get("clarify_answers") or [{"default": "Cancelar"}], transcript)
+                _answer_clarify(session, case, owner_llm, transcript)
             new = cli_session.replies(session.history())[seen:]
             seen += len(new)
             transcript += [{"speaker": "fifi", "text": text} for text in new]

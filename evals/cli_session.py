@@ -81,6 +81,16 @@ def keys_to(selected: int, target: int) -> list[str]:
     return [step] * abs(target - selected) + ["enter"]
 
 
+def clarify_actions(clarify: dict, index) -> list[tuple]:
+    """How to answer a parsed clarify: move to a choice index, or type ("other", text) after selecting "Other" — or
+    directly, when the prompt has no buttons."""
+    if not isinstance(index, tuple):
+        return [("keys", keys_to(clarify["selected"], index))]
+    if clarify["other"] is None:
+        return [("text", index[1])]
+    return [("keys", keys_to(clarify["selected"], clarify["other"])), ("text", index[1])]
+
+
 class CliSession:
     """One `hermes --cli` process in a pty; call close() when the trial ends."""
 

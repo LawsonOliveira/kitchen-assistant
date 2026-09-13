@@ -55,3 +55,8 @@ display:  # no unverified text reaches the owner (Loop 4 step 7, Hermes fact 7)
       long_running_notifications: "off"
 streaming:
   enabled: false
+timeouts:
+  tools:
+    # Hermes' default sequential tool deadline is 420 s; sabor_a2a waits 480 s for an expert (correction C35), so the
+    # deadline sits between that client and agent.run_budget_seconds (930 s).
+    sequential_call: 540
