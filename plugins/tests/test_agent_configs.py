@@ -25,3 +25,12 @@ def test_the_orchestrator_is_dona_salvia_and_greets_with_the_owners_words():
     assert re.search(r"^\s*skin: dona-salvia\b", (orchestrator / "config.yaml").read_text(), flags=re.M)
     assert "Olá, sou a Sálvia, como posso te ajudar hoje? 🌿" in (orchestrator / "SOUL.md").read_text()
     assert not any(path.name == "fifi" for path in AGENTS.iterdir())
+
+
+@pytest.mark.parametrize("skill", sorted(AGENTS.glob("*/skills/*/SKILL.md")), ids=lambda path: f"{path.parts[-4]}/{path.parts[-2]}")
+def test_every_file_a_skill_points_to_can_be_opened_from_the_skill(skill):
+    # Full run, scenario 01 trial 2: recipe-normalization named `contracts/recipe.schema.json`, which skill_view cannot open
+    # (it is not in the skill); recipe_expert kept looking for it — skills_list, skill_manage, then `research` with the
+    # placeholder items "__unused__" and "dummy" — and registering the owner's own recipe took 17 minutes.
+    referenced = re.findall(r"`([\w./-]+\.(?:json|md|yaml|py))`", skill.read_text())
+    assert [path for path in referenced if not (skill.parent / path).exists()] == []
