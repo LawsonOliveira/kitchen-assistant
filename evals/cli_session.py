@@ -150,6 +150,13 @@ class CliSession:
         return "timeout"
 
     def close(self) -> None:
+        """/quit first: killing the host-side `docker compose exec` leaves `hermes --cli` running inside fifi."""
+        if self.alive:
+            try:
+                self.send_text("/quit")
+                self._pump(10)
+            except OSError:
+                pass
         if self.alive:
             try:
                 os.kill(self.pid, signal.SIGTERM)
