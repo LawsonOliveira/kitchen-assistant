@@ -52,3 +52,29 @@ def test_cost_of_a_call_from_tokens_and_the_price_table():
 def test_a_model_without_a_price_fails_loud():
     with pytest.raises(ValueError):
         cost_of_call("claude-unknown", 1, 1, PRICES)
+
+
+def test_session_costs_follow_the_current_turn_and_count_delegated_children():
+    from sabor_guardrails.cost_cap import SessionCosts
+
+    costs = SessionCosts(Decimal("0.10"), agent="researcher")
+    costs.begin("parent", "turn-1", received_remaining=Decimal("0.05"))
+    costs.link_child("child-1", "parent")
+    costs.add_own("child-1", Decimal("0.02"))
+    costs.add_own("parent", Decimal("0.01"))
+    assert costs.spent("parent") == Decimal("0.03") and costs.remaining("parent") == Decimal("0.02")
+    assert costs.allows_next_call("child-1")
+    costs.add_own("child-1", Decimal("0.02"))
+    assert not costs.allows_next_call("parent")
+    costs.begin("parent", "turn-2")
+    assert costs.spent("parent") == Decimal("0") and costs.allows_next_call("parent")
+
+
+def test_session_costs_add_what_experts_report():
+    from sabor_guardrails.cost_cap import SessionCosts
+
+    costs = SessionCosts(Decimal("0.06"), agent="fifi")
+    costs.begin("owner-session", "turn-1")
+    costs.add_own("owner-session", Decimal("0.02"))
+    costs.add_reported("owner-session", Decimal("0.05"), agent="cost_expert")
+    assert not costs.allows_next_call("owner-session") and costs.breakdown("owner-session") == {"fifi": "0.02", "cost_expert": "0.05"}
