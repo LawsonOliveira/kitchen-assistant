@@ -2318,6 +2318,11 @@ Queued during implementation (each: what it blocks, the question, the default if
    (`/api/public/llm-connections` is empty). Under D46 there is no Anthropic Console key, and sending the Claude Code
    OAuth token to Langfuse as an API key is not a supported use of that credential. Do you want to provide an Anthropic
    API key for Langfuse's evaluator, or keep the judge offline?
+   Checked 2026-09-13: the credential Hermes uses is a Claude Code OAuth token (`sk-ant-oat01…`). Sent as `x-api-key`,
+   which is how Langfuse's `anthropic` adapter authenticates, the Anthropic API answers "API key is invalid"; it only works
+   as `Authorization: Bearer` with the `anthropic-beta: oauth-2025-04-20` header. Langfuse connections accept `baseURL`,
+   `customModels` and `extraHeaders`, but routing the evaluator through the subscription token that way was not tried:
+   it is a use of a Claude Code credential outside Claude Code, and a Console API key is the supported path.
    **Default if unanswered:** keep the judge offline — `make evals` scores every trial with claude-sonnet-5 through
    Hermes' auxiliary client and publishes the dataset run with the judge scores in its metadata; the README documents
    the online-evaluator setup (template from `evals/rubric.md`, sampling of fifi turns) for when a key exists.
