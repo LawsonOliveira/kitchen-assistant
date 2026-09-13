@@ -27,7 +27,7 @@ def live_dsn() -> str:
     password = os.environ.get("POSTGRES_PASSWORD") or dotenv.get("POSTGRES_PASSWORD")
     assert password, "POSTGRES_PASSWORD missing from environment and .env"
     port = os.environ.get("POSTGRES_HOST_PORT") or dotenv.get("POSTGRES_HOST_PORT") or "55432"
-    return f"postgresql://kitchen:{password}@127.0.0.1:{port}/sabor"
+    return f"postgresql://kitchen:{password}@127.0.0.1:{port}/kitchen"
 
 
 @pytest.fixture

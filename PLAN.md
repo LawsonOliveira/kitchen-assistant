@@ -2191,6 +2191,20 @@ evidence, what was changed, and where. Open questions that were "default applied
   score config (the review creates numeric 1–5 configs for the rubric criteria), and score deletion through the API is
   asynchronous.
 
+- **C59 — PL2/PL3/PL5 renames and the stack cutover.** Tests first (red: the orchestrator persona test, and `make
+  test-skin` asking for `dona-salvia`). One scripted pass over the tracked files (PLAN.md's history and the brief
+  untouched): `fifi` → `orchestrator` (service, role, agent directory, tokens `A2A_TOKEN_ORCHESTRATOR` and
+  `COSTS_MCP_TOKEN_ORCHESTRATOR`, volumes, event agent, cockpit node), `Dona Fifi` → `Dona Sálvia`, plugins
+  `kitchen_a2a`/`kitchen_guardrails`/`kitchen_observability`, `SABOR_*` → `KITCHEN_*` (her `.env` keys renamed in place),
+  Postgres user and database `kitchen`, contract ids `kitchen.local`, images `kitchen-*`, compose project
+  `kitchen-assistant`; the restaurant name "Sabor da Maria" stays. Dona Sálvia's skin has a DONA SALVIA logo, the
+  grandma-only hero and the owner's greeting "Olá, sou a Sálvia, como posso te ajudar hoje? 🌿", which her prompt also
+  uses. Two rename artifacts were fixed by hand: a test assertion whose literal "fifi" had been rewritten, and the
+  integration tests' database name in `conftest.py`; the README's Portuguese articles were adjusted ("o orchestrator").
+  Cutover: project `sabor` down (its 13 volumes kept on disk), `kitchen-assistant` up on fresh volumes — every service
+  healthy, self-test ok, `make test-skin` ok, Telegram "Connected (polling mode)", seed 37 ingredients and 16 measures,
+  integration suite green against the new database. The repository folder stays `ifood` (owner).
+
 ## Post-loop changes (owner requests, 2026-09-13)
 Requested by the owner while Loops 6–8 were running, test-first, each recorded as a correction. **Order decided by the
 owner:** Loop 6 pauses; Loop 7 (the owner's Telegram checks) and Loop 8 finish, then PL1–PL9, then Loop 6 resumes and
