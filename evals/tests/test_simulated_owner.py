@@ -49,3 +49,36 @@ def test_next_message_sees_fifi_as_the_other_speaker_and_stops_on_the_end_marker
     assert seen["messages"] == [{"role": "assistant", "content": "Oi Dona Fifi! Quero um arroz com frango."},
                                 {"role": "user", "content": "Quantas porções no lançamento?"}]
     assert simulated_owner.next_message(lambda system, messages: " FIM ", SCENARIO, transcript) is None
+
+
+def test_a_clarify_the_scenario_cannot_answer_goes_to_the_persona():
+    # Live trial: fifi asked "Quantas porções ... no lançamento?" with choices 6 / 12; the default "Confirmar" matched no
+    # choice, was typed as free text three times, and the flow looped until the clarify timed out.
+    seen = {}
+
+    def llm(system, messages):
+        seen["system"], seen["messages"] = system, messages
+        return "12 porções (dobro da receita)"
+
+    answer = simulated_owner.answer_clarify(llm, SCENARIO, [], "Quantas porções no lançamento?", ["6 porções", "12 porções (dobro da receita)"])
+    assert answer == {"choice": "12 porções (dobro da receita)"}
+    assert "Quantas porções no lançamento?" in seen["messages"][-1]["content"] and "6 porções" in seen["messages"][-1]["content"]
+
+
+def test_a_free_text_clarify_is_answered_by_the_persona_in_her_words():
+    answer = simulated_owner.answer_clarify(lambda system, messages: "No lançamento quero fazer 10 porções.", SCENARIO, [],
+                                            "Quantas porções você vai fazer?", [])
+    assert answer == {"choice": "No lançamento quero fazer 10 porções."}
+
+
+def test_a_scenario_answer_that_fits_the_choices_needs_no_model_call():
+    def llm(system, messages):
+        raise AssertionError("the scenario already answers this clarify")
+
+    assert simulated_owner.answer_clarify(llm, SCENARIO, [], "Confirma o preço de R$ 9,90?", ["Confirmar", "Cancelar"]) == {"choice_position": 2}
+    assert simulated_owner.answer_clarify(llm, SCENARIO, [], "Posso aceitar o prato?", ["Confirmar", "Cancelar"]) == {"choice": "Confirmar"}
+
+
+def test_the_persona_never_describes_her_pantry_beyond_the_facts():
+    # Live trial: the persona said "sal e óleo eu tenho sim, salsinha no quintal", facts the scenario never gave.
+    assert "pantry" in simulated_owner.system_prompt(SCENARIO)

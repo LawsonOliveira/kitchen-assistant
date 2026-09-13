@@ -54,3 +54,35 @@ def test_eval_reset_refuses_without_the_explicit_opt_in_and_touches_nothing(tmp_
     assert completed.returncode != 0
     assert "SABOR_ALLOW_EVAL_RESET=1" in output and "audit_log" in output and "memories" in output
     assert not marker.exists()
+
+
+def fake_docker(tmp_path, ingredients: str):
+    """A docker stand-in that logs every call and answers the seed check with the given ingredient count."""
+    log, fake_bin = tmp_path / "docker.log", tmp_path / "bin"
+    fake_bin.mkdir()
+    (fake_bin / "docker").write_text(f'#!/bin/sh\necho "$*" >> {log}\ncase "$*" in *"count(*) FROM ingredients"*) echo "{ingredients}";; esac\n')
+    (fake_bin / "docker").chmod(0o755)
+    environ = {**os.environ, "SABOR_ALLOW_EVAL_RESET": "1", "PATH": f"{fake_bin}:{os.environ['PATH']}"}
+    return log, environ
+
+
+def test_eval_reset_stops_the_agents_before_truncating_and_fails_loud_without_the_seed(tmp_path):
+    # First runner smoke run: an expert turn left over from an interrupted trial inserted "limão" right after the
+    # TRUNCATE, costs-mcp skipped its seed (it only seeds an empty database) and the trial ran on an empty pantry.
+    log, environ = fake_docker(tmp_path, ingredients="0")
+    completed = subprocess.run(["make", "-s", "-C", str(REPO), "eval-reset"], env=environ, capture_output=True, text=True)
+    calls = log.read_text().splitlines()
+    assert completed.returncode != 0 and "seed" in completed.stdout + completed.stderr
+    stop = next(index for index, call in enumerate(calls) if " stop " in f" {call} " and "recipe-expert" in call)
+    truncate = next(index for index, call in enumerate(calls) if "TRUNCATE" in call)
+    assert stop < truncate
+
+
+def test_eval_reset_starts_the_agents_after_a_verified_seed(tmp_path):
+    log, environ = fake_docker(tmp_path, ingredients="37")
+    completed = subprocess.run(["make", "-s", "-C", str(REPO), "eval-reset"], env=environ, capture_output=True, text=True)
+    calls = log.read_text().splitlines()
+    assert completed.returncode == 0, completed.stderr
+    seed_check = next(index for index, call in enumerate(calls) if "count(*) FROM ingredients" in call)
+    agents_up = max(index for index, call in enumerate(calls) if " up " in f" {call} " and "recipe-expert" in call)
+    assert seed_check < agents_up
