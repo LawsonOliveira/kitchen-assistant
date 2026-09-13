@@ -10,6 +10,7 @@ import json
 import math
 import os
 import re
+import unicodedata
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from pathlib import Path
 
@@ -435,6 +436,34 @@ def set_conversion_factor(conn, ingredient_name: str, measure: str, amount, unit
 
 
 # --- cost, scenarios, alerts ---------------------------------------------------------------------------
+
+def _normalized_words(text: str) -> list[str]:
+    folded = unicodedata.normalize("NFKD", str(text).lower())
+    return re.findall(r"[a-z0-9]+", "".join(char for char in folded if not unicodedata.combining(char)))
+
+
+def cache_recipes(conn, recipes: list[dict], query: str) -> dict:
+    """Researched web recipes kept for the next rounds and conversations (PL8); the owner's own recipes are never cached."""
+    for recipe in recipes:
+        errors = sorted(RECIPE_VALIDATOR.iter_errors(recipe), key=str)
+        if errors:
+            raise DomainError("invalid_recipe", "recipe does not match contracts/recipe.schema.json", errors=[e.message for e in errors[:10]])
+        if not str(recipe["source_url"]).startswith(("http://", "https://")):
+            raise DomainError("not_a_web_recipe", "only researched web recipes are cached", name=recipe["name"])
+    with conn.transaction():
+        for recipe in recipes:
+            db.upsert_cached_recipe(conn, recipe, " ".join(_normalized_words(recipe["name"])), query)
+    return {"cached": len(recipes)}
+
+
+def find_cached_recipes(conn, query: str, exclude_dish_names: list[str] | None = None, limit: int = 3) -> dict:
+    """Cached recipes whose title holds every word of the subject (case and accents ignored), newest first."""
+    wanted = set(_normalized_words(query))
+    excluded = {" ".join(_normalized_words(name)) for name in exclude_dish_names or []}
+    found = [recipe for normalized, recipe in db.cached_recipes(conn)
+             if wanted and wanted <= set(normalized.split()) and normalized not in excluded]
+    return {"recipes": found[:max(1, min(int(limit), 10))]}
+
 
 def _refuse_conversions(conversions: list[dict]) -> None:
     """Web measures waiting for her click are named as such (PL6); other gaps ask her for a conversion factor."""

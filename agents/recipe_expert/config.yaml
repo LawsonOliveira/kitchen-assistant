@@ -41,6 +41,8 @@ mcp_servers:
         - set_launch_batch_portions
         - record_measure_quote
         - confirm_measure
+        - find_cached_recipes
+        - cache_recipes
         - confirm_dish_requirement
         - accept_dish
         - update_kitchen_profile

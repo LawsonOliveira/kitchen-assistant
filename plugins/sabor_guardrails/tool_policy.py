@@ -20,7 +20,7 @@ def _mcp(*tools: str) -> set[str]:
 
 ALLOWED = {
     "fifi": {"clarify", "memory"} | ASK_TOOLS | SKILLS | _mcp(*READ),
-    "recipe_expert": {"research"} | SKILLS | _mcp(*READ, "check_viability", "register_candidate_dish", "reject_candidate_dish", "set_launch_batch_portions", "record_measure_quote", "confirm_measure",
+    "recipe_expert": {"research"} | SKILLS | _mcp(*READ, "check_viability", "register_candidate_dish", "reject_candidate_dish", "set_launch_batch_portions", "record_measure_quote", "confirm_measure", "find_cached_recipes", "cache_recipes",
                                                   "confirm_dish_requirement", "accept_dish", "update_kitchen_profile"),
     "cost_expert": {"research"} | SKILLS | _mcp(*READ, "compute_dish_cost", "check_budget_fit", "simulate_promotion",
                                                 "record_price_quote", "set_dish_packaging", "register_purchase", "adjust_budget",

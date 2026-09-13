@@ -133,6 +133,17 @@ def conversion_factors(conn) -> dict[tuple[str, str], tuple[Decimal, str]]:
     return {(row["name"], row["measure"]): (row["amount_base"], row["amount_base_unit"]) for row in rows}
 
 
+def upsert_cached_recipe(conn, recipe: dict, name_normalized: str, query: str) -> None:
+    conn.execute("INSERT INTO recipe_cache (source_url, name, name_normalized, recipe, query) VALUES (%s, %s, %s, %s, %s) "
+                 "ON CONFLICT (source_url) DO UPDATE SET name = EXCLUDED.name, name_normalized = EXCLUDED.name_normalized, "
+                 "recipe = EXCLUDED.recipe, query = EXCLUDED.query, cached_at = now()",
+                 (recipe["source_url"], recipe["name"], name_normalized, Jsonb(recipe), query))
+
+
+def cached_recipes(conn) -> list[tuple[str, dict]]:
+    return conn.execute("SELECT name_normalized, recipe FROM recipe_cache ORDER BY cached_at DESC, id DESC").fetchall()
+
+
 def measures(conn) -> dict:
     rows = conn.execute("SELECT measure, ingredient_name, amount_base, amount_base_unit, source, source_url FROM measures "
                         "WHERE superseded_at IS NULL").fetchall()

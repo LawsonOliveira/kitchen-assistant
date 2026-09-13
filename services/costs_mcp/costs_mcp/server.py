@@ -26,7 +26,7 @@ READ_TOOLS = {"get_pantry", "get_state_summary", "check_pantry_match", "get_laun
 TOOL_PERMISSIONS = {
     "fifi": READ_TOOLS,
     "recipe_expert": READ_TOOLS | {
-        "check_viability", "register_candidate_dish", "reject_candidate_dish", "set_launch_batch_portions", "record_measure_quote", "confirm_measure", "confirm_dish_requirement",
+        "check_viability", "register_candidate_dish", "reject_candidate_dish", "set_launch_batch_portions", "record_measure_quote", "confirm_measure", "find_cached_recipes", "cache_recipes", "confirm_dish_requirement",
         "accept_dish", "update_kitchen_profile",
     },
     "cost_expert": READ_TOOLS | {
