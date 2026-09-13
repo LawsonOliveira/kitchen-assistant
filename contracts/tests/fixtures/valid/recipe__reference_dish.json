@@ -1,0 +1,52 @@
+{
+  "name": "Arroz com frango grelhado",
+  "source_url": "https://example.com/receitas/arroz-com-frango",
+  "yield_portions": 4,
+  "prep_time_minutes": 45,
+  "ingredients": [
+    {
+      "name": "Arroz branco tipo 1",
+      "quantity": 400,
+      "unit": "g",
+      "pantry_match": "Arroz branco tipo 1"
+    },
+    {
+      "name": "Peito de frango",
+      "quantity": 600,
+      "unit": "g",
+      "pantry_match": "Peito de frango"
+    },
+    {
+      "name": "Alho",
+      "quantity": 2,
+      "unit": "clove",
+      "pantry_match": "Alho"
+    },
+    {
+      "name": "Óleo de soja",
+      "quantity": 2,
+      "unit": "tablespoon",
+      "pantry_match": "Óleo de soja"
+    },
+    {
+      "name": "Sal",
+      "quantity": null,
+      "unit": "to_taste",
+      "pantry_match": "Sal"
+    },
+    {
+      "name": "Cheiro-verde fresco",
+      "quantity": 10,
+      "unit": "g",
+      "pantry_match": null
+    }
+  ],
+  "requirements": [
+    "stove_burners>=2",
+    "technique:meat_doneness",
+    "max_batch_time_minutes>=45",
+    "gas_or_energy:botijão",
+    "other:frigideira grande",
+    "oven"
+  ]
+}

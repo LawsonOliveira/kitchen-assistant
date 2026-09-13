@@ -1,0 +1,14 @@
+{
+  "name": "Arroz com frango grelhado",
+  "source_url": "https://example.com/receitas/arroz-com-frango",
+  "yield_portions": 4,
+  "prep_time_minutes": 45,
+  "requirements": [
+    "stove_burners>=2",
+    "technique:meat_doneness",
+    "max_batch_time_minutes>=45",
+    "gas_or_energy:botijão",
+    "other:frigideira grande",
+    "oven"
+  ]
+}

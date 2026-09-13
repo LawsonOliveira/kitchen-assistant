@@ -1,0 +1,16 @@
+{
+  "span_id": "span-1",
+  "parent_span_id": null,
+  "agent": "fifi",
+  "kind": "tool_call",
+  "name": "ask_cost_expert",
+  "status": "ok",
+  "started_at": "2026-09-12T12:00:00Z",
+  "duration_ms": 120,
+  "model": null,
+  "prompt_hash": null,
+  "tokens_in": null,
+  "tokens_out": null,
+  "cost_usd": null,
+  "preview": "cost_expert match_and_cost"
+}

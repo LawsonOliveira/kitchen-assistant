@@ -1,0 +1,17 @@
+{
+  "trace_id": "trace-1",
+  "span_id": "span-2",
+  "parent_span_id": "span-1",
+  "agent": "fifi",
+  "kind": "llm_call",
+  "name": "claude-sonnet-5",
+  "status": "ok",
+  "started_at": "2026-09-12T12:00:00Z",
+  "duration_ms": 120,
+  "model": "claude-sonnet-5",
+  "prompt_hash": "ab12",
+  "tokens_in": 1200,
+  "tokens_out": 300,
+  "cost_usd": 0.0081,
+  "preview": "cost_expert match_and_cost"
+}

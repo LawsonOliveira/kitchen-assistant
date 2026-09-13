@@ -1036,7 +1036,7 @@ flowchart TD
   `ANTHROPIC_API_KEY`), `SABOR_TURN_COST_CAP_USD=5.00`,
   `SABOR_IMPORT_DIR=/opt/data/cache/documents`, `API_SERVER_KEY` (fifi's Hermes API server, used by
   the guardrail self-test and the evals). No GitHub remote (D45).
-- [ ] 2. *(sequential)* Write every test in **Tests** above; run them red; commit `test: L0 …`.
+- [x] 2. *(sequential)* Write every test in **Tests** above; run them red; commit `test: L0 …`.
 - [ ] 3. *(parallel with each other; 3b needs 3a's recipe schema)*
   - [ ] a) `contracts/recipe.schema.json`, `contracts/requirements.json`,
     `contracts/events.schema.json` exactly as in *Shared definitions*.
@@ -1839,3 +1839,10 @@ Queued during implementation (each: what it blocks, the question, the default if
    while the Langfuse v4 stack recommends 16 GiB. **Default:** keep Langfuse in the default compose as
    decided (D33), set container memory limits, and if the stack is unstable make it an opt-in compose
    profile documented in the README.
+4. **Affects** Loop 0 test "A2A edges": the plan expects an Agent Card GET without a token to return
+   401, but Hermes serves Agent Cards publicly (`plugins/platforms/a2a/adapter.py`, `do_GET` returns the
+   card before any auth check); authentication and the trust list are enforced on JSON-RPC POSTs
+   (401 unknown/missing token, 403 untrusted identity). **Default (implemented, marked
+   `TODO(open question 4)` in `scripts/smoke_a2a.sh`):** assert the card is served (200) and assert
+   auth on a `GetTask` POST for a nonexistent task — it passes the auth/trust checks without starting an
+   agent turn; allowed edges → 200, missing/wrong token → 401, disallowed caller → 401 or 403.
