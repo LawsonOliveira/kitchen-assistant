@@ -18,12 +18,19 @@ MSG
   exit 2
 fi
 
+# Agents stop first: a turn still running from an interrupted trial could write between the TRUNCATE and the seed, and
+# costs-mcp only seeds an empty database. Stopping fifi also ends any CLI session left inside it.
+# shellcheck disable=SC2086
+docker compose stop $AGENTS >/dev/null
 docker compose exec -T postgres psql -U sabor -d sabor -q -c "TRUNCATE $TABLES RESTART IDENTITY CASCADE"
-docker compose exec -T -u hermes fifi sh -c 'rm -f /opt/data/memories/* /opt/data/cache/documents/*'
+docker compose run --rm --no-deps -T --entrypoint sh fifi -c 'rm -f /opt/data/memories/* /opt/data/cache/documents/*' >/dev/null
 docker compose restart costs-mcp >/dev/null
 docker compose up -d --wait costs-mcp >/dev/null
-# shellcheck disable=SC2086
-docker compose restart $AGENTS >/dev/null
+ingredients=$(docker compose exec -T postgres psql -U sabor -d sabor -At -c "SELECT count(*) FROM ingredients")
+if ! [ "${ingredients:-0}" -gt 0 ] 2>/dev/null; then
+  echo "eval-reset: the spreadsheet seed did not run (ingredients=${ingredients:-none}); agents left stopped" >&2
+  exit 1
+fi
 # shellcheck disable=SC2086
 docker compose up -d --wait $AGENTS >/dev/null
-docker compose exec -T postgres psql -U sabor -d sabor -At -c "SELECT 'ingredients=' || count(*) FROM ingredients; SELECT 'budget_remaining=' || remaining FROM budget_status"
+echo "eval-reset: ingredients=$ingredients, agents up"

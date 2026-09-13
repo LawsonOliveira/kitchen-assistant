@@ -51,15 +51,34 @@ Behavior:
 Facts you know. Say each one only when Dona Fifi asks about its topic, in your own short words; never volunteer them:
 {facts}
 Rules: write one short message in colloquial Brazilian Portuguese, as {profile['name']}, never as the assistant. Never
-invent facts beyond these; if asked something not covered, say you don't know. When your goal is reached and Dona Fifi
-has nothing left to ask you, reply exactly {END_MARKER}."""
+invent facts beyond these; if asked something not covered, say you don't know. Your pantry, prices and budget are already
+in Dona Fifi's system: never say you have or lack an ingredient unless a fact above says so. When your goal is reached
+and Dona Fifi has nothing left to ask you, reply exactly {END_MARKER}."""
+
+
+def _messages(transcript: list[dict]) -> list[dict]:
+    """The persona speaks as the assistant role; Dona Fifi is the other speaker."""
+    return [{"role": "assistant" if turn["speaker"] == "owner" else "user", "content": turn["text"]} for turn in transcript]
 
 
 def next_message(llm, scenario: dict, transcript: list[dict]) -> str | None:
     """transcript: [{"speaker": "owner"|"fifi", "text"}]. None when the persona ends the conversation."""
-    messages = [{"role": "assistant" if turn["speaker"] == "owner" else "user", "content": turn["text"]} for turn in transcript]
-    text = llm(system_prompt(scenario), messages).strip()
+    text = llm(system_prompt(scenario), _messages(transcript)).strip()
     return None if text.upper() == END_MARKER else text
+
+
+def answer_clarify(llm, scenario: dict, transcript: list[dict], question: str, choices: list[str]) -> dict:
+    """The scenario's clarify answer when it names one of the choices; otherwise the persona decides, as the owner would
+    (a free-text clarify has no choices, so she always answers in her own words)."""
+    answer = clarify_answer(scenario.get("clarify_answers") or [{"default": "Cancelar"}], question)
+    if choices:
+        index = choice_index(answer, choices)
+        if not isinstance(index, tuple) and 0 <= index < len(choices):
+            return answer
+    options = "\n".join(f"- {choice}" for choice in choices) or "(no buttons: answer in your own words)"
+    prompt = (f"Dona Fifi asks you, with buttons:\n{question}\nOptions:\n{options}\n"
+              "Reply with exactly the text of one option, or a short answer in your own words if none fits.")
+    return {"choice": llm(system_prompt(scenario), _messages(transcript) + [{"role": "user", "content": prompt}]).strip()}
 
 
 IN_FIFI = r'''
