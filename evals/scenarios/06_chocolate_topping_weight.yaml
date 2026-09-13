@@ -34,9 +34,7 @@ trajectory_rules:
     first: {tool: set_conversion_factor, args: {ingredient_name: "Cobertura de chocolate"}}
     then: [{tool: compute_dish_cost, result_text_contains: "Cobertura de chocolate"}]
     require_then: true
-  - id: "the_weight_was_not_guessed"
-    type: precedes
-    first: {tool: compute_dish_cost, error_code: missing_conversion}
-    then: [{tool: set_conversion_factor}]
-    require_then: true
+  - id: "the_weight_came_from_the_owner"
+    type: evidence_from_owner
+    call: {tool: set_conversion_factor}
 rubric_focus: [didactic_clarity, clarity_of_numbers]

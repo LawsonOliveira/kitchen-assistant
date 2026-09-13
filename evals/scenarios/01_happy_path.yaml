@@ -14,6 +14,8 @@
 #   click_before           every successful call to `tools` is preceded in fifi's session by a `clarify`
 #                          answered "Confirmar" issued after the previous such write.
 #   called / not_called    at least one / no call matching `call`.
+#   evidence_from_owner    every successful call matching `call` has an `evidence` argument that appears in one of
+#                          the owner's messages or clarify answers in fifi's session (the value was not guessed).
 #   rejected_dish_not_suggested_again
 #                          after `reject_candidate_dish`, every `ask_recipe_expert` `suggest_dishes` request lists
 #                          the rejected dish name in `payload.exclude_dish_names`, and no new candidate repeats it.
