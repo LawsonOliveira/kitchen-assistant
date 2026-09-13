@@ -89,6 +89,12 @@ def _ask(expert: str):
     return handler
 
 
+def _field(name: str, spec: dict) -> str:
+    """A payload field for the model: short enums inline ("status: available|unavailable"), long ones by name only."""
+    values = spec.get("enum", [])
+    return f"{name}: {'|'.join(map(str, values))}" if 0 < len(values) <= 6 else name
+
+
 def _task_guide(expert: str) -> tuple[list[str], str]:
     """Task names and a one-line payload guide per task, read from the expert's request contract (single source)."""
     from .validation import CONTRACTS_DIR
@@ -103,7 +109,7 @@ def _task_guide(expert: str) -> tuple[list[str], str]:
         requirement = (" — requires owner_confirmation" if "owner_confirmation" in needs and "anyOf" not in needs else
                        " — requires owner_confirmation or owner_statement" if "anyOf" in needs else
                        " — requires owner_statement" if "owner_statement" in needs else "")
-        fields = ", ".join(payload.get("properties", {})) or "url | recipe | owner_recipe_text"
+        fields = ", ".join(_field(name, spec) for name, spec in payload.get("properties", {}).items()) or "url | recipe | owner_recipe_text"
         lines.append(f"{rule['if']['properties']['task']['const']}: payload {{{fields}}}{requirement}")
     return contract["properties"]["task"]["enum"], "; ".join(lines)
 
