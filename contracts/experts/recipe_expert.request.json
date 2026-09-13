@@ -159,6 +159,12 @@
               },
               "recipe": {
                 "$ref": "https://sabor.local/contracts/recipe.schema.json"
+              },
+              "owner_recipe_text": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2000,
+                "description": "The recipe in the owner's own words, when she dictates it."
               }
             }
           }

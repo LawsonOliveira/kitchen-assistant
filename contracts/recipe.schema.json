@@ -8,7 +8,7 @@
   "required": ["name", "source_url", "yield_portions", "prep_time_minutes", "ingredients", "requirements"],
   "properties": {
     "name": { "type": "string", "minLength": 1, "maxLength": 80 },
-    "source_url": { "type": "string", "maxLength": 500, "pattern": "^https?://[^\\s]+$" },
+    "source_url": { "type": "string", "maxLength": 500, "pattern": "^(https?://[^\\s]+|owner)$", "description": "URL of the fetched recipe page, or \"owner\" when Dona Maria dictated the recipe herself." },
     "yield_portions": { "type": "integer", "minimum": 1 },
     "prep_time_minutes": { "type": "integer", "minimum": 1 },
     "ingredients": { "type": "array", "minItems": 1, "maxItems": 40, "items": { "$ref": "#/$defs/ingredient" } },

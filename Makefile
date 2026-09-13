@@ -34,7 +34,8 @@ test-plugins:
 smoke-a2a:
 	bash scripts/smoke_a2a.sh
 
-smoke-research:  
+smoke-research:  # live: real Tavily and model calls through the researcher contract
+	bash scripts/smoke_research.sh
 
 db-shell:
 	$(COMPOSE) exec postgres psql -U sabor -d sabor

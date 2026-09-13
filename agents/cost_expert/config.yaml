@@ -27,6 +27,8 @@ mcp_servers:
     headers:
       Authorization: "Bearer ${COSTS_MCP_TOKEN}"
     tools:
+      resources: false  # no generated read_resource/list_resources utilities (correction C22)
+      prompts: false  # no generated get_prompt/list_prompts utilities
       include:  # read + compute only until Loop 3's owner-confirmation protocol exists (correction C16)
         - get_pantry
         - get_state_summary

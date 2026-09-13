@@ -17,7 +17,8 @@ Use this whenever a recipe from `research` must become the recipe contract
    "a gosto" -> to_taste with quantity null. Fractions become decimals (1/2 -> 0.5).
 3. **Quantities.** Copy them from the page. If a quantity is missing, do not guess: put the ingredient with
    unit to_taste only when the page says "a gosto"; otherwise add a question to `questions_for_owner`.
-4. **Yield and time.** `yield_portions` and `prep_time_minutes` come from the page. If the page omits the yield,
+4. **Yield and time.** `yield_portions` and `prep_time_minutes` come from the page (or from the owner's words;
+   an owner-dictated recipe has `source_url` "owner", never a made-up URL). If the page omits the yield,
    use 1 and add the question "Quantas porções essa receita rende na sua marmita?".
 5. **Requirements.** Equipment and techniques from the preparation steps, only from the vocabulary:
    oven, pressure_cooker, blender, mixer, air_fryer, food_processor, microwave, grill, deep_fryer,

@@ -1882,6 +1882,33 @@ evidence, what was changed, and where. Open questions that were "default applied
   and researcher get `cost_usd_spent: 0.0` from a `transform_llm_output` hook when the model omits it (the
   contracts require it; the real spend arrives with Loop 4 step 6c).
 
+- **C21 — Owner-dictated recipes have a contract path.** The Loop 1 manual check ("ask fifi to price the
+  reference dish") had no valid route: `recipe.source_url` had to be an http URL and `normalize_recipe` took only
+  `url` or a full recipe. fifi built recipe JSON itself six times (`invalid_request` each time, nothing sent), and
+  recipe_expert finally invented `https://owner-provided.local/…` to satisfy the schema. Fix, tests first
+  (fixtures red run: 2 failed): `source_url` also accepts the literal `"owner"`, and `normalize_recipe` accepts
+  `{"owner_recipe_text": "<her words>"}` (1–2000 characters, still exactly one payload property). fifi's
+  `SOUL.md` sends the owner's words instead of writing JSON; recipe_expert's `SOUL.md` and the
+  recipe-normalization skill set `source_url: "owner"` and never call `research` for them. A researcher child
+  that returned `"owner"` would still be dropped by the provenance filter (the URL was never visited).
+- **C22 — No generated MCP resource/prompt utilities.** fifi called `read_resource` and `get_prompt` on costs-mcp
+  looking for the recipe schema (costs-mcp serves neither). Every `mcp_servers.costs.tools` block now sets
+  `resources: false` and `prompts: false`, so agents see only the allowlisted tools.
+- **C23 — fifi shows how each ingredient cost was found.** In the first reference-dish conversation the three
+  prices were right (R$ 7,90 / 9,90 / 10,90) but fifi omitted the line "R$ 24,90 ÷ 5 kg = R$ 4,98/kg" although
+  `compute_dish_cost` returned every part. fifi's `SOUL.md` now renders each ingredient as
+  `<total_price_paid_display> ÷ <quantity_purchased_display> = <unit_cost_display>; usa <quantity_used_display> =
+  <cost_display>`, copying the tool's display strings.
+- **C24 — The web-recipe path stops at household measures until Loop 3.** Live E2E "frango e arroz": fifi →
+  recipe_expert → researcher (one web child) → fifi asked about the stove → cost_expert → `compute_dish_cost`
+  answered `missing_conversion` for "1 unit" of chicken breast, onion and tomato and "1 teaspoon" of salt (pantry
+  base unit g; the table has no such factors), and cost_expert returned the four questions without writing
+  anything (0 conversion factors, 37 spreadsheet prices). Recording the owner's answers needs
+  `set_conversion_factor`, which C16 withholds until Loop 3's confirmation protocol, so the CMV hand-check for
+  Loop 0 is done on the reference-dish conversation, which crosses fifi → recipe_expert → cost_expert →
+  costs-mcp with the same tools. fifi also tried `clarify`, unavailable in non-interactive `hermes chat -Q`, and
+  then asked in plain text as its `SOUL.md` says.
+
 ## Final manual step (owner — after Loop 8, not executed by the agent)
 Kept here so it is not forgotten: no loop creates a GitHub remote or submits the challenge.
 - [ ] Create the GitHub repository, add it as `origin` and push.
