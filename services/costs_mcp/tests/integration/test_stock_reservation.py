@@ -45,3 +45,12 @@ def test_purchase_adds_availability_without_touching_pantry_stock(conn):
     )
     assert pantry_stock(conn, "Tomate") == Decimal("2000")
     operations.accept_dish(conn, dish_b)  # 2000 + 1000 - 1500 = 1500 available >= 800
+
+
+def test_an_accepted_dish_counts_its_own_reservation_as_available(conn):
+    # Loop 3 scenario 05: budget_fit on the accepted sauce reported its own reserved 2 kg of tomato as missing.
+    viable_profile(conn)
+    dish = tomato_dish(conn, 1000, "Molho da vó", yield_portions=4, launch_batch_portions=8)
+    operations.accept_dish(conn, dish)
+    assert operations.check_pantry_match(conn, dish)["missing"] == []
+    assert operations.check_budget_fit(conn, dish)["missing_items"] == []
