@@ -200,3 +200,17 @@ def test_a_url_that_web_extract_could_not_fetch_is_not_visited(monkeypatch):
     failed = json.dumps({"results": [{"url": FAKE["source_url"], "title": "", "content": "", "error": "Blocked: private network"}]})
     assert hooks.transform_tool_result(tool_name="web_extract", args={"urls": [FAKE["source_url"]]}, result=failed, session_id="session-1") is None
     assert hooks.fan_out(FakeLifecycle(json.dumps(FAKE)), Request, "session-1", "recipe_search", ["a"])["results"] == []
+
+
+def test_a_research_child_gets_a_few_web_calls_per_tool_then_answers_with_what_it_read():
+    # PL9 lever 3: the paused eval trial spent 120 Haiku calls on a handful of research children. Hermes launches lifecycle
+    # children with its fixed DEFAULT_MAX_ITERATIONS (SubagentLaunchRequest has no iteration field, and
+    # delegation.max_iterations only applies to delegate_task), so the cap is enforced here, per child and per web tool.
+    request("session-1", "recipe_search", "frango com arroz")
+    hooks.subagent_start(parent_session_id="session-1", child_session_id="child-1")
+    for _ in range(3):
+        assert hooks.pre_tool_call(tool_name="web_search", args={"query": "x"}, session_id="child-1") is None
+    assert hooks.pre_tool_call(tool_name="web_search", args={"query": "x"}, session_id="child-1")["action"] == "block"
+    assert hooks.pre_tool_call(tool_name="web_extract", args={"urls": ["https://a.example"]}, session_id="child-1") is None
+    for _ in range(5):  # researcher itself is never capped
+        assert hooks.pre_tool_call(tool_name="web_search", args={"query": "x"}, session_id="session-1") is None
