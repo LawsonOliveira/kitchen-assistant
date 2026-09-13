@@ -2018,6 +2018,13 @@ evidence, what was changed, and where. Open questions that were "default applied
   `register_purchase.source_url` is optional (a missing key made fifi ask the owner for a store link); fifi's
   prompt asks `budget_fit` first and `price_missing_item` only for ingredients reported without a price.
 
+- **C38 — A rejection is always recorded, even for a candidate never registered.** Loop 3 scenario 09 (first
+  attempt): candidates are presented before registration, so when the owner rejected the first one ("dá muito
+  trabalho pra marmita") fifi only acknowledged it; nothing reached `reject_candidate_dish` (it needs a registered
+  candidate), so the rejection was not auditable and could not keep the dish out of later rounds. fifi's `SOUL.md`
+  now registers the rejected recipe as a candidate (launch batch = its yield, her words as evidence) and rejects it
+  with her reason at once; the scenario was rerun from a reset state.
+
 ## Final manual step (owner — after Loop 8, not executed by the agent)
 Kept here so it is not forgotten: no loop creates a GitHub remote or submits the challenge.
 - [ ] Create the GitHub repository, add it as `origin` and push.
