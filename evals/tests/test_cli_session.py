@@ -71,3 +71,26 @@ def test_keys_to_reach_a_choice_from_the_highlighted_one():
     assert cli_session.keys_to(selected=0, target=1) == ["down", "enter"]
     assert cli_session.keys_to(selected=2, target=0) == ["up", "up", "enter"]
     assert cli_session.keys_to(selected=1, target=1) == ["enter"]
+
+
+FREE_TEXT = """╭─ Hermes needs your input ────────────────────────────────────────╮
+│ 1 questions                                                      │
+│ ▸ Quantas porções do arroz com frango você vai preparar no lote  │
+│   de lançamento? A receita rende 6 porções normalmente.          │
+╰──────────────────────────────────────────────────────────────────╯
+  ❓ clarify  (  6.5s · ↓ 797 tok)
+  type your answer and press Enter  (113s)
+✎ ❯ type your answer here and press Enter""".splitlines()
+
+
+def test_a_free_text_clarify_has_its_question_and_no_choices():
+    assert cli_session.parse_clarify(FREE_TEXT) == {
+        "question": "Quantas porções do arroz com frango você vai preparar no lote de lançamento? A receita rende 6 porções normalmente.",
+        "choices": [], "selected": 0, "other": None}
+
+
+def test_actions_for_a_choice_an_other_answer_and_a_free_text_answer():
+    clarify = cli_session.parse_clarify(CLARIFY_TWO)
+    assert cli_session.clarify_actions(clarify, 1) == [("keys", ["down", "enter"])]
+    assert cli_session.clarify_actions(clarify, ("other", "Tenho 3 bocas")) == [("keys", ["down", "down", "enter"]), ("text", "Tenho 3 bocas")]
+    assert cli_session.clarify_actions(cli_session.parse_clarify(FREE_TEXT), ("other", "10 porções")) == [("text", "10 porções")]
