@@ -117,6 +117,10 @@ services:
       API_SERVER_HOST: 127.0.0.1
       API_SERVER_PORT: "8642"
       API_SERVER_KEY: ${API_SERVER_KEY:?set API_SERVER_KEY in .env}
+      # Telegram (Loop 7): the gateway starts the channel only with a token, and without an allowlist it refuses
+      # every user; received files land in fifi_documents like CLI imports.
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_ALLOWED_USERS: ${TELEGRAM_ALLOWED_USERS:-}
     volumes:
       - ./agents/fifi:/seed:ro
       - hermes_fifi:/opt/data

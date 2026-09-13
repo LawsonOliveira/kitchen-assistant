@@ -2191,3 +2191,11 @@ Queued during implementation (each: what it blocks, the question, the default if
    her words), exposed as recipe_expert task `set_launch_batch`?
    **Default if unanswered:** yes — test-first in costs-mcp (candidate only; accepted dishes keep their reservation),
    added to TOOL_PERMISSIONS, the recipe_expert contract and fifi's prompt, recorded as a correction.
+12. **OPEN** — **Blocks** Loop 7's Telegram manual checks (`evals/manual/loop7_telegram.md` rows 1–7) and therefore
+   Loop 7's DoD "reference dish priced end to end over Telegram"; the skin, the fixture and the compose wiring are
+   done. `.env` has no `TELEGRAM_BOT_TOKEN` or `TELEGRAM_ALLOWED_USERS`. Can you create a bot with @BotFather, put
+   its token in `.env` as `TELEGRAM_BOT_TOKEN`, put your numeric Telegram user id (from @userinfobot) in
+   `TELEGRAM_ALLOWED_USERS`, and have a second Telegram account available for the "not allowlisted gets no reply"
+   check?
+   **Default if unanswered:** none — Telegram stays off (the gateway starts the channel only with a token and refuses
+   everyone without an allowlist); Loop 7 is left unchecked and Loop 8's README documents the setup steps.
