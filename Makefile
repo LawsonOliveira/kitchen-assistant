@@ -2,7 +2,7 @@ COMPOSE := docker compose
 UV := uv
 AGENT_PYTHON := /opt/hermes/.venv/bin/python
 
-.PHONY: up down logs chat test test-integration test-contracts test-plugins smoke-a2a db-shell hermes-shell
+.PHONY: up down logs chat test test-integration test-contracts test-plugins smoke-a2a smoke-research db-shell hermes-shell
 
 up:
 	$(COMPOSE) up -d --build --wait
@@ -33,6 +33,8 @@ test-plugins:
 
 smoke-a2a:
 	bash scripts/smoke_a2a.sh
+
+smoke-research:  
 
 db-shell:
 	$(COMPOSE) exec postgres psql -U sabor -d sabor

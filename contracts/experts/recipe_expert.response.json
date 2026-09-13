@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sabor.local/contracts/experts/recipe_expert.response.json",
+  "title": "recipe_expert response",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "result",
+    "questions_for_owner",
+    "cost_usd_spent"
+  ],
+  "properties": {
+    "result": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "candidates": {
+          "type": "array",
+          "maxItems": 3,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "recipe"
+            ],
+            "properties": {
+              "recipe": {
+                "$ref": "https://sabor.local/contracts/recipe.schema.json"
+              },
+              "pantry_coverage_pct": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0,
+                "maximum": 100
+              },
+              "missing_ingredients": {
+                "type": "array",
+                "maxItems": 40,
+                "items": {
+                  "type": "string",
+                  "maxLength": 60
+                }
+              }
+            }
+          }
+        },
+        "recipe": {
+          "$ref": "https://sabor.local/contracts/recipe.schema.json"
+        },
+        "error": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "code",
+            "message"
+          ],
+          "properties": {
+            "code": {
+              "type": "string",
+              "maxLength": 60
+            },
+            "message": {
+              "type": "string",
+              "maxLength": 300
+            }
+          }
+        }
+      }
+    },
+    "questions_for_owner": {
+      "type": "array",
+      "maxItems": 5,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      }
+    },
+    "cost_usd_spent": {
+      "type": "number",
+      "minimum": 0
+    }
+  }
+}

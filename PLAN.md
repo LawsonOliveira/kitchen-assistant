@@ -1347,7 +1347,7 @@ flowchart TD
   - [ ] b) `plugins/sabor_a2a/validation.py: validate(schema_path, text) -> dict` (`ContractError`) and
     `call_with_contract(peer, request, response_schema)` (invalid → resend once with the validation
     errors appended → still invalid → tool returns `{"error": {"code": "contract_violation"}}`).
-- [ ] 3. *(sequential, depends on 2a)* researcher: `SOUL.md`; plugin system-prompt section
+- [ ] 3. *(sequential, depends on 2a; delegation mechanism changed by C17/C18)* researcher: `SOUL.md`; plugin system-prompt section
   (`ctx.register_system_prompt_section`) active only
   when `platform == "subagent"` (child instructions: extract only from pages you fetched, fill the
   schema, never invent URLs or quantities); `plugins/sabor_a2a/researcher_hooks.py`: `pre_tool_call`
@@ -1837,6 +1837,50 @@ evidence, what was changed, and where. Open questions that were "default applied
   mirrors `TOOL_PERMISSIONS`, so models only see the tools the server would allow.
 - **C14 — Live E2E driven non-interactively.** `make chat` needs a TTY; live checks run
   `docker compose exec fifi hermes chat -Q -q "<message>"` and continue with `--resume <session id>`.
+- **C15 — cost_expert on Sonnet, not Haiku.** Second live turn: cost_expert (`claude-haiku-4-5-20251001`) looped
+  over `compute_dish_cost` (more than 20 MCP calls) and, when the tool answered `missing_conversion` /
+  `missing_price_quote`, invented conversion factors and web prices and wrote them with
+  `set_conversion_factor` / `record_price_quote` — without any owner confirmation (violates D14 and D27).
+  The owner had authorized moving a Haiku agent to Sonnet when the model causes repeated calls; cost_expert
+  now runs `claude-sonnet-5`. The turn was stopped, cost-expert restarted, and the polluted app database
+  recreated from the spreadsheet.
+- **C16 — No write tools for cost_expert before Loop 3.** Until the confirmation protocol (Loop 3 step 3)
+  exists, `agents/cost_expert/config.yaml` exposes only read and compute tools (`get_pantry`,
+  `get_state_summary`, `check_pantry_match`, `get_launch_menu`, `compute_dish_cost`, `check_budget_fit`);
+  its `SOUL.md` calls `compute_dish_cost` once, returns tool errors with the questions for the owner, and
+  forbids guessed values. Loop 3 restores the full allowlist together with `owner_confirmation`.
+
+- **C17 — researcher fans out through `fan_out_research`, not a model-issued `delegate_task`.** The live
+  research smoke returned `contract_violation`: the pinned Hermes (`run_agent._dispatch_delegate_task`) always runs
+  a top-level model delegation in the background and ignores the `background` argument, so researcher's A2A reply
+  ("subagent running in background…") left before any child finished, and the top-level `output_schema` injected
+  by `pre_tool_call` was dropped as well. Fix: `plugins/sabor_a2a/researcher_hooks.py` registers one tool,
+  `fan_out_research(task_type, items)`, which launches one `claude-haiku-4-5-20251001` child per item (toolset `web`
+  only, asked for a page in Brazilian Portuguese — the first live recipe was an English page) through the public plugin API `ctx.subagent_lifecycle`, waits for all of them with a shared 90-second
+  deadline (late children are cancelled), validates each child's JSON against the item schema (bundled, so the
+  child sees a self-contained schema in its context), applies the provenance filter and stores the merged reply;
+  `transform_llm_output` then returns that merged JSON as researcher's final answer, whatever the model wrote.
+  A model-issued `delegate_task` is always blocked; the `delegation`, `skills`, `session_search` and `memory`
+  toolsets are disabled for researcher; the unused `delegation.*` config keys were removed (the fan-out passes
+  model and timeout itself). A second `fan_out_research` in the same request returns `already_called`. The
+  tests in `plugins/tests/test_researcher_hooks.py` were rewritten first against this design (red run: 12 failed).
+- **C18 — Visited URLs come from `transform_tool_result`.** After C17 a real recipe was still reported in
+  `unverified_source`: Hermes wraps every tool execution in `suppress_post_tool_call_hook()` and the web children
+  run inside `fan_out_research`, so `post_tool_call` never fired for their `web_search`/`web_extract`. The hook is
+  now `transform_tool_result` returning `None` (observer only, result unchanged). URL collection also decodes the
+  JSON result first and accepts parentheses, because the real URL
+  `…/Rice_with_Chicken_(Arroz_com_frango).php` was cut at `(` by the old regex (new test first, red, then fix).
+- **C19 — Research request parsing survives retries and reused sessions.** `call_with_contract` resends the
+  request followed by the validation errors, which can contain braces; the task type is now read with
+  `json.JSONDecoder.raw_decode` from the first `{`. Each new A2A request also clears the URLs visited and the
+  merged result of its session, so a reused context cannot validate a recipe with an earlier request's URLs.
+- **C20 — Expert tools send contract requests.** Loop 2 step 5: `research`, `ask_recipe_expert`,
+  `ask_cost_expert` and `ask_marketing_expert` build `{task…, trace, owner_confirmation, owner_statement,
+  payload}` / `{task_type, trace, items}`, validate the request against its contract before sending (invalid →
+  `invalid_request`, nothing sent) and use `call_with_contract` for the reply. `trace` is a placeholder until
+  Loop 5 (fresh `trace_id`) and `turn_cost_remaining_usd` is the configured cap until Loop 4. Replies of experts
+  and researcher get `cost_usd_spent: 0.0` from a `transform_llm_output` hook when the model omits it (the
+  contracts require it; the real spend arrives with Loop 4 step 6c).
 
 ## Final manual step (owner — after Loop 8, not executed by the agent)
 Kept here so it is not forgotten: no loop creates a GitHub remote or submits the challenge.

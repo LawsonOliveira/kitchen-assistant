@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sabor.local/contracts/experts/cost_expert.response.json",
+  "title": "cost_expert response (task subschemas arrive in Loop 3)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "result",
+    "questions_for_owner",
+    "cost_usd_spent"
+  ],
+  "properties": {
+    "result": {
+      "type": "object"
+    },
+    "questions_for_owner": {
+      "type": "array",
+      "maxItems": 5,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 200
+      }
+    },
+    "cost_usd_spent": {
+      "type": "number",
+      "minimum": 0
+    }
+  }
+}

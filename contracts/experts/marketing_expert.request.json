@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sabor.local/contracts/experts/marketing_expert.request.json",
+  "title": "marketing_expert request (task subschemas arrive in Loop 3)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "task",
+    "trace",
+    "owner_confirmation",
+    "owner_statement",
+    "payload"
+  ],
+  "properties": {
+    "task": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 60
+    },
+    "trace": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "trace_id",
+        "parent_span_id",
+        "turn_cost_remaining_usd"
+      ],
+      "properties": {
+        "trace_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "parent_span_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 100
+        },
+        "turn_cost_remaining_usd": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
+    "owner_confirmation": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "choice",
+            "summary"
+          ],
+          "properties": {
+            "choice": {
+              "const": "Confirmar"
+            },
+            "summary": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 300
+            }
+          }
+        }
+      ]
+    },
+    "owner_statement": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 500
+    },
+    "payload": {
+      "type": "object"
+    }
+  }
+}

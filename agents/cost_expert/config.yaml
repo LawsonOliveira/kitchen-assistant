@@ -1,7 +1,7 @@
 # cost_expert — Hermes config seeded into HERMES_HOME on every start (agents/entrypoint.sh).
 _config_version: 42  # schema version of the pinned Hermes image; avoids the legacy-config migration path
 model:
-  default: claude-haiku-4-5-20251001
+  default: claude-sonnet-5  # was Haiku: looped and invented values (PLAN.md correction C15)
   provider: anthropic  # authenticated with CLAUDE_CODE_OAUTH_TOKEN (PLAN.md D46)
 terminal:
   cwd: /workspace
@@ -27,19 +27,10 @@ mcp_servers:
     headers:
       Authorization: "Bearer ${COSTS_MCP_TOKEN}"
     tools:
-      include:
+      include:  # read + compute only until Loop 3's owner-confirmation protocol exists (correction C16)
         - get_pantry
         - get_state_summary
         - check_pantry_match
         - get_launch_menu
         - compute_dish_cost
         - check_budget_fit
-        - simulate_promotion
-        - record_price_quote
-        - set_dish_packaging
-        - register_purchase
-        - adjust_budget
-        - correct_price
-        - set_conversion_factor
-        - select_price_scenario
-        - import_pantry

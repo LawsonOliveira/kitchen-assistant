@@ -10,7 +10,7 @@ plugins:
     - sabor_a2a
     - sabor_observability
 agent:
-  disabled_toolsets: [terminal, file, code_execution, browser, computer_use, image_gen, tts, video, video_gen, vision, cronjob, kanban, spotify, homeassistant, x_search, clarify]
+  disabled_toolsets: [terminal, file, code_execution, browser, computer_use, image_gen, tts, video, video_gen, vision, cronjob, kanban, spotify, homeassistant, x_search, clarify, delegation, skills, session_search, memory]  # research runs only through fan_out_research (C17)
 tools:
   tool_search:
     enabled: "off"  # tools are called directly, no tool_search/tool_call bridge (PLAN.md correction C8)
@@ -23,3 +23,6 @@ skills:
   write_approval: true
 web:
   backend: tavily
+memory:
+  memory_enabled: false
+  user_profile_enabled: false

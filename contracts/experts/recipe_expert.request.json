@@ -1,0 +1,169 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sabor.local/contracts/experts/recipe_expert.request.json",
+  "title": "recipe_expert request",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "task",
+    "trace",
+    "owner_confirmation",
+    "owner_statement",
+    "payload"
+  ],
+  "properties": {
+    "task": {
+      "enum": [
+        "suggest_dishes",
+        "normalize_recipe"
+      ]
+    },
+    "trace": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "trace_id",
+        "parent_span_id",
+        "turn_cost_remaining_usd"
+      ],
+      "properties": {
+        "trace_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "parent_span_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 100
+        },
+        "turn_cost_remaining_usd": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
+    "owner_confirmation": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "choice",
+            "summary"
+          ],
+          "properties": {
+            "choice": {
+              "const": "Confirmar"
+            },
+            "summary": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 300
+            }
+          }
+        }
+      ]
+    },
+    "owner_statement": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 500
+    },
+    "payload": {
+      "type": "object"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "task": {
+            "const": "suggest_dishes"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "pantry_focus",
+              "owner_preferences",
+              "exclude_dish_names",
+              "max_candidates"
+            ],
+            "properties": {
+              "pantry_focus": {
+                "type": "array",
+                "maxItems": 20,
+                "items": {
+                  "type": "string",
+                  "maxLength": 60
+                }
+              },
+              "owner_preferences": {
+                "type": "array",
+                "maxItems": 10,
+                "items": {
+                  "type": "string",
+                  "maxLength": 120
+                }
+              },
+              "exclude_dish_names": {
+                "type": "array",
+                "maxItems": 20,
+                "items": {
+                  "type": "string",
+                  "maxLength": 80
+                }
+              },
+              "max_candidates": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 3
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "task": {
+            "const": "normalize_recipe"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "minProperties": 1,
+            "maxProperties": 1,
+            "properties": {
+              "url": {
+                "type": "string",
+                "maxLength": 500,
+                "pattern": "^https?://[^\\s]+$"
+              },
+              "recipe": {
+                "$ref": "https://sabor.local/contracts/recipe.schema.json"
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

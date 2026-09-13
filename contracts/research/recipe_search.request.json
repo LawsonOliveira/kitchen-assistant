@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sabor.local/contracts/research/recipe_search.request.json",
+  "title": "researcher request: recipe_search",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "task_type",
+    "trace",
+    "items"
+  ],
+  "properties": {
+    "task_type": {
+      "const": "recipe_search"
+    },
+    "trace": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "trace_id",
+        "parent_span_id",
+        "turn_cost_remaining_usd"
+      ],
+      "properties": {
+        "trace_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "parent_span_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 100
+        },
+        "turn_cost_remaining_usd": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
+    "items": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 5,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 120
+      }
+    }
+  }
+}

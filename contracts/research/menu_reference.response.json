@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sabor.local/contracts/research/menu_reference.response.json",
+  "title": "researcher response: menu_reference",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "task_type",
+    "results",
+    "cost_usd_spent"
+  ],
+  "properties": {
+    "task_type": {
+      "const": "menu_reference"
+    },
+    "results": {
+      "type": "array",
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "dish_name",
+          "description_length_chars",
+          "keywords"
+        ],
+        "properties": {
+          "dish_name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80
+          },
+          "description_length_chars": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2000
+          },
+          "keywords": {
+            "type": "array",
+            "maxItems": 8,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 20
+            }
+          }
+        }
+      }
+    },
+    "cost_usd_spent": {
+      "type": "number",
+      "minimum": 0
+    }
+  }
+}

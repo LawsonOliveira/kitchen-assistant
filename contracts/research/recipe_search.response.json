@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sabor.local/contracts/research/recipe_search.response.json",
+  "title": "researcher response: recipe_search (provenance-filtered)",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "task_type",
+    "results",
+    "unverified_source",
+    "cost_usd_spent"
+  ],
+  "properties": {
+    "task_type": {
+      "const": "recipe_search"
+    },
+    "results": {
+      "type": "array",
+      "maxItems": 5,
+      "items": {
+        "$ref": "https://sabor.local/contracts/recipe.schema.json"
+      }
+    },
+    "unverified_source": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+        "type": "string",
+        "maxLength": 500
+      }
+    },
+    "cost_usd_spent": {
+      "type": "number",
+      "minimum": 0
+    }
+  }
+}
