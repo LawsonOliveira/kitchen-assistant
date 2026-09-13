@@ -1529,61 +1529,61 @@ flowchart TD
   9,90 / 10,90 unblocked.
 
 **Steps**
-- [ ] 1. *(sequential)* Author the dataset, red-team cases, malicious page, unit tests and
+- [x] 1. *(sequential)* Author the dataset, red-team cases, malicious page, unit tests and
   `scripts/selftest.sh`; run red; commit `test: L4 …`.
-- [ ] 2. *(sequential)* Spikes, each answered in `plugins/sabor_guardrails/NOTES.md` (if one fails,
+- [x] 2. *(sequential)* Spikes, each answered in `plugins/sabor_guardrails/NOTES.md` (if one fails,
   stop and queue an open question): the synthetic response object the Anthropic transport accepts from
   an `llm_execution` short-circuit; how to recognize gateway helper agents in middleware; whether
   `post_api_request` exposes usage/cost for the cap (else compute from tokens × a price table in
   config); how a plugin emits a fixed progress message to the CLI and to Telegram.
-- [ ] 3. *(parallel with each other)*
-  - [ ] a) `classifier.py: classify(prompt_file, content, timeout_s) -> Verdict(verdict, category,
+- [x] 3. *(parallel with each other)*
+  - [x] a) `classifier.py: classify(prompt_file, content, timeout_s) -> Verdict(verdict, category,
     reason)` using the Anthropic SDK (pinned) with `claude-haiku-4-5-20251001`, key
     `SABOR_GUARD_API_KEY` or else `ANTHROPIC_API_KEY`, and JSON-schema structured output; raises
     `GuardInfraError` on timeout/network/parse; `SABOR_GUARD_TIMEOUT_SECONDS`
     is required (missing or ≥ 30 → the plugin refuses to load).
-  - [ ] b) `prompts/input_guard.md`, `prompts/output_policy.md`, `prompts/memory_guard.md` (English,
+  - [x] b) `prompts/input_guard.md`, `prompts/output_policy.md`, `prompts/memory_guard.md` (English,
     explicit output schema, examples incl. short replies); `prompt_hash` = sha256 of each file.
-  - [ ] c) `grounding.py: extract_brl(text) -> set[str]` (`R$ 1.234,56`, `R$ 7,90`, optional `/kg`,
+  - [x] c) `grounding.py: extract_brl(text) -> set[str]` (`R$ 1.234,56`, `R$ 7,90`, optional `/kg`,
     `/L`, `/un`) and `SessionGrounding.add_from_tool_result(result)` collecting every `*_display` money
     string from expert results in the session plus `"R$ 80,00"`; `ungrounded(text) -> set[str]`.
-  - [ ] d) `messages.py` exactly as in *Shared definitions*.
-- [ ] 4. *(sequential)* `input_guard.py` (`llm_execution` middleware, fifi only): `api_call_count == 0`,
+  - [x] d) `messages.py` exactly as in *Shared definitions*.
+- [x] 4. *(sequential)* `input_guard.py` (`llm_execution` middleware, fifi only): `api_call_count == 0`,
   not a helper agent; strip the gateway document note only when it matches the exact gateway format and
   its path is inside `SABOR_IMPORT_DIR` with `.xlsx`; classify owner message + fifi's last message
   (≤ 500 chars); `allow`/`uncertain` → `next_call`; `block` → synthetic `SCOPE_BLOCK_MESSAGE`; any
   exception → synthetic `INFRA_BLOCK_MESSAGE`; every path emits `guard_input`.
-- [ ] 5. *(sequential)* `output_guard.py` (`transform_llm_output`, fifi only, skip subagents/helpers):
+- [x] 5. *(sequential)* `output_guard.py` (`transform_llm_output`, fifi only, skip subagents/helpers):
   ungrounded R$ → `SCOPE_BLOCK_MESSAGE`; policy `allow` → original, `block`/`uncertain` →
   `SCOPE_BLOCK_MESSAGE`; any exception → `INFRA_BLOCK_MESSAGE`; the whole body wrapped so it always
   returns a string (Hermes would otherwise deliver the unverified original); emits `guard_output`.
-- [ ] 6. *(parallel with each other, depend on 3a)*
-  - [ ] a) `memory_guard.py`: `pre_tool_call` on `memory` → classifier; only `allow` passes; otherwise
+- [x] 6. *(parallel with each other, depend on 3a)*
+  - [x] a) `memory_guard.py`: `pre_tool_call` on `memory` → classifier; only `allow` passes; otherwise
     `{"action": "block", "message": MEMORY_BLOCK_MESSAGE}`.
-  - [ ] b) `tool_policy.py`: `pre_tool_call` allowlist by `SABOR_AGENT_ROLE`, installed on all five
+  - [x] b) `tool_policy.py`: `pre_tool_call` allowlist by `SABOR_AGENT_ROLE`, installed on all five
     agents — fifi {`clarify`, `memory`, `ask_*_expert`, costs read tools, skills tools}; experts
     {`research`, their MCP tools, skills tools}; researcher {`web_search`, `web_extract`,
     `delegate_task`, skills tools}; anything else blocked with a fixed text.
-  - [ ] c) `cost_cap.py`: per trace, accumulate own spend from API usage; fifi starts each turn with
+  - [x] c) `cost_cap.py`: per trace, accumulate own spend from API usage; fifi starts each turn with
     `SABOR_TURN_COST_CAP_USD` (required) and sends the remainder in `trace.turn_cost_remaining_usd`;
     `llm_execution` blocks the next call once spend ≥ the received remainder (experts and researcher
     return `turn_cost_cap_reached`); callers add each response's `cost_usd_spent`; fifi replaces the
     answer with `COST_CAP_MESSAGE`; emits an `error` event with the per-agent breakdown.
-  - [ ] d) `progress.py`: on `pre_tool_call` of `ask_recipe_expert` / `ask_cost_expert` /
+  - [x] d) `progress.py`: on `pre_tool_call` of `ask_recipe_expert` / `ask_cost_expert` /
     `ask_marketing_expert`, emit the matching fixed progress string (mechanism from the spike).
-- [ ] 7. *(sequential)* No-leak config on fifi: `display.streaming: false`, `streaming.enabled: false`,
+- [x] 7. *(sequential)* No-leak config on fifi: `display.streaming: false`, `streaming.enabled: false`,
   `display.platforms.telegram: {streaming: false, interim_assistant_messages: false, tool_progress:
   "off", long_running_notifications: "off"}`; enable `sabor_guardrails` in `plugins.enabled`; enable
   fifi's API server (`API_SERVER_ENABLED=true`, `API_SERVER_KEY`) bound to `127.0.0.1:8642` for the
   self-test and evals.
-- [ ] 8. *(sequential)* `scripts/selftest.sh` wired into `make chat` (non-zero exit blocks the CLI) and
+- [x] 8. *(sequential)* `scripts/selftest.sh` wired into `make chat` (non-zero exit blocks the CLI) and
   `make selftest`; emits a `health` event; run all tests and manual checks.
 
 **Definition of Done for this loop**
-- [ ] Tests above were written before the implementation steps
-- [ ] Steps completed, spikes documented
-- [ ] Tests above pass
-- [ ] Full Loop 3 flow still passes with guardrails on
+- [x] Tests above were written before the implementation steps
+- [x] Steps completed, spikes documented
+- [x] Tests above pass
+- [x] Full Loop 3 flow still passes with guardrails on
 
 ---
 
@@ -2027,6 +2027,37 @@ evidence, what was changed, and where. Open questions that were "default applied
   that registration ("owner_statement is a rejection, not interest") and fifi still told the owner the rejection was
   noted; recipe_expert's `SOUL.md` now accepts a rejection as evidence for that registration, and fifi's `SOUL.md`
   forbids claiming anything was recorded unless the expert's result confirms it.
+
+- **C39 — Guard classifier through Hermes' plugin LLM, not the Anthropic SDK with `SABOR_GUARD_API_KEY`.** Loop 4
+  step 3a named the SDK and a separate key, which D46 does not provide. Open question 2's approved fallback applies:
+  `classifier.classify` calls `ctx.llm.complete_structured` (same Claude Code credentials as the agent) with
+  `claude-haiku-4-5-20251001`, allowed only for this plugin in fifi's config
+  (`plugins.entries.sabor_guardrails.llm`). The manual "invalid guard key" check becomes "guard model not allowed":
+  with Haiku removed from `allowed_models`, the input guard answered `INFRA_BLOCK_MESSAGE` in `hermes chat -q`, and
+  the output guard returned `INFRA_BLOCK_MESSAGE` for a plain reply. Hermes prices Haiku as unknown, so the cost cap
+  uses tokens × a price table in the plugin (`cost_cap.PRICES`; spike notes §3).
+- **C40 — fifi's API server key and readiness.** The first self-test got 401: Hermes had generated its own
+  `API_SERVER_KEY` in `$HERMES_HOME/.env`, which it loads with `override=True`, so it beat the compose value.
+  `agents/entrypoint.sh` now deletes that line before starting Hermes. The next run got "connection refused"
+  because `up --wait` returned once `gateway run` existed; fifi's healthcheck now probes the API server's `/health`.
+- **C41 — The input guard classifies on `api_call_count == 1`.** Loop 4 said "acts only on `api_call_count == 0`",
+  but the pinned Hermes increments the count before each model call (`agent/turn_iteration_prep.py`), so the guard
+  never classified anything live; the first self-test passed only because the output guard blocked the canary reply.
+  Test corrected first (red: 10 failed), then the guard (spike notes §2).
+- **C42 — The Confirmar click reaches the ledger through `post_tool_call`, and an unsent request gives it back.**
+  Live scenario 01 rerun: after Dona Maria chose Confirmar, every `select_price_scenario` was blocked. `clarify` is an
+  inline agent tool: Hermes fires `pre_tool_call` and `post_tool_call` for it but never `transform_tool_result`
+  (spike notes §6). Tests first (red: 1 failed). The next rerun showed a second gap: the first request after the click
+  failed fifi's own contract check (`invalid_request`, nothing sent) and had already spent the click, so she had to
+  confirm the same price three times. A request carrying `owner_confirmation` that fails with `invalid_request` or
+  `missing_token` now returns the click; an expert's reply (even an error) keeps it spent. Tests first (red: 2 failed).
+- **C43 — The output policy judges only what a reply can show.** Two live false positives: Dona Fifi's report after
+  a confirmed write ("o prato está aceito e o preço fechado em R$ 9,90") was blocked by a rule "claims a write was
+  done without saying it was confirmed", which the verifier cannot check from the reply and D12 does not ask for
+  (the click check authorizes writes); and an acknowledgement of a memory the memory guard had allowed ("vou lembrar
+  de pular o coentro") was blocked as an instruction leak. The confirmation rule was removed and the leak rule names
+  Dona Fifi's own prompt and configuration only. Rechecked with the real guard model, twice per case: 4 allow
+  cases → allow, 6 block cases (health claim, competitor, tool leak, prompt leak, off-topic, web instruction) → block.
 
 ## Final manual step (owner — after Loop 8, not executed by the agent)
 Kept here so it is not forgotten: no loop creates a GitHub remote or submits the challenge.
