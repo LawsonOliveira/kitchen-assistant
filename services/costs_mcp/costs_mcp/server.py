@@ -9,6 +9,7 @@ import hmac
 import inspect
 import logging
 import os
+import time
 from pathlib import Path
 
 import uvicorn
@@ -16,7 +17,7 @@ from mcp.server.mcpserver import Context, MCPServer
 from mcp.server.transport_security import TransportSecuritySettings
 from starlette.responses import JSONResponse
 
-from costs_mcp import db, operations
+from costs_mcp import db, operations, telemetry
 from costs_mcp.pantry_import import seed_from_workbook
 
 log = logging.getLogger("costs_mcp")
@@ -51,7 +52,8 @@ def _error(code: str, message: str, **details) -> dict:
 
 
 def dispatch(conn, agent: str, tool: str, args: dict, trace_id: str | None = None):
-    """Permission check, call, commit or roll back, audit. Returns the result or the MCP error shape."""
+    """Permission check, call, commit or roll back, audit, telemetry. Returns the result or the MCP error shape."""
+    started_at, started = telemetry.now(), time.monotonic()
     if tool not in TOOL_PERMISSIONS.get(agent, set()):
         result = _error("forbidden", f"{agent} may not call {tool}", agent=agent, tool=tool)
     else:
@@ -73,6 +75,7 @@ def dispatch(conn, agent: str, tool: str, args: dict, trace_id: str | None = Non
     error_code = result["error"]["code"] if isinstance(result, dict) and "error" in result else None
     db.insert_audit(conn, agent, tool, args, result, error_code, trace_id)
     conn.commit()
+    telemetry.after_call(conn, agent, tool, trace_id, started_at, started, error_code)  # best-effort cockpit events
     return result
 
 

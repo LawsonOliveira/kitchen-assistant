@@ -1,0 +1,15 @@
+[project]
+name = "cockpit"
+version = "0.1.0"
+description = "Live pipeline view for Sabor da Maria (Python standard library only, PLAN.md D34)"
+requires-python = ">=3.12"
+dependencies = []
+
+[dependency-groups]
+dev = ["pytest"]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+pythonpath = ["."]

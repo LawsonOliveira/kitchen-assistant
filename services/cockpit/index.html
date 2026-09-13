@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cockpit — Sabor da Maria</title>
+<style>
+  :root {
+    --bg: #f7f5f0; --panel: #ffffff; --ink: #1f2328; --muted: #6b7280; --line: #d9d4c7;
+    --node: #fffaf0; --active: #e8590c; --ok: #2f9e44; --error: #c92a2a; --blocked: #e67700; --edge: #bdb5a1;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #16181c; --panel: #1f2228; --ink: #e9ecef; --muted: #9aa1ab; --line: #343a40;
+            --node: #262a31; --active: #ff922b; --ok: #51cf66; --error: #ff6b6b; --blocked: #fcc419; --edge: #495057; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 16px; background: var(--bg); color: var(--ink);
+         font: 14px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  header { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 12px; }
+  h1 { font-size: 18px; margin: 0 12px 0 0; }
+  .badge { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px;
+           border: 1px solid var(--line); background: var(--panel); color: var(--muted); }
+  .badge::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+  .badge.ok::before { background: var(--ok); } .badge.error::before { background: var(--error); }
+  .grid { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 1fr); gap: 12px; }
+  @media (max-width: 900px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px; min-width: 0; }
+  .panel h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 0 0 8px; }
+  svg { width: 100%; height: auto; display: block; }
+  .node rect { fill: var(--node); stroke: var(--line); stroke-width: 1.5; transition: stroke .3s, fill .3s; }
+  .node text { fill: var(--ink); font-size: 13px; text-anchor: middle; dominant-baseline: middle; }
+  .node .sub { fill: var(--muted); font-size: 10px; }
+  .node.active rect { stroke: var(--active); stroke-width: 3; animation: pulse 1s ease-in-out infinite; }
+  .node.error rect { stroke: var(--error); stroke-width: 3; }
+  .node.blocked rect { stroke: var(--blocked); stroke-width: 3; }
+  .edge { stroke: var(--edge); stroke-width: 1.5; fill: none; marker-end: url(#arrow); }
+  .edge.active { stroke: var(--active); stroke-width: 3; stroke-dasharray: 8 6; animation: flow .6s linear infinite; }
+  @keyframes pulse { 50% { stroke-opacity: .35; } }
+  @keyframes flow { to { stroke-dashoffset: -14; } }
+  .turn { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 8px; color: var(--muted); }
+  .turn b { color: var(--ink); font-variant-numeric: tabular-nums; }
+  #state .budget { font-size: 22px; font-weight: 600; margin-bottom: 8px; }
+  #state ul { margin: 0; padding-left: 18px; } #state li { margin: 2px 0; }
+  .muted { color: var(--muted); }
+  .table-wrap { overflow-x: auto; max-height: 55vh; overflow-y: auto; }
+  table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+  th, td { text-align: left; padding: 4px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  th { position: sticky; top: 0; background: var(--panel); color: var(--muted); font-weight: 500; }
+  td.num { text-align: right; } td.preview { white-space: normal; max-width: 420px; color: var(--muted); }
+  .status-ok { color: var(--ok); } .status-error { color: var(--error); } .status-blocked { color: var(--blocked); }
+  a { color: var(--active); }
+</style>
+</head>
+<body>
+<header>
+  <h1>Cockpit — Sabor da Maria</h1>
+  <span id="badge-stream" class="badge">Eventos</span>
+  <span id="badge-langfuse" class="badge">Langfuse</span>
+  <span id="badge-guardrails" class="badge">Guardrails</span>
+  <a id="langfuse-link" href="#" target="_blank" rel="noopener">abrir Langfuse</a>
+</header>
+
+<div class="grid">
+  <section class="panel">
+    <h2>Pipeline do turno</h2>
+    <svg viewBox="0 0 960 280" role="img" aria-label="Pipeline: guarda de entrada, Dona Fifi, especialistas, pesquisador, MCP, guarda de saída">
+      <defs>
+        <marker id="arrow" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--edge)"></path>
+        </marker>
+      </defs>
+      <g id="edges"></g>
+      <g id="nodes">
+        <g class="node" data-node="guard_input" data-x="70" data-y="140" data-label="guarda de entrada"></g>
+        <g class="node" data-node="fifi" data-x="230" data-y="140" data-label="Dona Fifi"></g>
+        <g class="node" data-node="recipe_expert" data-x="440" data-y="50" data-label="receitas"></g>
+        <g class="node" data-node="cost_expert" data-x="440" data-y="140" data-label="custos"></g>
+        <g class="node" data-node="marketing_expert" data-x="440" data-y="230" data-label="marketing"></g>
+        <g class="node" data-node="researcher" data-x="660" data-y="70" data-label="pesquisador"></g>
+        <g class="node" data-node="mcp" data-x="660" data-y="210" data-label="costs-mcp"></g>
+        <g class="node" data-node="guard_output" data-x="880" data-y="140" data-label="guarda de saída"></g>
+      </g>
+    </svg>
+    <div class="turn" id="turn">Aguardando o primeiro turno…</div>
+  </section>
+
+  <section class="panel" id="state">
+    <h2>Estado do negócio</h2>
+    <div class="muted">Sem snapshot ainda: aparece depois da primeira escrita no costs-mcp.</div>
+  </section>
+</div>
+
+<section class="panel" style="margin-top: 12px">
+  <h2>Linha do tempo</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>hora</th><th>agente</th><th>tipo</th><th>nome</th><th>status</th><th class="num">ms</th>
+        <th class="num">tokens in/out</th><th class="num">US$</th><th>detalhe</th></tr></thead>
+      <tbody id="timeline"></tbody>
+    </table>
+  </div>
+</section>
+
+<script>
+// The pipeline layout lives in the SVG's data-node elements (PLAN.md Loop 5 step 2b):
+// guard_input → fifi → experts → researcher → MCP → guard_output.
+const NODES = {};
+for (const g of document.querySelectorAll("[data-node]")) {
+  NODES[g.dataset.node] = { x: Number(g.dataset.x), y: Number(g.dataset.y), label: g.dataset.label, g };
+}
+const EXPERTS = ["recipe_expert", "cost_expert", "marketing_expert"];
+const EDGES = [["guard_input", "fifi"], ["fifi", "guard_output"], ["fifi", "mcp"],
+  ...EXPERTS.map((e) => ["fifi", e]), ...EXPERTS.map((e) => [e, "researcher"]), ...EXPERTS.map((e) => [e, "mcp"])];
+const W = 120, H = 44, SVG = "http://www.w3.org/2000/svg";
+const MAX_ROWS = 200, PULSE_MS = 2500;
+
+function svg(tag, attrs, parent) {
+  const el = document.createElementNS(SVG, tag);
+  for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+  parent.appendChild(el);
+  return el;
+}
+
+const edgeEls = {};
+for (const [from, to] of EDGES) {
+  const a = NODES[from], b = NODES[to];
+  const dx = b.x - a.x, dy = b.y - a.y, len = Math.hypot(dx, dy);
+  const trimX = (dx / len) * (W / 2 + 4), trimY = (dy / len) * (H / 2 + 4);
+  edgeEls[`${from}>${to}`] = svg("line", { class: "edge", x1: a.x + trimX, y1: a.y + trimY, x2: b.x - trimX, y2: b.y - trimY },
+    document.getElementById("edges"));
+}
+const nodeEls = {};
+for (const [id, n] of Object.entries(NODES)) {
+  svg("rect", { x: n.x - W / 2, y: n.y - H / 2, width: W, height: H, rx: 10 }, n.g);
+  svg("text", { x: n.x, y: n.y - 6 }, n.g).textContent = n.label;
+  nodeEls[id] = { g: n.g, sub: svg("text", { x: n.x, y: n.y + 11, class: "sub" }, n.g) };
+}
+
+const timers = {};
+function pulse(key, el, cls = "active") {
+  el.classList.remove("error", "blocked");
+  el.classList.add(cls);
+  clearTimeout(timers[key]);
+  timers[key] = setTimeout(() => el.classList.remove(cls), PULSE_MS);
+}
+
+function nodeFor(e) {
+  if (e.kind === "guard_input" || e.kind === "guard_output") return e.kind;
+  if (e.kind === "mcp_call" || e.kind === "state_snapshot") return "mcp";
+  if (e.kind === "guard_memory") return "fifi";
+  return NODES[e.agent] ? e.agent : null;
+}
+
+function edgeFor(e) {
+  if (e.kind === "a2a_call" && e.agent === "fifi") return `fifi>${e.name.replace(/^ask_/, "")}`;
+  if (e.kind === "a2a_call" && e.name === "research") return `${e.agent}>researcher`;
+  if (e.kind === "tool_call" && e.name.startsWith("mcp__costs__")) return `${e.agent}>mcp`;
+  if (e.kind === "guard_input") return "guard_input>fifi";
+  if (e.kind === "guard_output") return "fifi>guard_output";
+  return null;
+}
+
+let turn = { id: null, cost: 0, tokensIn: 0, tokensOut: 0, llmCalls: 0, events: 0, first: null, last: null };
+function updateTurn(e) {
+  if (e.kind === "health" || e.trace_id === "untraced") return;
+  if (e.agent === "fifi" && e.trace_id !== turn.id) {
+    turn = { id: e.trace_id, cost: 0, tokensIn: 0, tokensOut: 0, llmCalls: 0, events: 0, first: Date.parse(e.started_at), last: null };
+  }
+  if (e.trace_id !== turn.id) return;
+  turn.events += 1;
+  turn.cost += e.cost_usd || 0;
+  turn.tokensIn += e.tokens_in || 0;
+  turn.tokensOut += e.tokens_out || 0;
+  if (e.kind === "llm_call") turn.llmCalls += 1;
+  turn.last = Date.parse(e.started_at) + (e.duration_ms || 0);
+  const seconds = turn.first && turn.last ? ((turn.last - turn.first) / 1000).toFixed(1) : "–";
+  document.getElementById("turn").innerHTML =
+    `<span>trace <b>${turn.id.slice(0, 12)}…</b></span><span>eventos <b>${turn.events}</b></span>` +
+    `<span>chamadas ao modelo <b>${turn.llmCalls}</b></span><span>tokens <b>${turn.tokensIn.toLocaleString("pt-BR")}</b> / ` +
+    `<b>${turn.tokensOut.toLocaleString("pt-BR")}</b></span><span>custo <b>US$ ${turn.cost.toFixed(4)}</b></span>` +
+    `<span>duração <b>${seconds} s</b></span>`;
+}
+
+function showState(e) {
+  const [budget, ...dishes] = e.preview.split(" | ");
+  const panel = document.getElementById("state");
+  panel.innerHTML = "<h2>Estado do negócio</h2>";
+  panel.appendChild(Object.assign(document.createElement("div"), { className: "budget", textContent: budget }));
+  const list = panel.appendChild(document.createElement("ul"));
+  for (const dish of dishes) list.appendChild(Object.assign(document.createElement("li"), { textContent: dish }));
+  panel.appendChild(Object.assign(document.createElement("div"), {
+    className: "muted", textContent: `após ${e.name} · ${new Date(e.started_at).toLocaleTimeString("pt-BR")}` }));
+}
+
+function setBadge(id, status, title) {
+  const el = document.getElementById(id);
+  el.classList.remove("ok", "error");
+  el.classList.add(status === "ok" ? "ok" : "error");
+  el.title = title || "";
+}
+
+function addRow(e) {
+  const tr = document.createElement("tr");
+  const cells = [
+    new Date(e.started_at).toLocaleTimeString("pt-BR"), e.agent, e.kind, e.name, e.status, e.duration_ms,
+    e.tokens_in == null ? "" : `${e.tokens_in}/${e.tokens_out}`, e.cost_usd == null ? "" : e.cost_usd.toFixed(4), e.preview,
+  ];
+  cells.forEach((value, i) => {
+    const td = document.createElement("td");
+    td.textContent = value;
+    if (i === 4) td.className = `status-${e.status}`;
+    if ([5, 6, 7].includes(i)) td.className = "num";
+    if (i === 8) { td.className = "preview"; td.title = e.preview; }
+    tr.appendChild(td);
+  });
+  const body = document.getElementById("timeline");
+  body.insertBefore(tr, body.firstChild);
+  while (body.children.length > MAX_ROWS) body.removeChild(body.lastChild);
+}
+
+function handle(e) {
+  addRow(e);
+  if (e.kind === "health") {
+    if (e.name === "langfuse") setBadge("badge-langfuse", e.status, e.preview);
+    else if (e.name.includes("guard")) setBadge("badge-guardrails", e.status, e.preview);
+    return;
+  }
+  if (e.kind === "state_snapshot") showState(e);
+  const node = nodeFor(e);
+  if (node) {
+    pulse(node, nodeEls[node].g, e.status === "ok" ? "active" : e.status);
+    nodeEls[node].sub.textContent = `${e.kind} · ${e.name}`.slice(0, 22);
+  }
+  const edge = edgeFor(e);
+  if (edge && edgeEls[edge]) pulse(edge, edgeEls[edge]);
+  updateTurn(e);
+}
+
+document.getElementById("langfuse-link").href = `${location.protocol}//${location.hostname}:3000`;
+const stream = new EventSource("/stream");
+stream.onopen = () => setBadge("badge-stream", "ok", "conectado ao cockpit");
+stream.onerror = () => setBadge("badge-stream", "error", "reconectando…");
+stream.onmessage = (message) => handle(JSON.parse(message.data));
+</script>
+</body>
+</html>

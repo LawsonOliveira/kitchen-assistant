@@ -17,6 +17,42 @@ x-agent-env: &agent-env
   # Guardrails (Loop 4): required on every agent; the plugin refuses to load without a valid timeout.
   SABOR_GUARD_TIMEOUT_SECONDS: ${SABOR_GUARD_TIMEOUT_SECONDS:?set SABOR_GUARD_TIMEOUT_SECONDS in .env}
   SABOR_TURN_COST_CAP_USD: ${SABOR_TURN_COST_CAP_USD:?set SABOR_TURN_COST_CAP_USD in .env}
+  # Telemetry is best-effort (PLAN.md D32): no agent depends on the cockpit or Langfuse being up.
+  SABOR_COCKPIT_URL: http://cockpit:8080
+  SABOR_COCKPIT_TOKEN: ${SABOR_COCKPIT_TOKEN:?set SABOR_COCKPIT_TOKEN in .env}
+  LANGFUSE_BASE_URL: http://langfuse-web:3000
+  LANGFUSE_PUBLIC_KEY: ${LANGFUSE_INIT_PROJECT_PUBLIC_KEY:?set LANGFUSE_INIT_PROJECT_PUBLIC_KEY in .env}
+  LANGFUSE_SECRET_KEY: ${LANGFUSE_INIT_PROJECT_SECRET_KEY:?set LANGFUSE_INIT_PROJECT_SECRET_KEY in .env}
+
+# Shared by langfuse-web and langfuse-worker (the official compose file's langfuse-worker-env).
+x-langfuse-env: &langfuse-env
+  DATABASE_URL: postgresql://langfuse:${LANGFUSE_POSTGRES_PASSWORD:?set LANGFUSE_POSTGRES_PASSWORD in .env}@langfuse-postgres:5432/langfuse
+  NEXTAUTH_URL: http://localhost:${LANGFUSE_HOST_PORT:-3000}
+  SALT: ${LANGFUSE_SALT:?set LANGFUSE_SALT in .env}
+  ENCRYPTION_KEY: ${LANGFUSE_ENCRYPTION_KEY:?set LANGFUSE_ENCRYPTION_KEY in .env (64 hex characters)}
+  TELEMETRY_ENABLED: "false"  # self-hosted: nothing leaves the machine (D33)
+  CLICKHOUSE_MIGRATION_URL: clickhouse://clickhouse:9000
+  CLICKHOUSE_URL: http://clickhouse:8123
+  CLICKHOUSE_USER: clickhouse
+  CLICKHOUSE_PASSWORD: ${LANGFUSE_CLICKHOUSE_PASSWORD:?set LANGFUSE_CLICKHOUSE_PASSWORD in .env}
+  CLICKHOUSE_CLUSTER_ENABLED: "false"
+  LANGFUSE_S3_EVENT_UPLOAD_BUCKET: langfuse
+  LANGFUSE_S3_EVENT_UPLOAD_REGION: auto
+  LANGFUSE_S3_EVENT_UPLOAD_ACCESS_KEY_ID: minio
+  LANGFUSE_S3_EVENT_UPLOAD_SECRET_ACCESS_KEY: ${LANGFUSE_MINIO_ROOT_PASSWORD:?set LANGFUSE_MINIO_ROOT_PASSWORD in .env}
+  LANGFUSE_S3_EVENT_UPLOAD_ENDPOINT: http://minio:9000
+  LANGFUSE_S3_EVENT_UPLOAD_FORCE_PATH_STYLE: "true"
+  LANGFUSE_S3_EVENT_UPLOAD_PREFIX: events/
+  LANGFUSE_S3_MEDIA_UPLOAD_BUCKET: langfuse
+  LANGFUSE_S3_MEDIA_UPLOAD_REGION: auto
+  LANGFUSE_S3_MEDIA_UPLOAD_ACCESS_KEY_ID: minio
+  LANGFUSE_S3_MEDIA_UPLOAD_SECRET_ACCESS_KEY: ${LANGFUSE_MINIO_ROOT_PASSWORD:?set LANGFUSE_MINIO_ROOT_PASSWORD in .env}
+  LANGFUSE_S3_MEDIA_UPLOAD_ENDPOINT: http://minio:9000
+  LANGFUSE_S3_MEDIA_UPLOAD_FORCE_PATH_STYLE: "true"
+  LANGFUSE_S3_MEDIA_UPLOAD_PREFIX: media/
+  REDIS_HOST: redis
+  REDIS_PORT: "6379"
+  REDIS_AUTH: ${LANGFUSE_REDIS_AUTH:?set LANGFUSE_REDIS_AUTH in .env}
 
 x-a2a-server-healthcheck: &a2a-healthcheck
   test: ["CMD", "/opt/hermes/.venv/bin/python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:9900/health', timeout=3)"]
@@ -52,6 +88,8 @@ services:
       SABOR_SPREADSHEET: /data/despensa_dona_maria.xlsx
       SABOR_CONTRACTS_DIR: /contracts
       SABOR_IMPORT_DIR: /opt/data/cache/documents
+      SABOR_COCKPIT_URL: http://cockpit:8080  # mcp_call and state_snapshot events, best-effort (Loop 5 step 4)
+      SABOR_COCKPIT_TOKEN: ${SABOR_COCKPIT_TOKEN:?set SABOR_COCKPIT_TOKEN in .env}
     volumes:
       - ./data:/data:ro
       - ./contracts:/contracts:ro
@@ -187,6 +225,138 @@ services:
       - hermes_researcher_eval:/opt/data
     healthcheck: *a2a-healthcheck
 
+  cockpit:  # live pipeline view at http://localhost:8080 (PLAN.md D34); nothing depends on it
+    build: services/cockpit
+    image: sabor-cockpit:local
+    restart: unless-stopped
+    environment:
+      SABOR_COCKPIT_TOKEN: ${SABOR_COCKPIT_TOKEN:?set SABOR_COCKPIT_TOKEN in .env}
+      SABOR_CONTRACTS_DIR: /contracts
+      SABOR_LANGFUSE_URL: http://langfuse-web:3000
+    volumes:
+      - ./contracts:/contracts:ro
+    ports:
+      - "127.0.0.1:${COCKPIT_HOST_PORT:-8080}:8080"
+    mem_limit: 64m
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # --- Langfuse v4, self-hosted (PLAN.md D33) ------------------------------------------------------------------------
+  # From the official docker-compose.yml (langfuse/langfuse main, read 2026-09-13): images pinned, every CHANGEME secret
+  # in .env, host ports on 127.0.0.1, optional features left at their empty defaults. Memory limits because the Docker
+  # VM has ~7.5 GiB against the 16 GiB Langfuse recommends (open question 3, services/cockpit/NOTES.md).
+  langfuse-web:
+    image: langfuse/langfuse:4.35.0
+    restart: unless-stopped
+    depends_on: &langfuse-depends-on
+      langfuse-postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${LANGFUSE_HOST_PORT:-3000}:3000"
+    environment:
+      <<: *langfuse-env
+      NEXTAUTH_SECRET: ${LANGFUSE_NEXTAUTH_SECRET:?set LANGFUSE_NEXTAUTH_SECRET in .env}
+      LANGFUSE_S3_MEDIA_UPLOAD_ENDPOINT: http://localhost:${LANGFUSE_MINIO_HOST_PORT:-9090}
+      LANGFUSE_S3_MEDIA_UPLOAD_INTERNAL_ENDPOINT: http://minio:9000
+      LANGFUSE_INIT_ORG_ID: ${LANGFUSE_INIT_ORG_ID:?set LANGFUSE_INIT_ORG_ID in .env}
+      LANGFUSE_INIT_ORG_NAME: Sabor da Maria
+      LANGFUSE_INIT_PROJECT_ID: ${LANGFUSE_INIT_PROJECT_ID:?set LANGFUSE_INIT_PROJECT_ID in .env}
+      LANGFUSE_INIT_PROJECT_NAME: Dona Fifi
+      LANGFUSE_INIT_PROJECT_PUBLIC_KEY: ${LANGFUSE_INIT_PROJECT_PUBLIC_KEY:?set LANGFUSE_INIT_PROJECT_PUBLIC_KEY in .env}
+      LANGFUSE_INIT_PROJECT_SECRET_KEY: ${LANGFUSE_INIT_PROJECT_SECRET_KEY:?set LANGFUSE_INIT_PROJECT_SECRET_KEY in .env}
+      LANGFUSE_INIT_USER_EMAIL: ${LANGFUSE_INIT_USER_EMAIL:?set LANGFUSE_INIT_USER_EMAIL in .env}
+      LANGFUSE_INIT_USER_NAME: Dona Maria
+      LANGFUSE_INIT_USER_PASSWORD: ${LANGFUSE_INIT_USER_PASSWORD:?set LANGFUSE_INIT_USER_PASSWORD in .env}
+    mem_limit: 1g
+
+  langfuse-worker:
+    image: langfuse/langfuse-worker:4.35.0
+    restart: unless-stopped
+    depends_on: *langfuse-depends-on
+    environment: *langfuse-env
+    mem_limit: 768m
+
+  langfuse-postgres:  # Langfuse's own database; business state stays in `postgres` (PLAN.md D8)
+    image: postgres:17.6-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: langfuse
+      POSTGRES_PASSWORD: ${LANGFUSE_POSTGRES_PASSWORD:?set LANGFUSE_POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: langfuse
+      TZ: UTC
+      PGTZ: UTC
+    volumes:
+      - langfuse_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U langfuse -d langfuse"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+    mem_limit: 256m
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:25.12.11.4  # Langfuse v4 needs ClickHouse >= 25.12
+    restart: unless-stopped
+    user: "101:101"
+    environment:
+      CLICKHOUSE_DB: default
+      CLICKHOUSE_USER: clickhouse
+      CLICKHOUSE_PASSWORD: ${LANGFUSE_CLICKHOUSE_PASSWORD:?set LANGFUSE_CLICKHOUSE_PASSWORD in .env}
+    volumes:
+      - langfuse_clickhouse_data:/var/lib/clickhouse
+      - langfuse_clickhouse_logs:/var/log/clickhouse-server
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:8123/ping || exit 1
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 1s
+    mem_limit: 1536m
+
+  minio:
+    image: cgr.dev/chainguard/minio:latest@sha256:4d397a26fe49d7f9ed39b8b566534848936f7efa50ab6328ac97b2a44eeabf4c  # free tier publishes only :latest
+    restart: unless-stopped
+    entrypoint: sh
+    command: -c 'mkdir -p /data/langfuse && minio server --address ":9000" --console-address ":9001" /data'
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: ${LANGFUSE_MINIO_ROOT_PASSWORD:?set LANGFUSE_MINIO_ROOT_PASSWORD in .env}
+    ports:
+      - "127.0.0.1:${LANGFUSE_MINIO_HOST_PORT:-9090}:9000"  # media URLs opened by the browser
+    volumes:
+      - langfuse_minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 1s
+      timeout: 5s
+      retries: 5
+      start_period: 1s
+    mem_limit: 256m
+
+  redis:
+    image: redis:7.4.11
+    restart: unless-stopped
+    command: >
+      --requirepass ${LANGFUSE_REDIS_AUTH:?set LANGFUSE_REDIS_AUTH in .env}
+      --maxmemory-policy noeviction
+    volumes:
+      - langfuse_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 10s
+      retries: 10
+    mem_limit: 128m
+
 volumes:
   postgres_data:
   fifi_documents:
@@ -196,3 +366,8 @@ volumes:
   hermes_marketing_expert:
   hermes_researcher:
   hermes_researcher_eval:
+  langfuse_postgres_data:
+  langfuse_clickhouse_data:
+  langfuse_clickhouse_logs:
+  langfuse_minio_data:
+  langfuse_redis_data:
