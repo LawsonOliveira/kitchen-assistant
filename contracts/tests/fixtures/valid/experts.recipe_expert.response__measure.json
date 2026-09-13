@@ -1,0 +1,13 @@
+{
+  "result": {
+    "measure": {
+      "ingredient": "Leite de coco",
+      "measure": "can",
+      "amount_display": "200 ml",
+      "source": "owner_confirmed",
+      "source_url": null
+    }
+  },
+  "questions_for_owner": [],
+  "cost_usd_spent": 0.02
+}

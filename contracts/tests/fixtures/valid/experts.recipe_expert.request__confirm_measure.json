@@ -1,0 +1,17 @@
+{
+  "task": "confirm_measure",
+  "trace": {
+    "trace_id": "trace-1",
+    "parent_span_id": "span-1",
+    "turn_cost_remaining_usd": 4.5
+  },
+  "owner_confirmation": {
+    "choice": "Confirmar",
+    "summary": "1 lata de leite de coco = 200 ml"
+  },
+  "owner_statement": null,
+  "payload": {
+    "ingredient_name": "Leite de coco",
+    "measure": "can"
+  }
+}

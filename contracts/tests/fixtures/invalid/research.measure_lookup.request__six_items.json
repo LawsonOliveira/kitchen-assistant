@@ -1,0 +1,16 @@
+{
+  "task_type": "measure_lookup",
+  "trace": {
+    "trace_id": "trace-1",
+    "parent_span_id": "span-1",
+    "turn_cost_remaining_usd": 4.5
+  },
+  "items": [
+    "item 0",
+    "item 1",
+    "item 2",
+    "item 3",
+    "item 4",
+    "item 5"
+  ]
+}

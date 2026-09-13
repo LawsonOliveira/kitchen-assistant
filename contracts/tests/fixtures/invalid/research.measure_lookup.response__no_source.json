@@ -1,0 +1,13 @@
+{
+  "task_type": "measure_lookup",
+  "results": [
+    {
+      "ingredient": "Leite de coco",
+      "measure": "can",
+      "amount": 200,
+      "unit": "ml",
+      "retrieved_at": "2026-09-13"
+    }
+  ],
+  "cost_usd_spent": 0.01
+}

@@ -1,0 +1,11 @@
+{
+  "task_type": "measure_lookup",
+  "trace": {
+    "trace_id": "trace-1",
+    "parent_span_id": "span-1",
+    "turn_cost_remaining_usd": 4.5
+  },
+  "items": [
+    "1 lata de leite de coco"
+  ]
+}

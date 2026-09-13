@@ -55,3 +55,9 @@ def test_unknown_token_is_rejected_before_reaching_the_mcp_app():
 def test_only_recipe_expert_changes_a_candidate_launch_batch():
     assert "set_launch_batch_portions" in server.TOOL_PERMISSIONS["recipe_expert"]
     assert all("set_launch_batch_portions" not in tools for agent, tools in server.TOOL_PERMISSIONS.items() if agent != "recipe_expert")
+
+
+def test_only_recipe_expert_records_and_confirms_measures():
+    for tool in ("record_measure_quote", "confirm_measure"):
+        assert tool in server.TOOL_PERMISSIONS["recipe_expert"]
+        assert all(tool not in tools for agent, tools in server.TOOL_PERMISSIONS.items() if agent != "recipe_expert")
