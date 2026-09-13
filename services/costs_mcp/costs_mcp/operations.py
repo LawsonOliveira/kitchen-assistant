@@ -140,7 +140,7 @@ def _resolve_lines(conn, recipe: dict):
                 quantity, unit, estimate = Decimal(str(item["quantity"])) * spec.factor_to_base, spec.base_unit, False
             else:
                 count = Decimal(str(item["quantity"])) if item["quantity"] is not None else Decimal(1)
-                quantity, unit, estimate = resolve_measure(name, item["unit"], count, factors)
+                quantity, unit, estimate = resolve_measure(name, item["unit"], count, factors, base_unit=row["base_unit"])
             quantity = _to_ingredient_base(name, quantity, unit, row["base_unit"], factors)
         except MissingConversionError as error:
             conversions.append({"ingredient": error.ingredient, "measure": error.measure})
@@ -330,7 +330,9 @@ def record_price_quote(conn, ingredient_name: str, kind: str, package_quantity, 
         db.supersede_price(conn, row["id"])
         db.insert_price(conn, row["id"], price, quantity_base, f"{plain(_decimal(package_quantity, 'package_quantity'))} {package_unit}",
                         source, source_url, evidence)
-    return {"ingredient": ingredient_name, "price_source": source, "package_price_display": format_brl(price),
+    # The package travels back so Dona Fifi can confirm exactly this quote (Loop 3 scenario 02).
+    return {"ingredient": ingredient_name, "price_source": source, "package_quantity": plain(_decimal(package_quantity, "package_quantity")),
+            "package_unit": package_unit, "package_price": f"{price:.2f}", "package_price_display": format_brl(price),
             "unit_cost_display": format_unit_cost(price, quantity_base, base_unit)}
 
 

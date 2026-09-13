@@ -28,6 +28,10 @@ HOUSEHOLD_MEASURES = {
 }
 
 
+# Small fixed estimates, in the ingredient's own base unit (g or ml): "óleo a gosto" is 1 ml, never a density question.
+SMALL_ESTIMATES = {"to_taste": Decimal("1"), "pinch": Decimal("1"), "drizzle": Decimal("5")}
+
+
 class MissingConversionError(ValueError):
     def __init__(self, ingredient: str, measure: str):
         super().__init__(f"no conversion for {measure!r} of {ingredient!r}; ask the owner")
@@ -36,11 +40,16 @@ class MissingConversionError(ValueError):
 
 
 def resolve_measure(ingredient_name: str, measure: str, count: Decimal,
-                    owner_factors: dict | None = None) -> tuple[Decimal, str, bool]:
-    """(quantity in base unit, base unit, is_estimate). owner_factors: {(ingredient, measure): (amount, base unit)}."""
+                    owner_factors: dict | None = None, base_unit: str | None = None) -> tuple[Decimal, str, bool]:
+    """(quantity in base unit, base unit, is_estimate). owner_factors: {(ingredient, measure): (amount, base unit)}.
+    base_unit is the ingredient's base unit; small fixed estimates follow it."""
     if owner_factors and (ingredient_name, measure) in owner_factors:
-        amount, base_unit = owner_factors[(ingredient_name, measure)]
-        return count * amount, base_unit, False
+        amount, factor_unit = owner_factors[(ingredient_name, measure)]
+        return count * amount, factor_unit, False
+    if base_unit is not None and measure in SMALL_ESTIMATES:
+        if base_unit not in ("g", "ml"):  # one "unit" can cost R$ 79,90: never estimate whole units
+            raise MissingConversionError(ingredient_name, measure)
+        return count * SMALL_ESTIMATES[measure], base_unit, True
     entry = HOUSEHOLD_MEASURES.get((measure, ingredient_name)) or HOUSEHOLD_MEASURES.get((measure, None))
     if entry is None:
         raise MissingConversionError(ingredient_name, measure)

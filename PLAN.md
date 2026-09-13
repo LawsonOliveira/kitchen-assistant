@@ -1981,6 +1981,21 @@ evidence, what was changed, and where. Open questions that were "default applied
   quotes, purchases, budget, corrections, scenario choice, promotion simulation, import; marketing_expert:
   `register_promotion`). Tests first (red: 32 failed).
 
+- **C32 — Small fixed estimates follow the ingredient's base unit.** Loop 3 scenario 02 (first attempt): the
+  web recipe used "óleo a gosto"; `to_taste` resolved to 1 g, Óleo de soja is measured in ml, so costs-mcp raised
+  `missing_conversion` and Dona Fifi asked the owner how many grams 1 ml of oil weighs — and suggested a density
+  herself — exactly the interrogation D23 rejects. Tests first (red: unit 7, integration 1): `resolve_measure`
+  takes the ingredient's `base_unit`; `to_taste` (1), `pinch` (1) and `drizzle` (5) are estimates in that unit
+  when it is g or ml, and still a question for `unit` ingredients (one unit of Cobertura costs R$ 79,90); owner
+  factors still win.
+- **C33 — A quote carries its package, and click choices are exactly Confirmar/Cancelar.** Same attempt:
+  `record_price_quote`'s relayed result had no package size, so fifi could not build `confirm_price_quote` for the
+  estimate it had just shown, guessed "1 un" (contract refusal, then `incompatible_units`) and asked the owner for
+  sizes the estimate already had. Tests first (red: integration 1): the result now includes `package_quantity`,
+  `package_unit` and `package_price` ("15.39"), and fifi's `SOUL.md` sends them unchanged. fifi had also offered
+  "Confirmar preço estimado da maionese (R$ 15,39)" as a choice; its prompt now requires exactly ["Confirmar",
+  "Cancelar"], one decision per clarify (see open question 10).
+
 ## Final manual step (owner — after Loop 8, not executed by the agent)
 Kept here so it is not forgotten: no loop creates a GitHub remote or submits the challenge.
 - [ ] Create the GitHub repository, add it as `origin` and push.
@@ -2072,3 +2087,12 @@ Queued during implementation (each: what it blocks, the question, the default if
    server 240 s < experts→researcher client 270 s < expert A2A server 420 s < fifi→experts client 450 s) and set
    fifi `agent.run_budget_seconds: 900`, recording the change as a correction; until answered the current C7
    values stay in place, marked `TODO(open question 9)`, and `run_budget_seconds` is not set.
+10. **OPEN** — **Affects** Loop 3 step 3 and Loop 4's red-team case "fifi grants a write without a click" (nothing is
+   blocked meanwhile): D14 leaves the click to fifi's LLM, and the Loop 3 runs show the model bending the protocol
+   (scenario 02 used custom clarify choices such as "Confirmar preço estimado da maionese (R$ 15,39)" and still sent
+   `owner_confirmation`; in `hermes chat -q` Hermes answers clarify by itself, C29). Should a deterministic check be
+   added — `sabor_a2a` refuses a click-required request unless the latest `clarify` answer in that fifi session was
+   exactly "Confirmar" (Hermes may append " (Recommended)") and no click-required request consumed it yet — as a
+   lightweight complement to D14 (not the rejected proposal/approval tokens bound to parameter hashes)?
+   **Default if unanswered:** yes, implemented test-first in Loop 4 step 6b next to the tool allowlist, recorded as
+   a correction; until then the prompt rule and the contract requirement (C29) stand.
