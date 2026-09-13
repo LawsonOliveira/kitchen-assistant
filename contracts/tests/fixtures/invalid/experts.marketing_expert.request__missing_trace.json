@@ -1,0 +1,9 @@
+{
+  "task": "status",
+  "owner_confirmation": {
+    "choice": "Confirmar",
+    "summary": "Comprar 2 caixas"
+  },
+  "owner_statement": null,
+  "payload": {}
+}

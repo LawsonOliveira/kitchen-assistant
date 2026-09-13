@@ -1,0 +1,15 @@
+{
+  "task_type": "menu_reference",
+  "results": [
+    {
+      "dish_name": "Arroz com frango da casa",
+      "description_length_chars": 120,
+      "keywords": [
+        "caseiro",
+        "frango"
+      ],
+      "description": "a long free-text description"
+    }
+  ],
+  "cost_usd_spent": 0.003
+}

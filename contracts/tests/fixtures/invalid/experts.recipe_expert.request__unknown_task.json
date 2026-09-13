@@ -1,0 +1,21 @@
+{
+  "task": "do_anything",
+  "trace": {
+    "trace_id": "trace-1",
+    "parent_span_id": "span-1",
+    "turn_cost_remaining_usd": 4.5
+  },
+  "owner_confirmation": null,
+  "owner_statement": null,
+  "payload": {
+    "pantry_focus": [
+      "Peito de frango",
+      "Arroz branco tipo 1"
+    ],
+    "owner_preferences": [
+      "pratos caseiros"
+    ],
+    "exclude_dish_names": [],
+    "max_candidates": 3
+  }
+}

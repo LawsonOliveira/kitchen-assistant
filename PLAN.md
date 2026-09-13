@@ -1339,7 +1339,7 @@ flowchart TD
   show parallel children.
 
 **Steps**
-- [ ] 1. *(sequential)* Write every test and dataset in **Tests** above (fixtures, pages, labeled
+- [x] 1. *(sequential)* Write every test and dataset in **Tests** above (fixtures, pages, labeled
   JSONL, `smoke_research.sh`); run red; commit `test: L2 …`.
 - [ ] 2. *(parallel with each other)*
   - [ ] a) `contracts/research/*.json` and `contracts/experts/*.json` as in *Shared definitions*, with

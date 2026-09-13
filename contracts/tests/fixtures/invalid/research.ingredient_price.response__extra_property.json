@@ -1,0 +1,15 @@
+{
+  "task_type": "ingredient_price",
+  "results": [
+    {
+      "product": "Creme de leite 200 g",
+      "package_quantity": 200,
+      "package_unit": "g",
+      "price": 4.99,
+      "source_url": "https://mercado.example/creme-de-leite",
+      "retrieved_at": "2026-09-13",
+      "comment": "best price"
+    }
+  ],
+  "cost_usd_spent": 0.004
+}

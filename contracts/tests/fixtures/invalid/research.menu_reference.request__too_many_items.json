@@ -1,0 +1,16 @@
+{
+  "task_type": "menu_reference",
+  "trace": {
+    "trace_id": "trace-1",
+    "parent_span_id": "span-1",
+    "turn_cost_remaining_usd": 4.5
+  },
+  "items": [
+    "x",
+    "x",
+    "x",
+    "x",
+    "x",
+    "x"
+  ]
+}

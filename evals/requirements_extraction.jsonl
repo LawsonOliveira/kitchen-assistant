@@ -1,0 +1,9 @@
+{"page": "frango_assado_forno.html", "expected_requirements": ["oven"], "expected_prep_time_minutes": 90}
+{"page": "feijoada_panela_pressao.html", "expected_requirements": ["pressure_cooker", "stove_burners>=2"], "expected_prep_time_minutes": 180}
+{"page": "molho_tomate_liquidificador.html", "expected_requirements": ["blender"], "expected_prep_time_minutes": 40}
+{"page": "batata_frita_air_fryer.html", "expected_requirements": ["air_fryer"], "expected_prep_time_minutes": 35}
+{"page": "marmita_quatro_bocas.html", "expected_requirements": ["stove_burners>=4"], "expected_prep_time_minutes": 60}
+{"page": "talharim_massa_fresca.html", "expected_requirements": ["technique:fresh_pasta"], "expected_prep_time_minutes": 70}
+{"page": "lasanha_bechamel.html", "expected_requirements": ["technique:bechamel", "oven"], "expected_prep_time_minutes": 100}
+{"page": "picanha_ao_ponto_grelha.html", "expected_requirements": ["grill", "technique:meat_doneness"], "expected_prep_time_minutes": 30}
+{"page": "carne_de_panela_lenta.html", "expected_requirements": [], "expected_prep_time_minutes": 240}
