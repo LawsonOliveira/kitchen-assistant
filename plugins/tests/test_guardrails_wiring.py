@@ -95,3 +95,41 @@ def test_the_owner_message_of_each_turn_grounds_her_own_amounts(fifi, monkeypatc
     assert fire(fifi, "transform_llm_output", response_text=echo, session_id="s1", platform="api_server") == [echo]
     assert fire(fifi, "transform_llm_output", response_text="O total fica R$ 5,98.", session_id="s1",
                 platform="api_server") == [SCOPE_BLOCK_MESSAGE]
+
+
+def test_the_input_guard_runs_alongside_the_first_model_call(fifi, monkeypatch):
+    # PL9 lever 4: each classification takes 2–5 s; an allowed turn should not wait for it before calling the model.
+    import time
+
+    from sabor_guardrails import classifier
+
+    events = []
+
+    def slow_classify(*args, **kwargs):
+        events.append("classify-start")
+        time.sleep(0.3)
+        events.append("classify-end")
+        return classifier.Verdict("allow", "", "")
+
+    def next_call(llm_request):
+        events.append("model")
+        return "model-response"
+
+    monkeypatch.setattr(classifier, "classify", slow_classify)
+    middleware = fifi.middleware["llm_execution"][0]
+    llm_request = {"messages": [{"role": "user", "content": "quero um arroz com frango"}]}
+    assert middleware(request=llm_request, next_call=next_call, api_call_count=1, platform="cli", session_id="s1", model="m") == "model-response"
+    assert events.index("model") < events.index("classify-end")
+
+
+def test_a_blocked_turn_discards_the_model_answer(fifi, monkeypatch):
+    import sabor_guardrails
+    from sabor_guardrails import classifier
+    from sabor_guardrails.messages import SCOPE_BLOCK_MESSAGE
+
+    monkeypatch.setattr(classifier, "classify", lambda *args, **kwargs: classifier.Verdict("block", "out_of_scope", ""))
+    monkeypatch.setattr(sabor_guardrails, "_synthetic", lambda text, model: {"synthetic": text})
+    middleware = fifi.middleware["llm_execution"][0]
+    llm_request = {"messages": [{"role": "user", "content": "me ajuda com meu código python"}]}
+    assert middleware(request=llm_request, next_call=lambda r: "model-response", api_call_count=1, platform="cli",
+                      session_id="s1", model="m") == {"synthetic": SCOPE_BLOCK_MESSAGE}
