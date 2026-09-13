@@ -8,7 +8,7 @@ COPY plugins /opt/sabor/plugins
 COPY contracts /opt/sabor/contracts
 COPY evals/web_fixtures /opt/sabor/evals/web_fixtures
 COPY agents/entrypoint.sh /opt/sabor/entrypoint.sh
-RUN chmod 755 /opt/sabor/entrypoint.sh && mkdir -p /workspace && chown hermes:hermes /workspace
+RUN chmod 755 /opt/sabor/entrypoint.sh && mkdir -p /workspace /opt/data/cache/documents && chown hermes:hermes /workspace /opt/data/cache /opt/data/cache/documents
 
 # main-wrapper.sh execs an executable first argument directly, as user hermes.
 CMD ["/opt/sabor/entrypoint.sh", "gateway", "run"]
