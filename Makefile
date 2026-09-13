@@ -67,7 +67,7 @@ selftest:  # guardrail canary against fifi's API server (Loop 4)
 
 # Hermes silently falls back to its default skin on invalid YAML, so the name must come back from the engine (Loop 7).
 test-skin:
-	$(COMPOSE) exec -T fifi python -c "from hermes_cli.skin_engine import load_skin; s=load_skin('dona-fifi'); assert 'Dona Fifi' in str(s), 'dona-fifi skin not loaded'"
+	$(COMPOSE) exec -T fifi python -c "from hermes_cli.skin_engine import load_skin; s=load_skin('dona-salvia'); assert 'Dona Sálvia' in str(s), 'dona-salvia skin not loaded'"
 
 db-shell:
 	$(COMPOSE) exec postgres psql -U sabor -d sabor
