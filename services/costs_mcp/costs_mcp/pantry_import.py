@@ -1,61 +1,156 @@
-"""Spreadsheet seed — Loop 0 baseline: only kg, L and un are parsed; any other unit is skipped loudly.
+"""Spreadsheet -> validated ingredient records (PLAN.md D31).
 
-Loop 1 replaces this with full validation (composite units, all errors together, startup fails).
+Strict on purpose: exact sheet/column names, names matched only after strip + NFC (fuzzy matching would
+misprice silently), and every problem collected and raised together so the owner fixes the file once.
 """
 
-import logging
-from decimal import Decimal
+import unicodedata
+from dataclasses import dataclass
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 
 import openpyxl
 import psycopg
 
 from costs_mcp import db
+from costs_mcp.units import UnknownUnitError, parse_unit
 
-log = logging.getLogger("costs_mcp.seed")
-
-SIMPLE_UNITS = {"kg": ("g", Decimal(1000)), "L": ("ml", Decimal(1000)), "un": ("unit", Decimal(1))}
+SHEETS = {
+    "Despensa": ("Ingrediente", "Quantidade em estoque", "Unidade"),
+    "Precos": ("Ingrediente", "Quantidade comprada", "Unidade", "Preço total pago (R$)"),
+}
 CENT = Decimal("0.01")
+DIFF_FIELDS = ("base_unit", "stock_base", "total_price_paid", "quantity_purchased_base")
 
 
-def _sheet_rows(workbook, sheet: str) -> list[dict]:
-    header, *rows = workbook[sheet].iter_rows(values_only=True)
-    return [dict(zip(header, row)) for row in rows if any(value is not None for value in row)]
+class PantryImportError(ValueError):
+    def __init__(self, errors: list[dict]):
+        super().__init__("; ".join(error["message"] for error in errors))
+        self.errors = errors
 
 
-def _whole_cents(value, name: str) -> Decimal:
-    exact = Decimal(str(value))
-    cents = exact.quantize(CENT)
-    if abs(exact - cents) > Decimal("0.000001"):
-        raise ValueError(f"price of {name!r} is not a whole number of cents: {value}")
-    return cents
+@dataclass(frozen=True)
+class IngredientRecord:
+    name: str
+    base_unit: str
+    stock_base: Decimal
+    total_price_paid: Decimal
+    quantity_purchased_base: Decimal
+    purchase_unit_label: str
+
+
+def _error(code: str, message: str, **details) -> dict:
+    return {"code": code, "message": message, "details": details}
+
+
+def _text(value) -> str:
+    return unicodedata.normalize("NFC", str(value if value is not None else "")).strip()
+
+
+def _decimal(value) -> Decimal | None:
+    try:
+        return Decimal(str(value)) if value is not None else None
+    except InvalidOperation:
+        return None
+
+
+def plain(quantity: Decimal) -> str:
+    """5 -> '5', 1.50 -> '1.5' (no exponent notation)."""
+    return format(quantity.normalize(), "f")
+
+
+def _read_sheets(path: Path, errors: list[dict]) -> dict[str, list[dict]]:
+    workbook = openpyxl.load_workbook(path, read_only=True, data_only=True)
+    sheets = {}
+    for sheet, columns in SHEETS.items():
+        if sheet not in workbook.sheetnames:
+            errors.append(_error("missing_sheet", f"sheet {sheet!r} is missing", sheet=sheet))
+            continue
+        header, *rows = list(workbook[sheet].iter_rows(values_only=True)) or [()]
+        header = [_text(cell) for cell in header]
+        missing = [column for column in columns if column not in header]
+        if missing:
+            errors.append(_error("missing_column", f"sheet {sheet!r} lacks columns {missing}", sheet=sheet, columns=missing))
+            continue
+        positions = {column: header.index(column) for column in columns}
+        sheets[sheet] = [{c: row[i] for c, i in positions.items()} for row in rows if any(v is not None for v in row)]
+    return sheets
+
+
+def _record(name: str, stock_row: dict, price_row: dict, errors: list[dict]) -> IngredientRecord | None:
+    stock_unit, price_unit = _text(stock_row["Unidade"]), _text(price_row["Unidade"])
+    try:
+        stock_spec, price_spec = parse_unit(stock_unit), parse_unit(price_unit)
+    except UnknownUnitError as error:
+        errors.append(_error("unknown_unit", f"{name!r}: unknown unit {error.raw!r}", ingredient=name, unit=error.raw))
+        return None
+    if stock_spec.base_unit != price_spec.base_unit:
+        errors.append(_error("incompatible_units", f"{name!r}: stock in {stock_unit} but bought in {price_unit}",
+                             ingredient=name, stock_unit=stock_unit, price_unit=price_unit))
+        return None
+    row_errors = []
+    stock, purchased = _decimal(stock_row["Quantidade em estoque"]), _decimal(price_row["Quantidade comprada"])
+    if stock is None or stock < 0:
+        row_errors.append(_error("non_positive_quantity", f"{name!r}: invalid stock {stock_row['Quantidade em estoque']}", ingredient=name))
+    if purchased is None or purchased <= 0:
+        row_errors.append(_error("non_positive_quantity", f"{name!r}: invalid quantity purchased {price_row['Quantidade comprada']}", ingredient=name))
+    total = _decimal(price_row["Preço total pago (R$)"])
+    if total is None or total <= 0:
+        row_errors.append(_error("invalid_price", f"{name!r}: invalid price {price_row['Preço total pago (R$)']}", ingredient=name))
+    elif abs(total - total.quantize(CENT)) > Decimal("0.000001"):  # float artifacts like 79.90000000000001 pass
+        row_errors.append(_error("non_cent_price", f"{name!r}: price {total} is not a whole number of cents", ingredient=name))
+    errors.extend(row_errors)
+    if row_errors:
+        return None
+    return IngredientRecord(name, stock_spec.base_unit, stock * stock_spec.factor_to_base, total.quantize(CENT),
+                            purchased * price_spec.factor_to_base, f"{plain(purchased)} {price_unit}")
+
+
+def load_records(path: Path | str) -> list[IngredientRecord]:
+    errors: list[dict] = []
+    sheets = _read_sheets(Path(path), errors)
+    if errors:
+        raise PantryImportError(errors)
+    pantry = {_text(row["Ingrediente"]): row for row in sheets["Despensa"]}
+    prices = {_text(row["Ingrediente"]): row for row in sheets["Precos"]}
+    for name in sorted(pantry.keys() ^ prices.keys()):
+        errors.append(_error("name_in_one_sheet", f"{name!r} appears in only one sheet", ingredient=name))
+    records = [record for name in pantry if name in prices
+               if (record := _record(name, pantry[name], prices[name], errors)) is not None]
+    if errors:
+        raise PantryImportError(errors)
+    return records
+
+
+def diff(current: list[IngredientRecord], new: list[IngredientRecord]) -> dict:
+    old_by_name = {record.name: record for record in current}
+    new_by_name = {record.name: record for record in new}
+    changed = []
+    for name in sorted(old_by_name.keys() & new_by_name.keys()):
+        old, fresh = old_by_name[name], new_by_name[name]
+        fields = {field: [_show(field, getattr(old, field)), _show(field, getattr(fresh, field))]
+                  for field in DIFF_FIELDS if getattr(old, field) != getattr(fresh, field)}
+        if fields:
+            changed.append({"name": name, "fields": fields})
+    return {"added": sorted(new_by_name.keys() - old_by_name.keys()),
+            "removed": sorted(old_by_name.keys() - new_by_name.keys()), "changed": changed}
+
+
+def _show(field: str, value) -> str:
+    if field == "total_price_paid":
+        return str(value.quantize(CENT))
+    return plain(value) if isinstance(value, Decimal) else str(value)
 
 
 def seed_from_workbook(conn: psycopg.Connection, path: Path) -> int:
-    """Seed an empty database from the workbook; returns how many ingredients were loaded."""
+    """Seed an empty database; an invalid workbook raises, so the server fails to start (fail loud)."""
+    records = load_records(path)
     if db.count_ingredients(conn):
         return 0
-    workbook = openpyxl.load_workbook(path, read_only=True, data_only=True)
-    prices = {row["Ingrediente"].strip(): row for row in _sheet_rows(workbook, "Precos")}
-    loaded = 0
-    for row in _sheet_rows(workbook, "Despensa"):
-        name, unit = row["Ingrediente"].strip(), str(row["Unidade"]).strip()
-        price = prices[name]  # an ingredient without a price row has no unit cost: fail loud
-        if unit not in SIMPLE_UNITS or str(price["Unidade"]).strip() != unit:
-            log.error("seed skipped ingredient=%s unit=%s", name, unit)
-            continue
-        base_unit, factor = SIMPLE_UNITS[unit]
-        ingredient_id = db.insert_ingredient(conn, name, base_unit)
-        db.insert_pantry_stock(conn, ingredient_id, Decimal(str(row["Quantidade em estoque"])) * factor)
-        purchased = Decimal(str(price["Quantidade comprada"]))
-        db.insert_price(
-            conn,
-            ingredient_id,
-            _whole_cents(price["Preço total pago (R$)"], name),
-            purchased * factor,
-            f"{purchased} {unit}",
-            "spreadsheet",
-        )
-        loaded += 1
+    for record in records:
+        ingredient_id = db.insert_ingredient(conn, record.name, record.base_unit)
+        db.insert_pantry_stock(conn, ingredient_id, record.stock_base)
+        db.insert_price(conn, ingredient_id, record.total_price_paid, record.quantity_purchased_base,
+                        record.purchase_unit_label, "spreadsheet")
     conn.commit()
-    return loaded
+    return len(records)

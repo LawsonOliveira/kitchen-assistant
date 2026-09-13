@@ -1202,14 +1202,14 @@ flowchart TD
   `test_budget.py`, `test_stock_reservation.py`, `test_viability.py`, `test_price_corrections.py`,
   `test_permissions.py`, `test_import_pantry.py`, `test_dish_lifecycle.py`, `test_budget_fit.py`, and the rewritten
   `test_seed.py`); run them red; commit `test: L1 …`.
-- [ ] 2. *(parallel with each other — pure modules, no database)*
-  - [ ] a) `costs_mcp/units.py`: `UnitSpec(base_unit, factor_to_base: Decimal, package_label | None)`;
+- [x] 2. *(parallel with each other — pure modules, no database)*
+  - [x] a) `costs_mcp/units.py`: `UnitSpec(base_unit, factor_to_base: Decimal, package_label | None)`;
     `parse_unit(raw) -> UnitSpec` for `g`, `kg` (×1000 g), `ml`, `l`/`L` (×1000 ml), `un` (unit),
     `<container> <n><g|kg|ml|l>` (`balde 2kg`, `un 500g`, `un 500ml`, `un 100ml`);
     `to_base(quantity: Decimal, raw_unit) -> Decimal`; errors `UnknownUnitError(raw)`,
     `NonPositiveQuantityError(value)`, `IncompatibleUnitsError(from_base, to_base)`. No other module
     converts units.
-  - [ ] b) `costs_mcp/measures.py`: `HOUSEHOLD_MEASURES: dict[(measure, ingredient_name | None),
+  - [x] b) `costs_mcp/measures.py`: `HOUSEHOLD_MEASURES: dict[(measure, ingredient_name | None),
     (Decimal, base_unit)]` with at least `(cup, Farinha de trigo) → 120 g`, `(cup, Arroz branco tipo 1)
     → 185 g`, `(cup, Açúcar) → 180 g`, `(cup, Leite integral) → 240 ml`, `(tablespoon, Manteiga) →
     15 g`, `(tablespoon, Óleo de soja) → 15 ml`, `(tablespoon, None) → 15 ml`, `(teaspoon, None) →
@@ -1218,7 +1218,7 @@ flowchart TD
     170 g`, `(can, Extrato de tomate) → 340 g`; no generic `can`/`package` entry;
     `resolve_measure(ingredient_name, measure, count, owner_factors) -> (Decimal, base_unit,
     is_estimate)`; owner factors take precedence; missing → `MissingConversionError(ingredient, measure)`.
-  - [ ] c) `costs_mcp/pricing.py` (pure, `Decimal` only): `unit_cost`, `recipe_cmv(lines)`,
+  - [x] c) `costs_mcp/pricing.py` (pure, `Decimal` only): `unit_cost`, `recipe_cmv(lines)`,
     `cmv_per_portion(recipe_cmv, yield_portions)` (≤ 0 → error), `min_price(cmv, fee_rate)`,
     `min_price_with_packaging(cmv, packaging_unit_cost, fee_rate)`, `round_up_commercial(price)`,
     `price_scenarios(cmv_per_portion, packaging_unit_cost | None, fee_rate,
@@ -1228,14 +1228,14 @@ flowchart TD
     total_price_paid, quantity_purchased_base, base_unit)` (per kg, L or un, 2 decimals),
     `price_alerts(cmv_per_portion, selected_price, selected_target, fee_rate, packaging_unit_cost |
     None) -> list[Alert(code, severity, actual_cmv_pct, target_cmv_pct, min_price_display)]`.
-  - [ ] d) `costs_mcp/pantry_import.py`: `read_workbook(path) -> (list[PantryRow], list[PriceRow])`
+  - [x] d) `costs_mcp/pantry_import.py`: `read_workbook(path) -> (list[PantryRow], list[PriceRow])`
     requiring the exact sheet and column names; `validate(pantry_rows, price_rows) ->
     list[IngredientRecord]` collecting all errors (missing sheet/column, name in one sheet only after
     `strip()` + NFC, incompatible base units between sheets, non-positive quantity, non-cent price,
     unknown unit) and raising them together; `diff(current, new) -> {added, removed, changed}`.
-- [ ] 3. *(sequential)* `migrations/002_domain.sql` = everything marked **L1** in *Database schema*;
+- [x] 3. *(sequential)* `migrations/002_domain.sql` = everything marked **L1** in *Database schema*;
   `db.py`: plain SQL functions, one per query.
-- [ ] 4. *(sequential)* `costs_mcp/operations.py`:
+- [x] 4. *(sequential)* `costs_mcp/operations.py`:
   - `get_pantry() -> [{name, kind, quantity_display, unit_cost_display, price_source}]` (replaces the
     Loop 0 raw version)
   - `get_state_summary() -> {budget_initial_display, adjustments_total_display, purchases_total_display,
@@ -1290,7 +1290,7 @@ flowchart TD
     cmv_per_portion_display, profit_display, profit_after_packaging_display | null}],
     shopping_list[{ingredient, packages, package_quantity_display, subtotal_display, dish_names[]}],
     purchases_total_display, budget_remaining_display}`
-- [ ] 5. *(sequential)* `server.py`: register every operation as an MCP tool; enforce the
+- [x] 5. *(sequential)* `server.py`: register every operation as an MCP tool; enforce the
   *MCP tool permissions* table from the token; write `audit_log` for every call (including errors);
   after each successful write emit a `state_snapshot` event (stdout until Loop 5); seed replaces the
   Loop 0 parser with `pantry_import.validate` and fails startup on any error.
@@ -1790,6 +1790,54 @@ flowchart TD
 
 ---
 
+## Implementation corrections
+Applied during implementation because reality differed from the plan. Each entry: what was wrong, the
+evidence, what was changed, and where. Open questions that were "default applied" point here.
+
+- **C1 — Postgres host port.** Host port 5432 was already taken by a local Postgres, so `make up` failed
+  (`address already in use`). Changed `docker-compose.yml` to bind `127.0.0.1:${POSTGRES_HOST_PORT:-55432}`;
+  `tests/integration/conftest.py` reads the same variable; `.env.example` documents it (open question 6).
+- **C2 — Hermes config schema version.** Every agent logged "config predates version 12 … can no longer be
+  auto-migrated". Added `_config_version: 42` (the pinned image's schema version) to all
+  `agents/*/config.yaml`.
+- **C3 — Seed log prefix.** `test_seed` could not find the ERROR lines: importing `mcp` installs a root log
+  handler first, so `logging.basicConfig` was a no-op. `costs_mcp/server.py: main()` now calls
+  `basicConfig(..., force=True)`.
+- **C4 — A2A smoke asserts on JSON-RPC, not on the Agent Card.** Hermes serves Agent Cards publicly;
+  `scripts/smoke_a2a.sh` asserts the card is served and checks auth/trust on a `GetTask` POST
+  (open question 4).
+- **C5 — `conversion_factors.amount_base_unit`.** A factor can convert across dimensions (1 un of Cobertura
+  de chocolate = 1000 g), so the stored amount needs its own unit; column added in `002_domain.sql`
+  (open question 8).
+- **C6 — Missing `get_launch_menu` test.** Loop 1's Tests list it but the first test commit did not cover
+  it; added to `test_budget_fit.py` in its own `test:` commit before `get_launch_menu` was implemented.
+- **C7 — A2A timeouts sized to real research time.** First live E2E turn: `ask_recipe_expert` failed after
+  169 s while recipe_expert was still researching (each `research` call took 20–45 s and it made several);
+  Hermes' A2A server waits up to `A2A_REPLY_TIMEOUT` (default 300 s) and keeps working after the caller
+  gives up (BrokenPipe in the logs), wasting model calls. The plan's 90/120/150/240 s (D38) are too short.
+  Now nested as: researcher server `A2A_REPLY_TIMEOUT=240` < experts' client 270 s
+  (`plugins/sabor_a2a/__init__.py`) < experts' server `A2A_REPLY_TIMEOUT=420` < fifi's client 450 s.
+- **C8 — Tool-search bridge off.** Hermes deferred MCP/plugin tools behind `tool_search`/`tool_describe`/
+  `tool_call`, adding round-trips and failing batches ("Local tools require one entry per tool_call").
+  Set `tools.tool_search.enabled: "off"` in every agent config.
+- **C9 — No agent-created skills.** recipe_expert created skills on its own (`skill_manage` from Hermes'
+  background review), contradicting D17 (skills are versioned in the repo). Set
+  `auxiliary.background_review.enabled: false`, `curator.enabled: false` and `skills.write_approval: true`.
+- **C10 — `clarify` only on fifi.** recipe_expert tried `clarify` inside an A2A turn, where nobody can answer
+  (D4). Disabled the `clarify` toolset on the experts and researcher. In Loop 0 fifi asks in plain text
+  (clarify buttons arrive with Loop 3's confirmation protocol).
+- **C11 — Fewer research calls.** recipe_expert (already `claude-sonnet-5`, so the owner's "switch Haiku to
+  Sonnet" suggestion did not apply to it) called `research` repeatedly. Its `SOUL.md` now allows at most two
+  `research` calls per request and researcher's at most two searches and two extracts. researcher stays on
+  `claude-haiku-4-5-20251001` unless the next live run shows its output causing re-calls; the owner allowed
+  switching it to Sonnet in that case.
+- **C12 — costs-mcp reads the contracts.** Loop 1 validates recipes against `contracts/recipe.schema.json`;
+  `docker-compose.yml` mounts `./contracts:/contracts:ro` and sets `SABOR_CONTRACTS_DIR`.
+- **C13 — MCP tool allowlists per agent.** Loop 1 step 6: each agent's `mcp_servers.costs.tools.include`
+  mirrors `TOOL_PERMISSIONS`, so models only see the tools the server would allow.
+- **C14 — Live E2E driven non-interactively.** `make chat` needs a TTY; live checks run
+  `docker compose exec fifi hermes chat -Q -q "<message>"` and continue with `--resume <session id>`.
+
 ## Final manual step (owner — after Loop 8, not executed by the agent)
 Kept here so it is not forgotten: no loop creates a GitHub remote or submits the challenge.
 - [ ] Create the GitHub repository, add it as `origin` and push.
@@ -1821,7 +1869,7 @@ Kept here so it is not forgotten: no loop creates a GitHub remote or submits the
 
 ## Open questions
 Queued during implementation (each: what it blocks, the question, the default if unanswered).
-**Answered:** 1–4 — owner approved the defaults below; 5 — owner is freeing 8 GB in total (not the recommended ~15 GB), so Langfuse (question 3) may still need the opt-in profile fallback.
+**Answered:** 1–4 — owner approved the defaults below (question 1: the owner put `CLAUDE_CODE_OAUTH_TOKEN` in `.env`); 5 — owner is freeing 8 GB in total (not the recommended ~15 GB), so Langfuse (question 3) may still need the opt-in profile fallback.
 1. **ANSWERED (default approved)** — **Blocks** every live model call (Loop 0 step 6 manual E2E and all later live checks): how does the
    Claude Code credential reach the five agent containers? The host has no `claude` in `PATH` (the
    VS Code extension bundles one at
@@ -1858,6 +1906,12 @@ Queued during implementation (each: what it blocks, the question, the default if
    from question 1. The owner asked to keep implementing everything that does not depend on their
    answers, so Loop 1 and the model-free parts of Loop 2 proceed before Loop 0 is fully checked off;
    their live checks run once the token is in `.env`.
+8. **Default applied, informational** — Loop 1 step 3 (schema): `conversion_factors` needs the unit of
+   `amount_base`, which the plan's schema omits. A factor converts across dimensions (1 `unit` of
+   Cobertura de chocolate = 1000 g), so the stored amount can be in a base unit different from the
+   ingredient's. **Applied:** column `amount_base_unit TEXT NOT NULL CHECK (IN 'g','ml','unit')`. Also,
+   Loop 1's Tests list a `get_launch_menu` check that no test file covered; it was added to
+   `test_budget_fit.py` before `get_launch_menu` was implemented.
 6. **Default applied, informational** — Loop 0 step 4 binds the app Postgres to `127.0.0.1:5432`, but
    that host port is already taken by a local Postgres on this machine. **Applied:** the host port is
    `${POSTGRES_HOST_PORT:-55432}` (container port stays 5432; services inside compose are unaffected;

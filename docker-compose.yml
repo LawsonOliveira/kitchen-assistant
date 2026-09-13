@@ -12,7 +12,7 @@ x-agent: &agent
       condition: service_healthy
 
 x-agent-env: &agent-env
-  # TODO(open question 1): how the Claude Code credential reaches the containers is still open.
+  # Claude Code credential for every agent (PLAN.md D46, open question 1: token generated with `claude setup-token`).
   CLAUDE_CODE_OAUTH_TOKEN: ${CLAUDE_CODE_OAUTH_TOKEN:-}
 
 x-a2a-server-healthcheck: &a2a-healthcheck
@@ -47,8 +47,10 @@ services:
       COSTS_MCP_AGENT_TOKENS: >-
         fifi:${COSTS_MCP_TOKEN_FIFI:?set COSTS_MCP_TOKEN_FIFI in .env},recipe_expert:${COSTS_MCP_TOKEN_RECIPE_EXPERT:?set COSTS_MCP_TOKEN_RECIPE_EXPERT in .env},cost_expert:${COSTS_MCP_TOKEN_COST_EXPERT:?set COSTS_MCP_TOKEN_COST_EXPERT in .env},marketing_expert:${COSTS_MCP_TOKEN_MARKETING_EXPERT:?set COSTS_MCP_TOKEN_MARKETING_EXPERT in .env}
       SABOR_SPREADSHEET: /data/despensa_dona_maria.xlsx
+      SABOR_CONTRACTS_DIR: /contracts
     volumes:
       - ./data:/data:ro
+      - ./contracts:/contracts:ro
     depends_on:
       postgres:
         condition: service_healthy
@@ -84,6 +86,7 @@ services:
       A2A_PORT: "9900"
       A2A_HOST: 0.0.0.0
       A2A_PUBLIC_URL: http://recipe-expert:9900
+      A2A_REPLY_TIMEOUT: "420"  # > researcher chain; fifi's client waits 450 s (correction C7)
       A2A_PEER_TOKENS: fifi:${A2A_TOKEN_FIFI}
       A2A_TRUSTED_PEERS: fifi
       A2A_ALLOWED_USERS: fifi
@@ -102,6 +105,7 @@ services:
       A2A_PORT: "9900"
       A2A_HOST: 0.0.0.0
       A2A_PUBLIC_URL: http://cost-expert:9900
+      A2A_REPLY_TIMEOUT: "420"  # > researcher chain; fifi's client waits 450 s (correction C7)
       A2A_PEER_TOKENS: fifi:${A2A_TOKEN_FIFI}
       A2A_TRUSTED_PEERS: fifi
       A2A_ALLOWED_USERS: fifi
@@ -120,6 +124,7 @@ services:
       A2A_PORT: "9900"
       A2A_HOST: 0.0.0.0
       A2A_PUBLIC_URL: http://marketing-expert:9900
+      A2A_REPLY_TIMEOUT: "420"  # > researcher chain; fifi's client waits 450 s (correction C7)
       A2A_PEER_TOKENS: fifi:${A2A_TOKEN_FIFI}
       A2A_TRUSTED_PEERS: fifi
       A2A_ALLOWED_USERS: fifi
@@ -138,6 +143,7 @@ services:
       A2A_PORT: "9900"
       A2A_HOST: 0.0.0.0
       A2A_PUBLIC_URL: http://researcher:9900
+      A2A_REPLY_TIMEOUT: "240"  # experts' client waits 270 s (correction C7)
       A2A_PEER_TOKENS: recipe_expert:${A2A_TOKEN_RECIPE_EXPERT},cost_expert:${A2A_TOKEN_COST_EXPERT},marketing_expert:${A2A_TOKEN_MARKETING_EXPERT}
       A2A_TRUSTED_PEERS: recipe_expert,cost_expert,marketing_expert
       A2A_ALLOWED_USERS: recipe_expert,cost_expert,marketing_expert

@@ -17,13 +17,13 @@ RESEARCH_TASK_TYPES = ["recipe_search", "ingredient_price", "menu_reference"]
 # role -> {tool name: (peer URL, timeout seconds, description)}
 ROLE_TOOLS = {
     "fifi": {
-        "ask_recipe_expert": ("http://recipe-expert:9900/", 150, "Ask the recipe expert (recipes, feasibility, kitchen facts)."),
-        "ask_cost_expert": ("http://cost-expert:9900/", 150, "Ask the cost expert (pantry match, CMV, prices, budget)."),
-        "ask_marketing_expert": ("http://marketing-expert:9900/", 150, "Ask the marketing expert (iFood menu copy, promotions)."),
+        "ask_recipe_expert": ("http://recipe-expert:9900/", 450, "Ask the recipe expert (recipes, feasibility, kitchen facts)."),
+        "ask_cost_expert": ("http://cost-expert:9900/", 450, "Ask the cost expert (pantry match, CMV, prices, budget)."),
+        "ask_marketing_expert": ("http://marketing-expert:9900/", 450, "Ask the marketing expert (iFood menu copy, promotions)."),
     },
-    "recipe_expert": {"research": ("http://researcher:9900/", 120, "Ask the web researcher for structured results.")},
-    "cost_expert": {"research": ("http://researcher:9900/", 120, "Ask the web researcher for structured results.")},
-    "marketing_expert": {"research": ("http://researcher:9900/", 120, "Ask the web researcher for structured results.")},
+    "recipe_expert": {"research": ("http://researcher:9900/", 270, "Ask the web researcher for structured results.")},
+    "cost_expert": {"research": ("http://researcher:9900/", 270, "Ask the web researcher for structured results.")},
+    "marketing_expert": {"research": ("http://researcher:9900/", 270, "Ask the web researcher for structured results.")},
     "researcher": {},
 }
 

@@ -11,8 +11,24 @@ plugins:
     - sabor_observability
 agent:
   disabled_toolsets: [terminal, file, code_execution, browser, computer_use, image_gen, tts, video, video_gen, vision, cronjob, kanban, spotify, homeassistant, x_search, web]
+tools:
+  tool_search:
+    enabled: "off"  # tools are called directly, no tool_search/tool_call bridge (PLAN.md correction C8)
+auxiliary:
+  background_review:
+    enabled: false  # no self-created skills: skills are versioned in the repo (correction C9)
+curator:
+  enabled: false
+skills:
+  write_approval: true
 mcp_servers:
   costs:
     url: http://costs-mcp:8000/mcp
     headers:
       Authorization: "Bearer ${COSTS_MCP_TOKEN}"
+    tools:
+      include:
+        - get_pantry
+        - get_state_summary
+        - check_pantry_match
+        - get_launch_menu
