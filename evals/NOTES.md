@@ -52,3 +52,23 @@ trajectory was read from `audit_log` and fifi's session.
 Permissions: every write in `audit_log` came from the agent the MCP permission table allows (enforced by costs-mcp
 tokens); every click-required write was preceded in fifi's session by `clarify` answered "Confirmar". One deviation
 (custom confirmation wording, scenario 02 first attempt) is addressed by C33 and open question 10 (Loop 4).
+
+## Loop 6 spike — driving fifi for trials (2026-09-13)
+
+Question (Loop 6 step 2): can the runner drive fifi through the Hermes API server with a stable session per trial,
+answering `clarify` choices?
+
+- **Session continuity works.** `POST /v1/chat/completions` with `Authorization: Bearer $API_SERVER_KEY` returns
+  `X-Hermes-Session-Id`; sending it back continues the session with history from `state.db` (two turns kept
+  `api-a5d6093568d0c7f1`).
+- **`clarify` is not available there.** The pinned Hermes gives API-server sessions the `hermes-api-server` toolset,
+  "full agent tools accessible via HTTP (no interactive UI tools like clarify or send_message)" (`toolsets.py`), and
+  the API-server adapter has no `send_clarify`. Live: asked to register a purchase, Dona Fifi asked "Pode confirmar?"
+  in plain text; the owner's "Confirmar" arrived as a normal message, so the click check refused the purchase twice
+  (correctly: no clarify click exists in that session). Every scenario with a click-required write would fail for a
+  reason that is not the agent's.
+- **What works (Loop 3 and 4 manual runs).** The classic CLI `hermes --cli` in a pty: one CLI process per trial is
+  one session, clarify prompts are answered with arrow keys and Enter (or "Other" plus typed text), and the screen
+  can be read with `pyte`. The scratchpad driver used for 13 scenario runs did exactly that.
+- **Outcome:** the API server cannot run multi-turn scenarios with clicks → open question 13 (PLAN.md), default: the
+  runner drives the CLI through a pty.

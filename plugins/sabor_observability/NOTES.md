@@ -99,3 +99,25 @@ running the Langfuse SDK on the host against a local OTLP capture server.
   numbers.
 - Full content capture (inputs/outputs) for the demo; production would use sanitized capture and a retention period
   (LGPD) — a README note for Loop 8.
+
+## Live checks (2026-09-13, after the merge into the main checkout)
+
+- **Build and baseline.** The first image build refused `langfuse==4.15.2` (inside the Hermes image's 14-day uv
+  `exclude-newer` quarantine); 4.15.1 is pinned. langfuse-web died five times with "JavaScript heap out of memory"
+  under 1 GiB; with `NODE_OPTIONS=--max-old-space-size=1024` and a 1.5 GiB limit it settled at ~850 MiB. Memory with
+  the whole stack up: clickhouse ~470 MiB, langfuse-worker ~430 MiB, agents ~220 MiB each; the Docker VM (7.5 GiB)
+  runs with swap in use. Plugin and contract tests in the image: 295 passed, 1 skipped (agent configs are not baked
+  into the image).
+- **Langfuse v4 API.** This deployment runs in v4 `events_only` mode: `/api/public/traces/<id>` and
+  `/api/public/observations` answer "not available"; `/api/public/v2/observations?traceId=<id>` works.
+- **One trace across containers.** Turn "cadastra o strogonoff e me diz quanto gastaria com creme de leite":
+  `audit_log.trace_id` (recipe_expert and cost_expert rows) = Langfuse trace `a98f906a…` with 50 observations:
+  fifi GENERATIONs and TOOL `ask_recipe_expert`/`ask_cost_expert` → AGENT `recipe_expert`/`cost_expert` →
+  their GENERATIONs and TOOL `mcp__costs__*`; cost_expert TOOL `research` → AGENT `researcher` → TOOL
+  `fan_out_research` → AGENT `researcher` (child) → TOOL `web_search`/`web_extract`. fifi's spans carry the owner's
+  session id and show `isRootObservation: true` (their random OTel parent is not an observation).
+- **Cockpit.** The SSE replay carried events from fifi, recipe_expert, cost_expert, researcher and costs_mcp
+  (`a2a_call`, `a2a_serve`, `mcp_call`, `state_snapshot`, guard events); after a purchase confirmed in the CLI the
+  latest `state_snapshot` went from "Saldo R$ 80,00" to "Saldo R$ 74,02".
+- **Resilience.** With `langfuse-web` and `cockpit` stopped, a full `hermes chat -q` turn answered normally in 20 s;
+  after `docker compose start` the next turn's events reached the cockpit (6) and Langfuse (5 observations).

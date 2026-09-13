@@ -1611,19 +1611,19 @@ flowchart TD
   restart, events resume.
 
 **Steps**
-- [ ] 1. *(sequential)* Write the tests above; run red; commit `test: L5 …`.
-- [ ] 2. *(parallel with each other)*
-  - [ ] a) Langfuse v4 services in `docker-compose.yml` from the official compose file (pinned tags;
+- [x] 1. *(sequential)* Write the tests above; run red; commit `test: L5 …`.
+- [x] 2. *(parallel with each other)*
+  - [x] a) Langfuse v4 services in `docker-compose.yml` from the official compose file (pinned tags;
     every `CHANGEME` secret moved to `.env`); `LANGFUSE_INIT_ORG_ID`, `LANGFUSE_INIT_PROJECT_ID`,
     `LANGFUSE_INIT_PROJECT_PUBLIC_KEY=pk-lf-…`, `LANGFUSE_INIT_PROJECT_SECRET_KEY=sk-lf-…`,
     `LANGFUSE_INIT_USER_EMAIL`, `LANGFUSE_INIT_USER_PASSWORD` so keys exist after the first `up`.
-  - [ ] b) `services/cockpit/`: `server.py` (stdlib `ThreadingHTTPServer`): `POST /events` (bearer
+  - [x] b) `services/cockpit/`: `server.py` (stdlib `ThreadingHTTPServer`): `POST /events` (bearer
     token, schema validation, in-memory ring buffer of 500), `GET /stream` (SSE), `GET /` →
     `index.html` (vanilla JS graph guard_input → fifi → experts → researcher → MCP → guard_output with
     the active node pulsing; timeline with duration, tokens, cost; state panel from the latest
     `state_snapshot`; badges from `health` events and a periodic Langfuse `/api/public/health` probe);
     `pyproject.toml` with no runtime deps; `Dockerfile`; port 8080.
-- [ ] 3. *(sequential)* `plugins/sabor_observability/trace.py`: `ContextVar` with `trace_id`/`span_id`;
+- [x] 3. *(sequential)* `plugins/sabor_observability/trace.py`: `ContextVar` with `trace_id`/`span_id`;
   fifi starts a trace per turn in `pre_llm_call`; `sabor_a2a` puts `trace` in every request; serving
   agents adopt it in `pre_llm_call`; `pre_tool_call` on MCP tools adds `trace_id` to args (costs-mcp
   accepts it on every tool and writes it to `audit_log`). `emit.py`: POST to cockpit (0.5 s timeout,
@@ -1631,16 +1631,16 @@ flowchart TD
   `session_id`, model, `prompt_hash`, tokens and cost (errors dropped + logged). Hooks:
   `pre/post_api_request`, `pre/post_tool_call`, `subagent_start/stop`, guard events. Bundled
   `observability/langfuse` stays disabled. Full content capture.
-- [ ] 4. *(sequential)* `costs-mcp` emits `mcp_call` and `state_snapshot` to the cockpit (same
+- [x] 4. *(sequential)* `costs-mcp` emits `mcp_call` and `state_snapshot` to the cockpit (same
   best-effort rule).
-- [ ] 5. *(sequential)* Run tests, live and resilience checks; note for the README that production
+- [x] 5. *(sequential)* Run tests, live and resilience checks; note for the README that production
   would use sanitized capture and retention (LGPD).
 
 **Definition of Done for this loop**
-- [ ] Tests above were written before the implementation steps
-- [ ] Steps completed
-- [ ] Tests above pass
-- [ ] A single cross-container trace inspected in Langfuse
+- [x] Tests above were written before the implementation steps
+- [x] Steps completed
+- [x] Tests above pass
+- [x] A single cross-container trace inspected in Langfuse
 
 ---
 
@@ -1665,8 +1665,8 @@ flowchart TD
   only under the test-first rule.
 
 **Steps**
-- [ ] 1. *(sequential)* Write the grader/runner unit tests; run red; commit `test: L6 …`.
-- [ ] 2. *(sequential)* Spike, recorded in `evals/NOTES.md`: drive fifi through the Hermes API server
+- [x] 1. *(sequential)* Write the grader/runner unit tests; run red; commit `test: L6 …`.
+- [x] 2. *(sequential)* Spike, recorded in `evals/NOTES.md`: drive fifi through the Hermes API server
   with a stable session per trial, including how `clarify` choices are answered; if impossible, queue
   an open question.
 - [ ] 3. *(parallel with each other)*
@@ -2082,6 +2082,31 @@ evidence, what was changed, and where. Open questions that were "default applied
     `exclude-newer` quarantine, so the first image build refused it), images pinned in `services/cockpit/NOTES.md`, and
     memory limits of about 4 GiB in total for the Langfuse services (open question 3).
 
+- **C45 — Loop 5 live fixes.** The first image build refused `langfuse==4.15.2` (pinned to 4.15.1, see C44).
+  langfuse-web then died five times at startup with "JavaScript heap out of memory" under its 1 GiB limit; it now has
+  `NODE_OPTIONS=--max-old-space-size=1024` and `mem_limit: 1536m` (~850 MiB in use). This Langfuse v4 deployment runs in
+  `events_only` mode, where `/api/public/traces/<id>` and `/api/public/observations` are unavailable; trace checks use
+  `/api/public/v2/observations?traceId=<id>`. fifi's spans are root observations (`isRootObservation: true`).
+- **C46 — postgres and costs-mcp restart with the host.** After a host reboot the agents and Langfuse came back
+  (`restart: unless-stopped`) but the app database and costs-mcp stayed stopped, so the agents started without their
+  MCP server; both services now have the same restart policy (the agents were restarted once to reconnect).
+- **C47 — A guard verdict is never lost to a long label.** A live output-guard call returned the category "cost
+  calculation and purchase confirmation" (42 characters); the verdict schema's `maxLength: 40` made Hermes' plugin LLM
+  reject the reply, which would have become `INFRA_BLOCK_MESSAGE`. The schema sent to the model has no length limits;
+  `parse_verdict` truncates category (40) and reason (300). Tests first (red: 1 failed).
+- **C48 — Amounts Dona Maria typed ground Dona Fifi's answer.** D12 grounded only expert display strings, so in the
+  Loop 6 API-server spike Dona Fifi's question repeating the owner's own "R$ 2,99" before registering a purchase was
+  replaced by the scope message. fifi's `pre_llm_call` now adds the amounts of the owner's message to the session
+  grounding; an amount nobody typed or returned (the model's own "R$ 5,98" total) is still blocked. Tests first (red:
+  2 failed).
+- **C49 — Loop 6 grader details fixed by the tests.** `grade_trajectory(scenario, audit_log, events, session)` also
+  takes fifi's session, which `click_before`, `evidence_from_owner` and `rejected_dish_not_suggested_again` need;
+  `click_before` mirrors the guardrail ledger (one click per Confirmar answer of the latest clarify, spent by each
+  click-required write), so a batch clarify confirming two decisions authorizes both, as it does live; `guard_blocked`
+  (red-team 05) also passes when the input guard stopped the turn before the memory guard could run; the judge-alert
+  test uses a mean of 3.25, because four integer criteria cannot average the plan's 3.4; `make eval-reset` is
+  `scripts/eval_reset.sh`.
+
 ## Final manual step (owner — after Loop 8, not executed by the agent)
 Kept here so it is not forgotten: no loop creates a GitHub remote or submits the challenge.
 - [ ] Create the GitHub repository, add it as `origin` and push.
@@ -2199,3 +2224,14 @@ Queued during implementation (each: what it blocks, the question, the default if
    check?
    **Default if unanswered:** none — Telegram stays off (the gateway starts the channel only with a token and refuses
    everyone without an allowlist); Loop 7 is left unchecked and Loop 8's README documents the setup steps.
+13. **OPEN** — **Affects** Loop 6 steps 3b–4 (how the runner talks to fifi; nothing is blocked meanwhile): the step 2
+   spike (`evals/NOTES.md`) found that the API server keeps a session (`X-Hermes-Session-Id`) but gives fifi no
+   `clarify` tool (`hermes-api-server` toolset), so no scenario with a click-required write can pass through it.
+   Should the runner drive the classic CLI instead — one `hermes --cli` process per trial in a pty (`docker compose
+   exec -it`), screen read with `pyte` (one new eval dependency), clarify answered with arrow keys/Enter per
+   `clarify_answers`, audit_log/events/fifi's `state.db` session read after the trial? It is slower (full terminal
+   rendering) but exercises exactly what Dona Maria uses. Rejected alternatives: a custom platform adapter with
+   buttons (new Hermes code just for evals); answering clarify through the API server's text intercept (the tool is
+   not offered there at all).
+   **Default if unanswered:** yes — the CLI pty driver; red-team single-turn cases without clicks may still use the
+   API server.
