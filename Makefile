@@ -2,7 +2,7 @@ COMPOSE := docker compose
 UV := uv
 AGENT_PYTHON := /opt/hermes/.venv/bin/python
 
-.PHONY: up down logs chat test test-integration test-contracts test-plugins smoke-a2a smoke-research eval-requirements import-pantry selftest db-shell hermes-shell
+.PHONY: up down logs chat test test-integration test-contracts test-plugins smoke-a2a smoke-research eval-requirements import-pantry selftest test-skin db-shell hermes-shell
 
 up:
 	$(COMPOSE) up -d --build --wait
@@ -51,6 +51,10 @@ import-pantry:  # copy a spreadsheet where Dona Fifi can import it: make import-
 
 selftest:  # guardrail canary against fifi's API server (Loop 4)
 	bash scripts/selftest.sh
+
+# Hermes silently falls back to its default skin on invalid YAML, so the name must come back from the engine (Loop 7).
+test-skin:
+	$(COMPOSE) exec -T fifi python -c "from hermes_cli.skin_engine import load_skin; s=load_skin('dona-fifi'); assert 'Dona Fifi' in str(s), 'dona-fifi skin not loaded'"
 
 db-shell:
 	$(COMPOSE) exec postgres psql -U sabor -d sabor
