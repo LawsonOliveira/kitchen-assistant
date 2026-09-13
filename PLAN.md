@@ -1647,6 +1647,11 @@ flowchart TD
 ### Loop 6 — Evals
 **Depends on:** Loop 4, Loop 5
 
+> **Paused by the owner (2026-09-13).** The live runner works up to the first scenario trial (fixes C53); the full
+> `make evals` run waits until Loops 7 and 8 and the post-loop changes PL1–PL9 are done, so the evals run once on the
+> final system (renamed orchestrator, Dona Sálvia, measures, recipe cache, latency levers). Loop 8's items that need an
+> eval report (README results, the rehearsal's `make evals`, the full suite's `make evals`) wait with it.
+
 **Requirements for this loop**
 - `make evals` runs every layer (D36) and reports against the thresholds in the global DoD; results
   published to Langfuse; one feedback-loop example documented.
@@ -2126,8 +2131,11 @@ evidence, what was changed, and where. Open questions that were "default applied
   `evals/results/<timestamp>/`, so `make evals ARGS="--resume …"` continues an interrupted run.
 
 ## Post-loop changes (owner requests, 2026-09-13)
-Requested by the owner while Loops 6–8 were running, **to implement after every loop is complete**, test-first, each
-recorded as a correction. Findings below were measured on the running stack; open decisions are listed per item.
+Requested by the owner while Loops 6–8 were running, test-first, each recorded as a correction. **Order decided by the
+owner:** Loop 6 pauses; Loop 7 (the owner's Telegram checks) and Loop 8 finish, then PL1–PL9, then Loop 6 resumes and
+runs the evals on the final system. Execution order inside PL: PL1 (guards), PL6 and PL8 (costs-mcp), PL9 (latency),
+PL7 (conversation review), and the renames last in one pass (PL2 code names, PL3 persona, PL5 plugin prefix, PL4 folder
+and compose project), because they touch almost every file and restart the stack. Findings below were measured on the running stack; open decisions are listed per item.
 
 - **PL1 — A receptive orchestrator (greetings and small talk are in scope).** The owner asked how she was and a guard
   blocked it. Live verdicts: the input guard blocked "Oi Fifi, tudo bem? Como você está?", "como você está?" and "Bom
