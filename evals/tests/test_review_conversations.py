@@ -87,3 +87,12 @@ def test_turn_durations_are_rounded_to_a_tenth_of_a_second():
     # First live review: a Telegram turn reported "p90 turn latency 93.4229 s" (raw timestamps from state.db).
     turns = review.turns([message(0.0, "user", "oi"), message(93.4229, "assistant", "Oi, meu bem!")])
     assert turns[0]["seconds"] == 93.4 and review.alerts(review.signals(turns), cost_usd=0.1) == ["p90 turn latency 93.4 s > 60 s"]
+
+
+def test_rerunning_the_review_updates_the_same_scores_instead_of_adding_copies():
+    # Second live review: every score of the Telegram session existed twice. Langfuse upserts a score by its id.
+    first = review.score_payloads("sess-1", {"scope_blocks": 1, "tool_errors": 0, "latency_p90_seconds": 75, "cancel_clicks": 0}, {"tone": 4})
+    again = review.score_payloads("sess-1", {"scope_blocks": 0, "tool_errors": 0, "latency_p90_seconds": 70, "cancel_clicks": 0}, {"tone": 5})
+    assert [payload["id"] for payload in first] == [payload["id"] for payload in again]
+    assert len({payload["id"] for payload in first}) == len(first)
+    assert all("sess-1" in payload["id"] for payload in first)
