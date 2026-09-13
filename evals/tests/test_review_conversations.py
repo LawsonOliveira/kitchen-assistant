@@ -81,3 +81,9 @@ def test_the_report_names_each_conversation_its_scores_alerts_and_candidates():
                           "latency_p90_seconds": 75, "infra_blocks": 0}, "judge": {"scores": {"tone": 4}, "mean": 4.0, "alert": False},
                           "alerts": ["p90 turn latency 75 s > 60 s"], "cost_usd": 0.1}])
     assert "sess-1" in text and "telegram" in text and "p90 turn latency 75 s > 60 s" in text and "Oi, como você está?" in text
+
+
+def test_turn_durations_are_rounded_to_a_tenth_of_a_second():
+    # First live review: a Telegram turn reported "p90 turn latency 93.4229 s" (raw timestamps from state.db).
+    turns = review.turns([message(0.0, "user", "oi"), message(93.4229, "assistant", "Oi, meu bem!")])
+    assert turns[0]["seconds"] == 93.4 and review.alerts(review.signals(turns), cost_usd=0.1) == ["p90 turn latency 93.4 s > 60 s"]
