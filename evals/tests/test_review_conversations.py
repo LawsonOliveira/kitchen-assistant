@@ -57,8 +57,10 @@ def test_alerts_use_the_owner_limits():
 def test_session_scores_for_langfuse_carry_the_rubric_and_the_signals():
     payloads = review.score_payloads("sess-1", {"scope_blocks": 1, "tool_errors": 2, "latency_p90_seconds": 75, "cancel_clicks": 0},
                                      {"tone": 4, "owner_decides": 5})
-    assert {"sessionId": "sess-1", "name": "tone", "value": 4, "dataType": "NUMERIC", "comment": "review_conversations"} in payloads
-    assert {"sessionId": "sess-1", "name": "latency_p90_seconds", "value": 75, "dataType": "NUMERIC", "comment": "review_conversations"} in payloads
+    assert {"id": "review-sess-1-tone", "sessionId": "sess-1", "name": "tone", "value": 4, "dataType": "NUMERIC",
+            "comment": "review_conversations"} in payloads
+    assert {"id": "review-sess-1-latency_p90_seconds", "sessionId": "sess-1", "name": "latency_p90_seconds", "value": 75,
+            "dataType": "NUMERIC", "comment": "review_conversations"} in payloads
     assert len(payloads) == 6
 
 
