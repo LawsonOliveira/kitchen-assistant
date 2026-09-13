@@ -79,6 +79,26 @@ def test_a_scenario_answer_that_fits_the_choices_needs_no_model_call():
     assert simulated_owner.answer_clarify(llm, SCENARIO, [], "Posso aceitar o prato?", ["Confirmar", "Cancelar"]) == {"choice": "Confirmar"}
 
 
+def test_a_rule_with_choices_count_only_answers_a_prompt_with_that_many_choices():
+    answers = [{"question_contains": ["preço"], "choices_count": 3, "choice_position": 2}, {"default": "Confirmar"}]
+    prices = ["R$ 12,90 (CMV 35%)", "R$ 14,90 (CMV 30%)", "R$ 17,90 (CMV 25%)"]
+    assert simulated_owner.clarify_answer(answers, "Qual preço a senhora escolhe?", prices) == {"choice_position": 2}
+    assert simulated_owner.clarify_answer(answers, "Confirma o preço de R$ 14,90?", ["Confirmar", "Cancelar"]) == {"choice": "Confirmar"}
+
+
+def test_no_scenario_takes_a_price_quote_confirmation_for_the_price_scenario_choice():
+    # Smoke trial 01 (2026-09-13): "Posso usar o preço estimado de R$ 11,81 (pacote de 50g) para a pimenta-do-reino no
+    # cálculo do custo do prato?" matched the rule meant for the three price scenarios (question_contains "preço",
+    # choice_position 2), so the simulated owner clicked Cancelar four times and the flow never reached a price.
+    import yaml
+    from pathlib import Path
+
+    question = "Posso usar o preço estimado de R$ 11,81 (pacote de 50g) para a pimenta-do-reino no cálculo do custo do prato?"
+    for path in sorted((Path(__file__).resolve().parents[1] / "scenarios").glob("*.yaml")):
+        answers = yaml.safe_load(path.read_text())["clarify_answers"]
+        assert "choice_position" not in simulated_owner.clarify_answer(answers, question, ["Confirmar", "Cancelar"]), path.name
+
+
 def test_the_persona_never_describes_her_pantry_beyond_the_facts():
     # Live trial: the persona said "sal e óleo eu tenho sim, salsinha no quintal", facts the scenario never gave.
     assert "pantry" in simulated_owner.system_prompt(SCENARIO)
