@@ -1,5 +1,5 @@
 {
-  "task": "match_and_cost",
+  "task": "buy_everything",
   "trace": {
     "trace_id": "trace-1",
     "parent_span_id": "span-1",
@@ -7,7 +7,5 @@
   },
   "owner_confirmation": null,
   "owner_statement": null,
-  "payload": {
-    "dish_id": 3
-  }
+  "payload": {}
 }

@@ -1,13 +1,14 @@
 {
-  "task": "match_and_cost",
+  "task": "set_packaging",
   "trace": {
     "trace_id": "trace-1",
     "parent_span_id": "span-1",
     "turn_cost_remaining_usd": 4.5
   },
   "owner_confirmation": null,
-  "owner_statement": null,
+  "owner_statement": "Uso marmitex de alumínio de 750 ml.",
   "payload": {
-    "dish_id": 3
+    "dish_id": 3,
+    "packaging_name": "Marmitex de alumínio 750 ml"
   }
 }

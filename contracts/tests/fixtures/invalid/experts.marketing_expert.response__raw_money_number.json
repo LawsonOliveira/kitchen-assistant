@@ -1,0 +1,11 @@
+{
+  "result": {
+    "promotion": {
+      "description": "10% off",
+      "discount_pct": "0.10",
+      "promo_price": 8.91
+    }
+  },
+  "questions_for_owner": [],
+  "cost_usd_spent": 0.01
+}

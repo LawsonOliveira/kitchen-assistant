@@ -1,11 +1,14 @@
 {
-  "task": "match_and_cost",
+  "task": "accept",
   "trace": {
     "trace_id": "trace-1",
     "parent_span_id": "span-1",
     "turn_cost_remaining_usd": 4.5
   },
-  "owner_confirmation": null,
+  "owner_confirmation": {
+    "choice": "Confirmar",
+    "summary": "Aceitar o Arroz com frango no cardápio"
+  },
   "owner_statement": null,
   "payload": {
     "dish_id": 3

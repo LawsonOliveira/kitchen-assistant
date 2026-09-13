@@ -1,5 +1,5 @@
 {
-  "task": "match_and_cost",
+  "task": "correct_price",
   "trace": {
     "trace_id": "trace-1",
     "parent_span_id": "span-1",
@@ -8,6 +8,9 @@
   "owner_confirmation": null,
   "owner_statement": null,
   "payload": {
-    "dish_id": 3
+    "ingredient": "Creme de leite",
+    "total_price_paid": "3.49",
+    "quantity": 200,
+    "unit": "g"
   }
 }

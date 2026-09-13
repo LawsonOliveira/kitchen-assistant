@@ -1,13 +1,15 @@
 {
-  "task": "match_and_cost",
+  "task": "confirm_requirement",
   "trace": {
     "trace_id": "trace-1",
     "parent_span_id": "span-1",
     "turn_cost_remaining_usd": 4.5
   },
   "owner_confirmation": null,
-  "owner_statement": null,
+  "owner_statement": "Tenho forno.",
   "payload": {
-    "dish_id": 3
+    "dish_id": 3,
+    "requirement": "oven",
+    "status": "available"
   }
 }

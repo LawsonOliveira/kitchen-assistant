@@ -1,0 +1,16 @@
+{
+  "task": "import_pantry_apply",
+  "trace": {
+    "trace_id": "trace-1",
+    "parent_span_id": "span-1",
+    "turn_cost_remaining_usd": 4.5
+  },
+  "owner_confirmation": {
+    "choice": "Confirmar",
+    "summary": "Aplicar a planilha nova (Tomate R$ 16,00 → R$ 20,00)"
+  },
+  "owner_statement": null,
+  "payload": {
+    "import_id": 1
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "result": {
+    "promotion": {
+      "description": "Semana de lançamento: 10% off",
+      "discount_pct": "0.10"
+    }
+  },
+  "questions_for_owner": [],
+  "cost_usd_spent": 0.01
+}

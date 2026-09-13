@@ -1,0 +1,24 @@
+{
+  "task": "register_purchase",
+  "trace": {
+    "trace_id": "trace-1",
+    "parent_span_id": "span-1",
+    "turn_cost_remaining_usd": 4.5
+  },
+  "owner_confirmation": {
+    "choice": "Confirmar",
+    "summary": "Comprar 1 pacote de 2 kg de tomate por R$ 16,00 para o vinagrete"
+  },
+  "owner_statement": null,
+  "payload": {
+    "dish_id": 5,
+    "ingredient": "Tomate",
+    "kind": "food",
+    "packages": 0,
+    "package_quantity": 2,
+    "package_unit": "kg",
+    "package_price": "16.00",
+    "price_source": "owner_confirmed",
+    "source_url": null
+  }
+}

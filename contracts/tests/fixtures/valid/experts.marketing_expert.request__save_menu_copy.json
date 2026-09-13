@@ -1,0 +1,18 @@
+{
+  "task": "save_menu_copy",
+  "trace": {
+    "trace_id": "trace-1",
+    "parent_span_id": "span-1",
+    "turn_cost_remaining_usd": 4.5
+  },
+  "owner_confirmation": {
+    "choice": "Confirmar",
+    "summary": "Publicar título e descrição do Arroz com frango"
+  },
+  "owner_statement": null,
+  "payload": {
+    "dish_id": 3,
+    "title": "Arroz com frango da Dona Maria",
+    "description": "Arroz soltinho com peito de frango refogado no alho, feito na hora como em casa."
+  }
+}

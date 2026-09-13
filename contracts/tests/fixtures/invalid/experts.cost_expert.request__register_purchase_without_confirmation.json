@@ -1,0 +1,21 @@
+{
+  "task": "register_purchase",
+  "trace": {
+    "trace_id": "trace-1",
+    "parent_span_id": "span-1",
+    "turn_cost_remaining_usd": 4.5
+  },
+  "owner_confirmation": null,
+  "owner_statement": null,
+  "payload": {
+    "dish_id": 5,
+    "ingredient": "Tomate",
+    "kind": "food",
+    "packages": 1,
+    "package_quantity": 2,
+    "package_unit": "kg",
+    "package_price": "16.00",
+    "price_source": "owner_confirmed",
+    "source_url": null
+  }
+}

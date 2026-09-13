@@ -1,0 +1,16 @@
+{
+  "task": "correct_price",
+  "trace": {
+    "trace_id": "trace-1",
+    "parent_span_id": "span-1",
+    "turn_cost_remaining_usd": 4.5
+  },
+  "owner_confirmation": null,
+  "owner_statement": "Paguei R$ 3,49 na caixinha de 200 g.",
+  "payload": {
+    "ingredient": "Creme de leite",
+    "total_price_paid": "3.49",
+    "quantity": 200,
+    "unit": "g"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "result": {
+    "dish": {
+      "dish_id": 3,
+      "status": "candidate",
+      "viability": {
+        "missing": [],
+        "unknown": [
+          "oven"
+        ]
+      },
+      "pantry_coverage_pct": 86,
+      "missing_ingredients": []
+    }
+  },
+  "questions_for_owner": [],
+  "cost_usd_spent": 0.01
+}

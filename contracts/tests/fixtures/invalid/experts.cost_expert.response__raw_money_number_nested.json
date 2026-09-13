@@ -1,12 +1,9 @@
 {
   "result": {
-    "recipe_cmv_display": "R$ 10,86",
     "scenarios": [
       {
         "target_cmv_pct": "0.35",
-        "display_price": "R$ 7,90",
-        "margin_display": "55,6%",
-        "below_min": false
+        "display_price": 7.9
       }
     ]
   },

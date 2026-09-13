@@ -1,5 +1,10 @@
 {
-  "result": {},
+  "result": {
+    "menu_copy": {
+      "title": "Arroz com frango da Dona Maria",
+      "description": "Arroz soltinho com frango refogado no alho."
+    }
+  },
   "questions_for_owner": [],
   "cost_usd_spent": 0.01
 }

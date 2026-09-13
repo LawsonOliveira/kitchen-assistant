@@ -1,0 +1,15 @@
+{
+  "task": "record_kitchen_fact",
+  "trace": {
+    "trace_id": "trace-1",
+    "parent_span_id": "span-1",
+    "turn_cost_remaining_usd": 4.5
+  },
+  "owner_confirmation": null,
+  "owner_statement": "Tenho frigideira grande.",
+  "payload": {
+    "key": "other:frigideira grande",
+    "status": "available",
+    "numeric_value": null
+  }
+}

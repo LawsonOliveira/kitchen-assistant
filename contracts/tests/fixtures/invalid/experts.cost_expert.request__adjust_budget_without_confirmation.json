@@ -1,5 +1,5 @@
 {
-  "task": "match_and_cost",
+  "task": "adjust_budget",
   "trace": {
     "trace_id": "trace-1",
     "parent_span_id": "span-1",
@@ -8,6 +8,6 @@
   "owner_confirmation": null,
   "owner_statement": null,
   "payload": {
-    "dish_id": 3
+    "delta": "50.00"
   }
 }

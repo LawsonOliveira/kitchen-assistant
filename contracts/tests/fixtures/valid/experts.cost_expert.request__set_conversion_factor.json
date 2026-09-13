@@ -1,0 +1,16 @@
+{
+  "task": "set_conversion_factor",
+  "trace": {
+    "trace_id": "trace-1",
+    "parent_span_id": "span-1",
+    "turn_cost_remaining_usd": 4.5
+  },
+  "owner_confirmation": null,
+  "owner_statement": "A barra de cobertura que eu compro tem 1 kg.",
+  "payload": {
+    "ingredient": "Cobertura de chocolate",
+    "measure": "unit",
+    "amount": 1000,
+    "unit": "g"
+  }
+}

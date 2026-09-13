@@ -1,0 +1,18 @@
+{
+  "task": "register_promotion",
+  "trace": {
+    "trace_id": "trace-1",
+    "parent_span_id": "span-1",
+    "turn_cost_remaining_usd": 4.5
+  },
+  "owner_confirmation": {
+    "choice": "Confirmar",
+    "summary": "Promoção de 10% (R$ 8,91)"
+  },
+  "owner_statement": null,
+  "payload": {
+    "dish_id": 3,
+    "description": "Semana de lançamento: 10% off no arroz com frango",
+    "discount_pct": "0.10"
+  }
+}

@@ -2,6 +2,8 @@
 
 import json
 
+import pytest
+
 from sabor_a2a import relay
 
 SCENARIOS = {"recipe_cmv_display": "R$ 10,86", "scenarios": [
@@ -27,6 +29,11 @@ def model_reply(result, questions=()):
 
 def setup_function():
     relay.reset()
+
+
+@pytest.fixture(autouse=True)
+def cost_expert_role(monkeypatch):
+    monkeypatch.setenv("SABOR_AGENT_ROLE", "cost_expert")
 
 
 def test_the_tool_result_replaces_a_miscopied_value():
@@ -77,3 +84,26 @@ def test_a_new_request_in_a_reused_session_forgets_the_previous_result():
 def test_subagents_are_ignored():
     relay.transform_tool_result(tool_name="mcp__costs__compute_dish_cost", result=mcp_result(SCENARIOS), session_id="child-1")
     assert relay.transform_llm_output(response_text="{}", session_id="child-1", platform="subagent") is None
+
+
+def test_every_money_tool_of_cost_expert_is_relayed():
+    # Loop 3 extends C25 to every costs-mcp tool whose result carries money display strings.
+    assert relay.RELAYED_TOOLS["cost_expert"] == {
+        "mcp__costs__compute_dish_cost", "mcp__costs__check_budget_fit", "mcp__costs__record_price_quote",
+        "mcp__costs__register_purchase", "mcp__costs__adjust_budget", "mcp__costs__correct_price",
+        "mcp__costs__select_price_scenario", "mcp__costs__simulate_promotion", "mcp__costs__import_pantry"}
+
+
+def test_marketing_expert_relays_the_registered_promotion(monkeypatch):
+    monkeypatch.setenv("SABOR_AGENT_ROLE", "marketing_expert")
+    new_request()
+    promotion = {"promotion_id": 1, "promo_price_display": "R$ 8,91", "profit_display": "R$ 5,30", "margin_display": "59,5%", "below_min": False}
+    relay.transform_tool_result(tool_name="mcp__costs__register_promotion", result=mcp_result(promotion), session_id="session-1")
+    assert json.loads(relay.transform_llm_output(response_text="{}", session_id="session-1", platform="a2a"))["result"] == promotion
+
+
+def test_a_tool_outside_the_role_is_not_relayed(monkeypatch):
+    monkeypatch.setenv("SABOR_AGENT_ROLE", "marketing_expert")
+    new_request()
+    relay.transform_tool_result(tool_name="mcp__costs__compute_dish_cost", result=mcp_result(SCENARIOS), session_id="session-1")
+    assert relay.transform_llm_output(response_text=model_reply({}), session_id="session-1", platform="a2a") is None

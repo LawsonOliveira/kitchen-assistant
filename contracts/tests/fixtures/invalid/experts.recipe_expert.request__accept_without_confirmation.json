@@ -1,5 +1,5 @@
 {
-  "task": "match_and_cost",
+  "task": "accept",
   "trace": {
     "trace_id": "trace-1",
     "parent_span_id": "span-1",

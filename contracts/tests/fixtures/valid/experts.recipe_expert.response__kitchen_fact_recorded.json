@@ -1,0 +1,10 @@
+{
+  "result": {
+    "kitchen_fact": {
+      "key": "oven",
+      "status": "available"
+    }
+  },
+  "questions_for_owner": [],
+  "cost_usd_spent": 0.01
+}
