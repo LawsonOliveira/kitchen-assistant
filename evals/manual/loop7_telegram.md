@@ -15,7 +15,7 @@ business state reset to the seeded spreadsheet.
 | 5 | Owner uploads `evals/scenarios/fixtures/despensa_no_precos.xlsx` | an import error in plain Portuguese; `pantry_imports` has no new `applied` row; prices unchanged |
 | 6 | `make import-pantry FILE=data/despensa_dona_maria.xlsx`, then the owner tells Dona Fifi "atualizei a planilha" | a diff with no changes |
 | 7 | Reference dish over Telegram (PLAN.md Loop 1: 4 portions, 400 g arroz, 600 g peito de frango, 10 g alho, 30 ml óleo, sal) | three prices R$ 7,90 / R$ 9,90 / R$ 10,90 with the pricing explanation; choosing one asks Confirmar as buttons; the dish is accepted and priced |
-| 8 | `make chat` in a terminal of at least 95 columns | the Dona Fifi banner (sign and grandma stirring a pot, in color), PT-BR welcome, thinking verbs such as "mexendo a panela" |
+| 8 | `make chat` in a terminal of at least 95 columns | the Dona Fifi banner (sign and the grandma, in color), PT-BR welcome, thinking verbs such as "mexendo a panela" |
 
 ## Runs
 

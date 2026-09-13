@@ -1,7 +1,7 @@
 # Dona Fifi skin for the classic CLI (PLAN.md D42, Loop 7). Copied into $HERMES_HOME/skins by the entrypoint and
 # selected with display.skin in fifi's config.yaml. Missing keys inherit Hermes' default skin.
 name: dona-fifi
-description: Dona Fifi — cozinha caseira, tons de tomate, laranja e mostarda
+description: Dona Fifi — a vovó ajudante da cozinha, tons de tomate, laranja e mostarda
 
 colors:
   banner_border: "#C0392B"
@@ -40,14 +40,14 @@ banner_logo: |-
   [bold #B7950B]╚═════╝  ╚═════╝ ╚═╝  ╚═══╝╚═╝  ╚═╝    ╚═╝     ╚═╝╚═╝     ╚═╝[/]
 
 banner_hero: |-
-  [#C0392B]⠀⠀⠀⠀⠀▄▄▄███▄▄▄[/][#D5D8DC]         ░  ░[/][#FDFEFE]⠀[/]
-  [#C0392B]⠀⠀⠀▄██[/][#F0B27A]▀▀▀▀▀▀▀[/][#C0392B]██▄[/][#D5D8DC]      ░  ░ ░[/]
-  [#C0392B]⠀⠀⠀█[/][#F5CBA7]  [/][#34495E]o─o[/][#F5CBA7]    [/][#C0392B]█[/][#D5D8DC]       ░ ░[/][#FDFEFE]⠀⠀⠀⠀[/]
-  [#C0392B]⠀⠀⠀▀[/][#F5CBA7]▄   ‿   ▄[/][#C0392B]▀[/][#D5D8DC]        ░[/][#FDFEFE]⠀⠀⠀⠀⠀[/]
-  [#F5CBA7]⠀⠀⠀⠀⠀▀▄▄▄▄▄▄▄▀[/][#FDFEFE]⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀[/]
-  [#2E86C1]⠀⠀⠀▄█████████▄[/][#F5CBA7]▄▄[/][#8E6E53]━━━━━┓[/][#FDFEFE]⠀⠀⠀⠀⠀⠀[/]
-  [#2E86C1]⠀⠀███[/][#FDFEFE]▓▓▓▓▓▓▓[/][#2E86C1]███[/][#8E6E53]      ┃[/][#FDFEFE]⠀⠀⠀⠀⠀⠀[/]
-  [#2E86C1]⠀⠀███[/][#FDFEFE]▓▓▓[/][#E74C3C]♥[/][#FDFEFE]▓▓▓[/][#2E86C1]███[/][#7F8C8D] ▄▄▄▄▄█▄▄▄[/][#FDFEFE]⠀⠀⠀[/]
-  [#2E86C1]⠀⠀███[/][#FDFEFE]▓▓▓▓▓▓▓[/][#2E86C1]███[/][#7F8C8D]▐[/][#E67E22]≈≈≈≈≈≈≈≈≈[/][#7F8C8D]▌[/][#FDFEFE]⠀⠀[/]
-  [#2E86C1]⠀⠀⠀██[/][#FDFEFE]▓▓▓▓▓▓▓[/][#2E86C1]██[/][#7F8C8D]  ▐█████████▌[/][#FDFEFE]⠀[/]
-  [#5D4037]⠀⠀⠀⠀▀▀     ▀▀[/][#7F8C8D]     ▀▀▀▀▀▀▀▀▀[/][#FDFEFE]⠀[/]
+  [#C0392B]⠀⠀⠀⠀⠀▄▄▄███▄▄▄[/][#FDFEFE]⠀⠀[/]
+  [#C0392B]⠀⠀⠀▄██[/][#F0B27A]▀▀▀▀▀▀▀[/][#C0392B]██▄[/]
+  [#C0392B]⠀⠀⠀█[/][#F5CBA7]  [/][#34495E]o─o[/][#F5CBA7]    [/][#C0392B]█[/][#FDFEFE]⠀⠀[/]
+  [#C0392B]⠀⠀⠀▀[/][#F5CBA7]▄   ‿   ▄[/][#C0392B]▀[/][#FDFEFE]⠀⠀[/]
+  [#F5CBA7]⠀⠀⠀⠀⠀▀▄▄▄▄▄▄▄▀[/][#FDFEFE]⠀⠀[/]
+  [#2E86C1]⠀⠀⠀▄█████████▄[/][#FDFEFE]⠀⠀[/]
+  [#2E86C1]⠀⠀███[/][#FDFEFE]▓▓▓▓▓▓▓[/][#2E86C1]███[/][#FDFEFE]⠀[/]
+  [#2E86C1]⠀⠀███[/][#FDFEFE]▓▓▓[/][#E74C3C]♥[/][#FDFEFE]▓▓▓[/][#2E86C1]███[/][#FDFEFE]⠀[/]
+  [#2E86C1]⠀⠀███[/][#FDFEFE]▓▓▓▓▓▓▓[/][#2E86C1]███[/][#FDFEFE]⠀[/]
+  [#2E86C1]⠀⠀⠀██[/][#FDFEFE]▓▓▓▓▓▓▓[/][#2E86C1]██[/][#FDFEFE]⠀⠀[/]
+  [#5D4037]⠀⠀⠀⠀▀▀     ▀▀[/][#FDFEFE]⠀⠀⠀[/]

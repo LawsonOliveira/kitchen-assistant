@@ -2150,6 +2150,16 @@ evidence, what was changed, and where. Open questions that were "default applied
   Green: 66/66 rows correct (false-positive rate 0, recall 1.0); output rechecks twice per case: greeting and
   virtual-assistant replies → allow; prompt leak, health claim and off-topic code → block.
 
+- **C55 — PL6: measures in the database.** Tests first (red: unit collection error, integration 10, contracts 8, tool
+  policy 1). Migration `003_measures.sql` seeds the D23 table (16 rows, `source = seed`); `resolve_measure` reads it,
+  refuses a `web_estimate` with `UnconfirmedMeasureError` and treats `owner_confirmed` rows as exact;
+  `compute_dish_cost`/`accept_dish` answer `unconfirmed_measure` (with the estimate and its URL) while
+  `check_pantry_match` lists it in `conversions_needed`; `record_measure_quote` (web estimate, only for gaps:
+  `measure_already_known` otherwise) and `confirm_measure` (her click) belong to recipe_expert; researcher gets the
+  `measure_lookup` task (net content of a can or package from a real product page, provenance-checked); fifi asks
+  Confirmar/Cancelar and routes her own number to `set_conversion_factor`. The eval reset keeps only seeded measures.
+  Green: unit 80, integration 72, plugins + contracts 315 (1 skipped), evals 50.
+
 ## Post-loop changes (owner requests, 2026-09-13)
 Requested by the owner while Loops 6–8 were running, test-first, each recorded as a correction. **Order decided by the
 owner:** Loop 6 pauses; Loop 7 (the owner's Telegram checks) and Loop 8 finish, then PL1–PL9, then Loop 6 resumes and
@@ -2169,7 +2179,7 @@ and compose project), because they touch almost every file and restart the stack
   `fifi_documents`, event `agent` values, cockpit nodes, contracts tests, eval scenarios). **Decided (owner):** start
   clean — no volume data is migrated; the `.env` keys are renamed in place.
 - **PL3 — Persona Dona Sálvia.** Every "Fifi" becomes "Sálvia" (prompts, fixed messages, skin, scenarios, red-team
-  texts, README); skin `dona-salvia` with a "DONA SALVIA" logo. The Telegram bot is already `salvia_assistant_bot`.
+  texts, README); skin `dona-salvia` with a "DONA SALVIA" logo. The Telegram bot is already `salvia_assistant_bot`. The hero art keeps only the grandma: the pot, spoon and steam were removed (owner, done early).
   **Decided (owner):** the greeting is "Olá, sou a Sálvia, como posso te ajudar hoje? 🌿".
 - **PL4 — Repository folder `kitchen-assistant/`.** **Decided (owner):** spelled `kitchen-assistant`; the compose
   project follows the new name (new containers and volumes, starting clean as in PL2).
