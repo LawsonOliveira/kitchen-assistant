@@ -44,3 +44,27 @@ def test_owner_factor_overrides_the_table_and_is_not_an_estimate():
 def test_owner_factor_covers_a_missing_entry():
     owner_factors = {("Leite condensado", "package"): (Decimal("395"), "g")}
     assert resolve_measure("Leite condensado", "package", Decimal("2"), owner_factors) == (Decimal("790"), "g", False)
+
+
+# Loop 3 scenario 02: "óleo a gosto" became a density question because the fixed estimate was always in grams.
+@pytest.mark.parametrize(
+    "ingredient, measure, base_unit, expected",
+    [("Óleo de soja", "to_taste", "ml", (Decimal("1"), "ml", True)),
+     ("Azeite de oliva extra virgem", "drizzle", "ml", (Decimal("5"), "ml", True)),
+     ("Manteiga", "drizzle", "g", (Decimal("5"), "g", True)),
+     ("Sal", "pinch", "g", (Decimal("1"), "g", True)),
+     ("Leite integral", "pinch", "ml", (Decimal("1"), "ml", True))],
+)
+def test_small_fixed_estimates_follow_the_ingredient_base_unit(ingredient, measure, base_unit, expected):
+    assert resolve_measure(ingredient, measure, Decimal("1"), base_unit=base_unit) == expected
+
+
+def test_small_fixed_estimates_never_price_whole_units():
+    # 1 "unit" of Cobertura de chocolate costs R$ 79,90: a fixed estimate in units would silently misprice.
+    with pytest.raises(MissingConversionError):
+        resolve_measure("Cobertura de chocolate", "to_taste", Decimal("1"), base_unit="unit")
+
+
+def test_owner_factor_still_wins_over_a_small_fixed_estimate():
+    owner_factors = {("Óleo de soja", "to_taste"): (Decimal("30"), "ml")}
+    assert resolve_measure("Óleo de soja", "to_taste", Decimal("1"), owner_factors, base_unit="ml") == (Decimal("30"), "ml", False)

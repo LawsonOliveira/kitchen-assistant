@@ -12,7 +12,7 @@ def creme_dish(conn, extra=()):
 
 
 def quote_creme(conn, price="5.00", source="web_estimate"):
-    operations.record_price_quote(
+    return operations.record_price_quote(
         conn, ingredient_name="Creme de leite", kind="food", package_quantity="200", package_unit="g",
         package_price=price, source=source, source_url="https://mercado.example/creme-de-leite", evidence=EVIDENCE,
     )
@@ -87,3 +87,18 @@ def test_missing_item_without_any_quote_fails_loud(conn):
         operations.check_budget_fit(conn, dish)
     assert error.value.code == "missing_price_quote"
     assert error.value.details["ingredients"] == ["Queijo coalho"]
+
+
+def test_a_quote_returns_its_package_so_the_owner_can_confirm_exactly_that_quote(conn):
+    # Loop 3 scenario 02: without the package, fifi could not send confirm_price_quote and asked the owner again.
+    quote = quote_creme(conn)
+    assert {key: quote[key] for key in ("package_quantity", "package_unit", "package_price", "package_price_display")} == {
+        "package_quantity": "200", "package_unit": "g", "package_price": "5.00", "package_price_display": "R$ 5,00"}
+
+
+def test_oil_to_taste_is_a_small_estimate_in_ml_not_a_conversion_question(conn):
+    # Loop 3 scenario 02: "óleo a gosto" asked the owner how many grams 1 ml of oil weighs.
+    recipe = make_recipe([ingredient("Peito de frango", 600, "g"), ingredient("Óleo de soja", None, "to_taste")])
+    cost = operations.compute_dish_cost(conn, recipe=recipe)
+    oil = next(line for line in cost["lines"] if line["ingredient"] == "Óleo de soja")
+    assert "error" not in cost and oil["quantity_used_display"] == "1 ml" and oil["is_estimate"] is True
