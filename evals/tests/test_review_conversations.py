@@ -1,0 +1,83 @@
+"""PL7 path A: review Dona Maria's real conversations and write the results into Langfuse (owner decisions, 2026-09-13)."""
+
+import json
+
+import review_conversations as review
+
+SCOPE, INFRA = review.SCOPE_BLOCK_MESSAGE, review.INFRA_BLOCK_MESSAGE
+
+
+def message(at, role, content="", tool_name=None, tool_args=None):
+    return {"at": at, "role": role, "content": content, "tool_name": tool_name, "tool_args": tool_args}
+
+
+def clarify(at, answer):
+    return message(at, "tool", json.dumps({"responses": [{"question": "Confirma?", "user_response": answer}]}), "clarify")
+
+
+CONVERSATION = [
+    message(0, "user", "Oi, como você está?"), message(3, "assistant", SCOPE),
+    message(10, "user", "Tô bem! Quero montar um arroz com frango."), message(12, "assistant", "", "ask_recipe_expert", {"task": "suggest_dishes"}),
+    message(80, "tool", json.dumps({"result": {"candidates": []}}), "ask_recipe_expert"), message(85, "assistant", "Achei três opções."),
+    message(90, "user", "Quero a segunda."), message(91, "assistant", "", "clarify", {"questions": []}), clarify(95, "Cancelar"),
+    message(96, "tool", json.dumps({"error": {"code": "a2a_failure", "message": "timeout"}}), "ask_cost_expert"),
+    message(100, "assistant", "Tive um probleminha, vamos tentar de novo?"),
+]
+
+
+def test_only_her_cli_and_telegram_sessions_in_the_window_are_reviewed_and_eval_trials_are_skipped():
+    rows = [{"id": "a", "source": "telegram", "started_at": 100.0}, {"id": "b", "source": "cli", "started_at": 50.0},
+            {"id": "c", "source": "api_server", "started_at": 100.0}, {"id": "d", "source": "subagent", "started_at": 100.0},
+            {"id": "e", "source": "cli", "started_at": 100.0}]
+    assert review.select_sessions(rows, since=60.0, eval_session_ids={"e"}) == ["a"]
+
+
+def test_turns_pair_each_owner_message_with_the_final_reply_and_its_duration():
+    turns = review.turns(CONVERSATION)
+    assert [(turn["owner"], turn["reply"], turn["seconds"]) for turn in turns] == [
+        ("Oi, como você está?", SCOPE, 3), ("Tô bem! Quero montar um arroz com frango.", "Achei três opções.", 75),
+        ("Quero a segunda.", "Tive um probleminha, vamos tentar de novo?", 10)]
+    assert turns[2]["clarify_answers"] == ["Cancelar"] and turns[2]["tool_errors"] == ["a2a_failure"]
+
+
+def test_signals_find_a_blocked_message_she_had_to_rephrase_errors_cancels_and_slow_turns():
+    signals = review.signals(review.turns(CONVERSATION))
+    assert signals["turns"] == 3 and signals["scope_blocks"] == 1 and signals["infra_blocks"] == 0
+    assert signals["false_positive_candidates"] == ["Oi, como você está?"]
+    assert signals["tool_errors"] == 1 and signals["cancel_clicks"] == 1
+    assert signals["latency_p90_seconds"] == 75
+
+
+def test_alerts_use_the_owner_limits():
+    signals = {"turns": 4, "latency_p90_seconds": 61, "scope_blocks": 0, "infra_blocks": 0}
+    assert review.alerts(signals, cost_usd=5.0) == ["p90 turn latency 61 s > 60 s", "cost per turn US$ 1.25 > US$ 1.00"]
+    assert review.alerts({**signals, "latency_p90_seconds": 20}, cost_usd=1.0) == []
+
+
+def test_session_scores_for_langfuse_carry_the_rubric_and_the_signals():
+    payloads = review.score_payloads("sess-1", {"scope_blocks": 1, "tool_errors": 2, "latency_p90_seconds": 75, "cancel_clicks": 0},
+                                     {"tone": 4, "owner_decides": 5})
+    assert {"sessionId": "sess-1", "name": "tone", "value": 4, "dataType": "NUMERIC", "comment": "review_conversations"} in payloads
+    assert {"sessionId": "sess-1", "name": "latency_p90_seconds", "value": 75, "dataType": "NUMERIC", "comment": "review_conversations"} in payloads
+    assert len(payloads) == 6
+
+
+def test_a_conversation_goes_to_the_annotation_queue_when_the_judge_alerts_or_something_looks_wrong():
+    assert review.needs_annotation({"alert": False}, {"false_positive_candidates": [], "tool_errors": 0, "infra_blocks": 0}, []) is False
+    assert review.needs_annotation({"alert": True}, {"false_positive_candidates": [], "tool_errors": 0, "infra_blocks": 0}, []) is True
+    assert review.needs_annotation({"alert": False}, {"false_positive_candidates": ["oi"], "tool_errors": 0, "infra_blocks": 0}, []) is True
+    assert review.needs_annotation({"alert": False}, {"false_positive_candidates": [], "tool_errors": 0, "infra_blocks": 0}, ["slow"]) is True
+
+
+def test_false_positives_become_draft_guard_dataset_rows_for_a_person_to_review():
+    rows = review.guard_dataset_drafts(["Oi, como você está?"])
+    assert [json.loads(line) for line in rows.splitlines()] == [
+        {"message": "Oi, como você está?", "last_assistant_message": "", "expected": "allow", "category": "review_false_positive"}]
+
+
+def test_the_report_names_each_conversation_its_scores_alerts_and_candidates():
+    text = review.report("2026-09-13", [{"session_id": "sess-1", "source": "telegram", "signals": {"turns": 3, "scope_blocks": 1,
+                          "false_positive_candidates": ["Oi, como você está?"], "tool_errors": 1, "cancel_clicks": 1,
+                          "latency_p90_seconds": 75, "infra_blocks": 0}, "judge": {"scores": {"tone": 4}, "mean": 4.0, "alert": False},
+                          "alerts": ["p90 turn latency 75 s > 60 s"], "cost_usd": 0.1}])
+    assert "sess-1" in text and "telegram" in text and "p90 turn latency 75 s > 60 s" in text and "Oi, como você está?" in text
