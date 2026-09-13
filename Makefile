@@ -67,7 +67,7 @@ selftest:  # guardrail canary against orchestrator's API server (Loop 4)
 
 # Hermes silently falls back to its default skin on invalid YAML, so the name must come back from the engine (Loop 7).
 test-skin:
-	$(COMPOSE) exec -T orchestrator python -c "from hermes_cli.skin_engine import load_skin; s=load_skin('dona-salvia'); assert 'Dona Sálvia' in str(s), 'dona-salvia skin not loaded'"
+	$(COMPOSE) exec -T orchestrator python -c "from hermes_cli.skin_engine import load_skin; s=load_skin('dona-salvia'); assert 'Dona Sálvia' in str(s), 'dona-salvia skin not loaded'; from rich.text import Text; rows=[Text.from_markup(r).plain for r in s.banner_hero.splitlines()]; assert rows and len({len(r) for r in rows})==1 and all(r==r.rstrip() for r in rows), 'banner_hero rows need one width and no trailing spaces: Rich strips them and centers each row on its own'; assert len(rows[0])<=52, 'banner_hero is wider than 52 cells'"
 
 db-shell:
 	$(COMPOSE) exec postgres psql -U kitchen -d kitchen
