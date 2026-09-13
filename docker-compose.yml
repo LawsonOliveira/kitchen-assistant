@@ -29,7 +29,8 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
       POSTGRES_DB: sabor
     ports:
-      - "127.0.0.1:5432:5432"
+      # Host port is configurable: 5432 is often taken by a local Postgres (PLAN.md open question 6).
+      - "127.0.0.1:${POSTGRES_HOST_PORT:-55432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:

@@ -1040,7 +1040,7 @@ flowchart TD
 - [ ] 3. *(parallel with each other; 3b needs 3a's recipe schema)*
   - [x] a) `contracts/recipe.schema.json`, `contracts/requirements.json`,
     `contracts/events.schema.json` exactly as in *Shared definitions*.
-  - [ ] b) `services/costs_mcp/` minimal: `pyproject.toml` (Python 3.12; deps `mcp`,
+  - [x] b) `services/costs_mcp/` minimal: `pyproject.toml` (Python 3.12; deps `mcp`,
     `psycopg[binary]`, `openpyxl`, `jsonschema`; dev `pytest`); `Dockerfile`;
     `migrations/001_init.sql` = everything marked **L0** in *Database schema*;
     `db.py: apply_migrations(conn)` (numbered `.sql`, `schema_version`);
@@ -1051,7 +1051,7 @@ flowchart TD
     [{name, quantity_base, base_unit, unit_cost}]` and `compute_dish_cost(recipe) ->
     {cmv_per_portion, min_price, price_30pct}`; an ingredient without `pantry_match` →
     `unmatched_ingredient`.
-  - [ ] c) `agents/Dockerfile`: `FROM nousresearch/hermes-agent:<tag>@sha256:<digest>` (look up the
+  - [x] c) `agents/Dockerfile`: `FROM nousresearch/hermes-agent:<tag>@sha256:<digest>` (look up the
     tag for v0.21.2 and its digest; if none exists apply the D1 fallback and record it in
     `agents/NOTES.md`), install pinned `jsonschema` and `pytest`, `COPY plugins/ contracts/` to
     `/opt/sabor/`; `agents/entrypoint.sh`: copy `/seed/{config.yaml,SOUL.md,skills,skins}` (the
@@ -1072,7 +1072,7 @@ flowchart TD
     `research(task_type, payload)` — plain text passthrough, no validation yet.
   - [ ] e) `plugins/sabor_observability/emit.py: emit(kind, name, **fields)` → one JSON line on stdout,
     called from `pre_tool_call`/`post_tool_call`.
-- [ ] 4. *(sequential)* `docker-compose.yml`: `postgres` (app DB, pinned image, healthcheck
+- [x] 4. *(sequential)* `docker-compose.yml`: `postgres` (app DB, pinned image, healthcheck
   `pg_isready`), `costs-mcp` (depends on postgres healthy; migrations + seed on start), `fifi`
   (`command: ["gateway","run"]`, must be healthy with no `TELEGRAM_BOT_TOKEN`), `recipe-expert`,
   `cost-expert`, `marketing-expert`, `researcher` (`gateway run`, A2A `:9900`, `A2A_HOST=0.0.0.0`,
@@ -1821,8 +1821,8 @@ Kept here so it is not forgotten: no loop creates a GitHub remote or submits the
 
 ## Open questions
 Queued during implementation (each: what it blocks, the question, the default if unanswered).
-
-1. **Blocks** every live model call (Loop 0 step 6 manual E2E and all later live checks): how does the
+**Answered:** 1–4 — owner approved the defaults below; 5 — owner is freeing 8 GB in total (not the recommended ~15 GB), so Langfuse (question 3) may still need the opt-in profile fallback.
+1. **ANSWERED (default approved)** — **Blocks** every live model call (Loop 0 step 6 manual E2E and all later live checks): how does the
    Claude Code credential reach the five agent containers? The host has no `claude` in `PATH` (the
    VS Code extension bundles one at
    `~/.vscode/extensions/anthropic.claude-code-2.1.269-linux-x64/resources/native-binary/claude`).
@@ -1830,23 +1830,23 @@ Queued during implementation (each: what it blocks, the question, the default if
    `CLAUDE_CODE_OAUTH_TOKEN`; compose passes it to every agent. Rejected default: bind-mounting
    `~/.claude/.credentials.json` into five containers, because Hermes refreshes and rewrites that
    single-use grant and concurrent processes (plus the host's Claude Code) would invalidate each other.
-2. **Blocks** Loop 4 step 3a (guardrail classifier) and Loop 6 steps 3b–4 (simulated owner, judge):
+2. **ANSWERED (default approved)** — **Blocks** Loop 4 step 3a (guardrail classifier) and Loop 6 steps 3b–4 (simulated owner, judge):
    the plan calls the Anthropic SDK with `SABOR_GUARD_API_KEY` or `ANTHROPIC_API_KEY`, which do not exist
    under D46. **Default:** make those calls with the same `CLAUDE_CODE_OAUTH_TOKEN` through the Anthropic
    SDK as a bearer token with the OAuth headers Hermes uses, after a spike confirms it works; if it does
    not, route them through Hermes' auxiliary client inside the fifi container.
-3. **Blocks** Loop 5 step 2a (Langfuse always started): Docker on this machine has ≈7.5 GiB of memory
+3. **ANSWERED (default approved)** — **Blocks** Loop 5 step 2a (Langfuse always started): Docker on this machine has ≈7.5 GiB of memory
    while the Langfuse v4 stack recommends 16 GiB. **Default:** keep Langfuse in the default compose as
    decided (D33), set container memory limits, and if the stack is unstable make it an opt-in compose
    profile documented in the README.
-4. **Affects** Loop 0 test "A2A edges": the plan expects an Agent Card GET without a token to return
+4. **ANSWERED (default approved)** — **Affects** Loop 0 test "A2A edges": the plan expects an Agent Card GET without a token to return
    401, but Hermes serves Agent Cards publicly (`plugins/platforms/a2a/adapter.py`, `do_GET` returns the
    card before any auth check); authentication and the trust list are enforced on JSON-RPC POSTs
    (401 unknown/missing token, 403 untrusted identity). **Default (implemented, marked
    `TODO(open question 4)` in `scripts/smoke_a2a.sh`):** assert the card is served (200) and assert
    auth on a `GetTask` POST for a nonexistent task — it passes the auth/trust checks without starting an
    agent turn; allowed edges → 200, missing/wrong token → 401, disallowed caller → 401 or 403.
-5. **Blocks** every Docker build/run and dependency download from Loop 0 step 3 verification onward
+5. **PARTIALLY ANSWERED** (owner freed 4 GB, 4 GB more coming; 8 GB total) — **Blocks** every Docker build/run and dependency download from Loop 0 step 3 verification onward
    (so all remaining loops): the root filesystem is full — `/dev/nvme0n1p6` 81 G, 77 G used, ≈72 MB free
    after pulling the Hermes image (Docker Desktop's VM disk lives under `~/.docker/desktop`; `docker
    system df` reports ≈3.1 GB of reclaimable images and ≈1.7 GB of build cache that predate this project).
@@ -1854,3 +1854,12 @@ Queued during implementation (each: what it blocks, the question, the default if
    Langfuse stack several more. **Default:** none — this stays blocked until the owner frees disk space
    (e.g. `docker system prune` of images/build cache they no longer need). Implementation files that need
    no download keep being written, but nothing is checked off until its tests actually run.
+7. **ANSWERED** — Loop 0 step 6 (manual E2E, and therefore Loop 0's DoD) waits for the Claude Code token
+   from question 1. The owner asked to keep implementing everything that does not depend on their
+   answers, so Loop 1 and the model-free parts of Loop 2 proceed before Loop 0 is fully checked off;
+   their live checks run once the token is in `.env`.
+6. **Default applied, informational** — Loop 0 step 4 binds the app Postgres to `127.0.0.1:5432`, but
+   that host port is already taken by a local Postgres on this machine. **Applied:** the host port is
+   `${POSTGRES_HOST_PORT:-55432}` (container port stays 5432; services inside compose are unaffected;
+   `tests/integration/conftest.py` reads the same variable). Revert to 5432 if you prefer and stop the
+   local Postgres.

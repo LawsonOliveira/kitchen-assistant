@@ -137,7 +137,8 @@ class BearerAuth:
 
 
 def main() -> None:
-    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s %(message)s")
+    # force=True: importing mcp installs a root handler first, which would swallow the level/logger prefix.
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s %(message)s", force=True)
     tokens = parse_agent_tokens(os.environ["COSTS_MCP_AGENT_TOKENS"])
     with db.connect(_dsn()) as conn:
         db.apply_migrations(conn)
