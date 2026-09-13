@@ -1,4 +1,4 @@
-"""cost_expert relays costs-mcp results verbatim (PLAN.md correction C25).
+"""Experts relay costs-mcp money results verbatim (PLAN.md correction C25, extended in Loop 3).
 
 A live run showed the model retyping compute_dish_cost's JSON into its A2A reply and changing a margin
 (62,6% became 65,1%). Money values must come from the tool, so the reply's `result` is replaced with the
@@ -6,11 +6,19 @@ latest relayed tool result of the request; the model only contributes `questions
 """
 
 import json
+import os
 import threading
 
 from .validation import ContractError, parse_json_object
 
-RELAYED_TOOLS = {"mcp__costs__compute_dish_cost"}
+# role -> costs-mcp tools whose results carry money display strings
+RELAYED_TOOLS = {
+    "cost_expert": {
+        "mcp__costs__compute_dish_cost", "mcp__costs__check_budget_fit", "mcp__costs__record_price_quote",
+        "mcp__costs__register_purchase", "mcp__costs__adjust_budget", "mcp__costs__correct_price",
+        "mcp__costs__select_price_scenario", "mcp__costs__simulate_promotion", "mcp__costs__import_pantry"},
+    "marketing_expert": {"mcp__costs__register_promotion"},
+}
 _lock = threading.Lock()
 _latest: dict[str, dict] = {}
 
@@ -40,7 +48,8 @@ def _tool_payload(result) -> dict | None:
 
 
 def transform_tool_result(tool_name: str = "", result=None, session_id: str = "", **_) -> None:
-    if tool_name in RELAYED_TOOLS and (payload := _tool_payload(result)) is not None:
+    relayed = RELAYED_TOOLS.get(os.environ.get("SABOR_AGENT_ROLE", ""), set())
+    if tool_name in relayed and (payload := _tool_payload(result)) is not None:
         with _lock:
             _latest[session_id] = payload
     return None  # observer only: the model sees the result unchanged

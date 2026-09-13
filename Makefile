@@ -2,7 +2,7 @@ COMPOSE := docker compose
 UV := uv
 AGENT_PYTHON := /opt/hermes/.venv/bin/python
 
-.PHONY: up down logs chat test test-integration test-contracts test-plugins smoke-a2a smoke-research eval-requirements db-shell hermes-shell
+.PHONY: up down logs chat test test-integration test-contracts test-plugins smoke-a2a smoke-research eval-requirements import-pantry db-shell hermes-shell
 
 up:
 	$(COMPOSE) up -d --build --wait
@@ -40,6 +40,12 @@ smoke-research:  # live: real Tavily and model calls through the researcher cont
 eval-requirements:  # requirement extraction on fixture pages through researcher-eval (evals/NOTES.md)
 	$(COMPOSE) --profile eval up -d --build --wait researcher-eval
 	cd evals && uv run python requirements_eval.py
+
+import-pantry:  # copy a spreadsheet where Dona Fifi can import it: make import-pantry FILE=path/to/file.xlsx
+	@test -n "$(FILE)" || { echo "usage: make import-pantry FILE=path/to/file.xlsx"; exit 1; }
+	$(COMPOSE) cp "$(FILE)" fifi:/opt/data/cache/documents/$(notdir $(FILE))
+	$(COMPOSE) exec -T fifi chown hermes:hermes /opt/data/cache/documents/$(notdir $(FILE))
+	@echo "Diga à Dona Fifi: atualizei minha planilha da despensa em /opt/data/cache/documents/$(notdir $(FILE))"
 
 db-shell:
 	$(COMPOSE) exec postgres psql -U sabor -d sabor

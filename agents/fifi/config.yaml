@@ -10,7 +10,9 @@ plugins:
     - sabor_a2a
     - sabor_observability
 agent:
-  disabled_toolsets: [terminal, file, code_execution, browser, computer_use, image_gen, tts, video, video_gen, vision, cronjob, kanban, spotify, homeassistant, x_search, web]
+  max_turns: 30
+  # TODO(open question 9): run_budget_seconds (plan: 240) waits for the owner's answer on Loop 3 timeouts
+  disabled_toolsets: [terminal, file, code_execution, browser, computer_use, image_gen, tts, video, video_gen, vision, cronjob, kanban, spotify, homeassistant, x_search, web, delegation, session_search]
 tools:
   tool_search:
     enabled: "off"  # tools are called directly, no tool_search/tool_call bridge (PLAN.md correction C8)
@@ -34,3 +36,5 @@ mcp_servers:
         - get_state_summary
         - check_pantry_match
         - get_launch_menu
+memory:
+  memory_enabled: true  # taste and style only, never business facts (D15); experts and researcher run without memory

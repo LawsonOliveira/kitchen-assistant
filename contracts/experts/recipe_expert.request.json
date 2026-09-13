@@ -15,7 +15,12 @@
     "task": {
       "enum": [
         "suggest_dishes",
-        "normalize_recipe"
+        "normalize_recipe",
+        "record_kitchen_fact",
+        "register_candidate",
+        "reject_candidate",
+        "confirm_requirement",
+        "accept"
       ]
     },
     "trace": {
@@ -169,6 +174,252 @@
             }
           }
         }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "task": {
+            "const": "record_kitchen_fact"
+          }
+        }
+      },
+      "then": {
+        "allOf": [
+          {
+            "properties": {
+              "payload": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "key",
+                  "status",
+                  "numeric_value"
+                ],
+                "properties": {
+                  "key": {
+                    "enum": [
+                      "oven",
+                      "pressure_cooker",
+                      "blender",
+                      "mixer",
+                      "air_fryer",
+                      "food_processor",
+                      "microwave",
+                      "grill",
+                      "deep_fryer",
+                      "technique:fresh_pasta",
+                      "technique:bechamel",
+                      "technique:meat_doneness",
+                      "technique:deep_frying",
+                      "technique:bread_baking",
+                      "technique:caramel",
+                      "technique:tempering_chocolate",
+                      "stove_burners",
+                      "max_batch_time_minutes",
+                      "fridge_space_liters"
+                    ]
+                  },
+                  "status": {
+                    "enum": [
+                      "available",
+                      "unavailable"
+                    ]
+                  },
+                  "numeric_value": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1
+                  }
+                }
+              }
+            }
+          },
+          {
+            "properties": {
+              "owner_statement": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "task": {
+            "const": "register_candidate"
+          }
+        }
+      },
+      "then": {
+        "allOf": [
+          {
+            "properties": {
+              "payload": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "recipe",
+                  "launch_batch_portions"
+                ],
+                "properties": {
+                  "recipe": {
+                    "$ref": "https://sabor.local/contracts/recipe.schema.json"
+                  },
+                  "launch_batch_portions": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 500
+                  }
+                }
+              }
+            }
+          },
+          {
+            "properties": {
+              "owner_statement": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "task": {
+            "const": "reject_candidate"
+          }
+        }
+      },
+      "then": {
+        "allOf": [
+          {
+            "properties": {
+              "payload": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "dish_id",
+                  "reason"
+                ],
+                "properties": {
+                  "dish_id": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "reason": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  }
+                }
+              }
+            }
+          },
+          {
+            "properties": {
+              "owner_statement": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "task": {
+            "const": "confirm_requirement"
+          }
+        }
+      },
+      "then": {
+        "allOf": [
+          {
+            "properties": {
+              "payload": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "dish_id",
+                  "requirement",
+                  "status"
+                ],
+                "properties": {
+                  "dish_id": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "requirement": {
+                    "type": "string",
+                    "pattern": "^(gas_or_energy|other):[^\\s][^\\n]{0,58}$"
+                  },
+                  "status": {
+                    "enum": [
+                      "available",
+                      "unavailable"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "properties": {
+              "owner_statement": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "task": {
+            "const": "accept"
+          }
+        }
+      },
+      "then": {
+        "allOf": [
+          {
+            "properties": {
+              "payload": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "dish_id"
+                ],
+                "properties": {
+                  "dish_id": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                }
+              }
+            }
+          },
+          {
+            "properties": {
+              "owner_confirmation": {
+                "type": "object"
+              }
+            }
+          }
+        ]
       }
     }
   ]

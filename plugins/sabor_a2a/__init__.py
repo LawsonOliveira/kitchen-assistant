@@ -14,8 +14,8 @@ log = logging.getLogger(__name__)
 
 TOOLSET = "sabor_a2a"
 RESEARCH_TASK_TYPES = ["recipe_search", "ingredient_price", "menu_reference"]
-RECIPE_EXPERT_TASKS = ["suggest_dishes", "normalize_recipe"]
 # peer -> (URL, client timeout seconds); nested timeouts per PLAN.md correction C7
+# TODO(open question 9): Loop 3 step 4 plans fifi→experts 150 s and experts→researcher 120 s
 PEERS = {
     "recipe_expert": ("http://recipe-expert:9900/", 450),
     "cost_expert": ("http://cost-expert:9900/", 450),
@@ -89,26 +89,44 @@ def _ask(expert: str):
     return handler
 
 
+def _task_guide(expert: str) -> tuple[list[str], str]:
+    """Task names and a one-line payload guide per task, read from the expert's request contract (single source)."""
+    from .validation import CONTRACTS_DIR
+
+    contract = json.loads((CONTRACTS_DIR / "experts" / f"{expert}.request.json").read_text())
+    lines = []
+    for rule in contract.get("allOf", []):
+        then = rule["then"]
+        parts = then.get("allOf", [then])
+        payload = next(part["properties"]["payload"] for part in parts if "payload" in part.get("properties", {}))
+        needs = json.dumps([part for part in parts if "payload" not in part.get("properties", {})])
+        requirement = (" — requires owner_confirmation" if "owner_confirmation" in needs and "anyOf" not in needs else
+                       " — requires owner_confirmation or owner_statement" if "anyOf" in needs else
+                       " — requires owner_statement" if "owner_statement" in needs else "")
+        fields = ", ".join(payload.get("properties", {})) or "url | recipe | owner_recipe_text"
+        lines.append(f"{rule['if']['properties']['task']['const']}: payload {{{fields}}}{requirement}")
+    return contract["properties"]["task"]["enum"], "; ".join(lines)
+
+
 def _schemas() -> dict:
     expert_properties = {
         "payload": {"type": "object", "description": "Task input as described in the task list."},
-        "owner_statement": {"type": "string", "description": "The owner's own words when they state a fact or correction."},
-        "owner_confirmation": {"type": "object", "description": "Only after the owner clicked Confirmar: {choice: 'Confirmar', summary}."},
+        "owner_statement": {"type": "string", "description": "The owner's own words when she states a fact or a correction."},
+        "owner_confirmation": {"type": "object", "description": "Only after the owner chose Confirmar in clarify: {\"choice\": \"Confirmar\", \"summary\": <what she confirmed>}."},
     }
-    return {
+    schemas = {
         "research": ("Ask the web researcher for structured results (one call per request).",
                      {"task_type": {"type": "string", "enum": RESEARCH_TASK_TYPES},
                       "items": {"type": "array", "items": {"type": "string"}, "minItems": 1, "maxItems": 5,
                                 "description": "Up to 5 short search subjects, e.g. ['frango com arroz']"}},
                      ["task_type", "items"]),
-        "ask_recipe_expert": ("Ask the recipe expert. suggest_dishes payload: {pantry_focus: [names], owner_preferences: [text], "
-                              "exclude_dish_names: [names], max_candidates: 1-3}. normalize_recipe payload: {url} or {recipe}.",
-                              {"task": {"type": "string", "enum": RECIPE_EXPERT_TASKS}, **expert_properties}, ["task", "payload"]),
-        "ask_cost_expert": ("Ask the cost expert. match_and_cost payload: {recipe: <recipe JSON>}.",
-                            {"task": {"type": "string"}, **expert_properties}, ["task", "payload"]),
-        "ask_marketing_expert": ("Ask the marketing expert (iFood menu copy, promotions).",
-                                 {"task": {"type": "string"}, **expert_properties}, ["task", "payload"]),
     }
+    for tool, expert in (("ask_recipe_expert", "recipe_expert"), ("ask_cost_expert", "cost_expert"),
+                         ("ask_marketing_expert", "marketing_expert")):
+        tasks, guide = _task_guide(expert)
+        schemas[tool] = (f"Ask the {expert.replace('_', ' ')}. Tasks: {guide}.",
+                         {"task": {"type": "string", "enum": tasks}, **expert_properties}, ["task", "payload"])
+    return schemas
 
 
 def _ensure_cost_field(response_text: str = "", platform: str = "", **_):
@@ -144,7 +162,7 @@ def register(ctx) -> None:
         researcher_hooks.register(ctx)
         ctx.register_system_prompt_section(
             "sabor-researcher-child", lambda info: CHILD_INSTRUCTIONS if info.get("platform") == "subagent" else "")
-    if role == "cost_expert":
+    if role in ("cost_expert", "marketing_expert"):
         from . import relay
 
         relay.register(ctx)  # registered before _ensure_cost_field: the first transform_llm_output result wins

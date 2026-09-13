@@ -66,6 +66,114 @@
               "maxLength": 300
             }
           }
+        },
+        "dish": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "dish_id",
+            "status"
+          ],
+          "properties": {
+            "dish_id": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "status": {
+              "enum": [
+                "candidate",
+                "accepted",
+                "rejected"
+              ]
+            },
+            "viability": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "missing",
+                "unknown"
+              ],
+              "properties": {
+                "missing": {
+                  "type": "array",
+                  "maxItems": 30,
+                  "items": {
+                    "type": "string",
+                    "maxLength": 80
+                  }
+                },
+                "unknown": {
+                  "type": "array",
+                  "maxItems": 30,
+                  "items": {
+                    "type": "string",
+                    "maxLength": 80
+                  }
+                }
+              }
+            },
+            "pantry_coverage_pct": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0,
+              "maximum": 100
+            },
+            "missing_ingredients": {
+              "type": "array",
+              "maxItems": 40,
+              "items": {
+                "type": "string",
+                "maxLength": 60
+              }
+            }
+          }
+        },
+        "kitchen_fact": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "key",
+            "status"
+          ],
+          "properties": {
+            "key": {
+              "type": "string",
+              "maxLength": 60
+            },
+            "status": {
+              "enum": [
+                "available",
+                "unavailable"
+              ]
+            }
+          }
+        },
+        "requirement": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "dish_id",
+            "requirement",
+            "status"
+          ],
+          "properties": {
+            "dish_id": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "requirement": {
+              "type": "string",
+              "maxLength": 80
+            },
+            "status": {
+              "enum": [
+                "available",
+                "unavailable"
+              ]
+            }
+          }
         }
       }
     },

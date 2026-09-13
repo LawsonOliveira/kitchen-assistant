@@ -48,9 +48,11 @@ services:
         fifi:${COSTS_MCP_TOKEN_FIFI:?set COSTS_MCP_TOKEN_FIFI in .env},recipe_expert:${COSTS_MCP_TOKEN_RECIPE_EXPERT:?set COSTS_MCP_TOKEN_RECIPE_EXPERT in .env},cost_expert:${COSTS_MCP_TOKEN_COST_EXPERT:?set COSTS_MCP_TOKEN_COST_EXPERT in .env},marketing_expert:${COSTS_MCP_TOKEN_MARKETING_EXPERT:?set COSTS_MCP_TOKEN_MARKETING_EXPERT in .env}
       SABOR_SPREADSHEET: /data/despensa_dona_maria.xlsx
       SABOR_CONTRACTS_DIR: /contracts
+      SABOR_IMPORT_DIR: /opt/data/cache/documents
     volumes:
       - ./data:/data:ro
       - ./contracts:/contracts:ro
+      - fifi_documents:/opt/data/cache/documents:ro  # spreadsheets the owner sends to Dona Fifi (Loop 3 step 4)
     depends_on:
       postgres:
         condition: service_healthy
@@ -67,9 +69,11 @@ services:
       SABOR_AGENT_ROLE: fifi
       SABOR_A2A_TOKEN: ${A2A_TOKEN_FIFI:?set A2A_TOKEN_FIFI in .env}
       COSTS_MCP_TOKEN: ${COSTS_MCP_TOKEN_FIFI}
+      SABOR_IMPORT_DIR: /opt/data/cache/documents
     volumes:
       - ./agents/fifi:/seed:ro
       - hermes_fifi:/opt/data
+      - fifi_documents:/opt/data/cache/documents  # where Hermes saves received files; read-only in costs-mcp
     healthcheck:
       test: ["CMD", "pgrep", "-f", "gateway run"]
       interval: 10s
@@ -178,6 +182,7 @@ services:
 
 volumes:
   postgres_data:
+  fifi_documents:
   hermes_fifi:
   hermes_recipe_expert:
   hermes_cost_expert:

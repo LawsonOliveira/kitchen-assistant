@@ -10,7 +10,7 @@ plugins:
     - sabor_a2a
     - sabor_observability
 agent:
-  disabled_toolsets: [terminal, file, code_execution, browser, computer_use, image_gen, tts, video, video_gen, vision, cronjob, kanban, spotify, homeassistant, x_search, web, clarify]
+  disabled_toolsets: [terminal, file, code_execution, browser, computer_use, image_gen, tts, video, video_gen, vision, cronjob, kanban, spotify, homeassistant, x_search, web, clarify, memory, delegation, session_search]
 tools:
   tool_search:
     enabled: "off"  # tools are called directly, no tool_search/tool_call bridge (PLAN.md correction C8)
@@ -36,3 +36,6 @@ mcp_servers:
         - get_launch_menu
         - save_menu_copy
         - register_promotion
+memory:
+  memory_enabled: false
+  user_profile_enabled: false

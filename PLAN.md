@@ -1957,6 +1957,30 @@ evidence, what was changed, and where. Open questions that were "default applied
   asked to extract an invented URL would have made it "visited". Tests first (red: 1 failed): URLs from
   `web_search` still all count, but from `web_extract` only entries with content and no error.
 
+- **C29 — Only the literal "Confirmar" answer confirms, even when clarify answers by itself.** Loop 3 red
+  run: in non-interactive `hermes chat -q` turns Hermes answers `clarify` itself with "[single-query mode: no user
+  available … Pick the best option … using your own judgment]" (`hermes_cli/cli_agent_setup_mixin.py`), and fifi
+  called it in scenario 06. Such an answer must never become `owner_confirmation`: fifi's `SOUL.md` confirmation
+  protocol treats any answer other than the exact choice "Confirmar" (Cancelar, free text, timeout, "no user
+  available") as not confirmed and sends nothing; and the expert request contracts now require
+  `owner_confirmation` (or `owner_statement`) per task, so a click-required request without it is refused before it
+  is sent (`invalid_request`, tested in `plugins/tests/test_a2a_tools.py`). Scenario runs therefore use the
+  interactive CLI.
+- **C30 — No delegation or session search on fifi and the experts.** In the Loop 3 red run (scenario 08) fifi
+  called `delegate_task` once, `session_search` once and `skill_view` five times looking for a way to open the
+  spreadsheet itself. Loop 4's allowlist will block anything outside each role's tools; until then
+  `agent.disabled_toolsets` adds `delegation` and `session_search` on fifi and the three experts (experts also get
+  `memory`, as Loop 3 step 4 plans).
+- **C31 — Expert task contracts carry the click rule and keep raw money out.** Loop 3 steps 2b–2d: every expert
+  task has its own payload subschema; click-required tasks (`accept`, `register_purchase`, `adjust_budget`,
+  `select_price_scenario`, `import_pantry_apply`, `save_menu_copy`, `register_promotion`) require
+  `owner_confirmation`, evidence tasks require `owner_statement`, `confirm_price_quote` requires one of them; money
+  in payloads is a two-decimal string ("16.00", never a float); and cost/marketing responses reject any money-named
+  key holding a number (recursive `no_raw_money`). fifi's `ask_*` tools read their task list and payload guide from
+  these contracts, and the relay of C25 now covers every money tool per role (cost_expert: compute, budget fit,
+  quotes, purchases, budget, corrections, scenario choice, promotion simulation, import; marketing_expert:
+  `register_promotion`). Tests first (red: 32 failed).
+
 ## Final manual step (owner — after Loop 8, not executed by the agent)
 Kept here so it is not forgotten: no loop creates a GitHub remote or submits the challenge.
 - [ ] Create the GitHub repository, add it as `origin` and push.

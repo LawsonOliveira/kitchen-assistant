@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://sabor.local/contracts/experts/cost_expert.response.json",
-  "title": "cost_expert response (task subschemas arrive in Loop 3)",
+  "title": "cost_expert response",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -11,7 +11,7 @@
   ],
   "properties": {
     "result": {
-      "type": "object"
+      "$ref": "#/$defs/no_raw_money"
     },
     "questions_for_owner": {
       "type": "array",
@@ -25,6 +25,40 @@
     "cost_usd_spent": {
       "type": "number",
       "minimum": 0
+    }
+  },
+  "$defs": {
+    "no_raw_money": {
+      "type": "object",
+      "description": "A key that names money never holds a number: money travels as an MCP display string (\"R$ 7,90\").",
+      "patternProperties": {
+        "(price|cost|profit|total|budget|remaining|subtotal|paid|receives|delta)": {
+          "not": {
+            "type": "number"
+          }
+        }
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/value"
+      }
+    },
+    "value": {
+      "if": {
+        "type": "object"
+      },
+      "then": {
+        "$ref": "#/$defs/no_raw_money"
+      },
+      "else": {
+        "if": {
+          "type": "array"
+        },
+        "then": {
+          "items": {
+            "$ref": "#/$defs/value"
+          }
+        }
+      }
     }
   }
 }
