@@ -2253,3 +2253,11 @@ Queued during implementation (each: what it blocks, the question, the default if
    not offered there at all).
    **Default if unanswered:** yes — the CLI pty driver; red-team single-turn cases without clicks may still use the
    API server.
+14. **OPEN** — **Blocks** Loop 6 step 5's Langfuse *online* evaluator (the manual flywheel example is not blocked):
+   Langfuse LLM-as-judge evaluators call the model through an LLM connection configured with a provider API key
+   (`/api/public/llm-connections` is empty). Under D46 there is no Anthropic Console key, and sending the Claude Code
+   OAuth token to Langfuse as an API key is not a supported use of that credential. Do you want to provide an Anthropic
+   API key for Langfuse's evaluator, or keep the judge offline?
+   **Default if unanswered:** keep the judge offline — `make evals` scores every trial with claude-sonnet-5 through
+   Hermes' auxiliary client and publishes the dataset run with the judge scores in its metadata; the README documents
+   the online-evaluator setup (template from `evals/rubric.md`, sampling of fifi turns) for when a key exists.
