@@ -118,6 +118,14 @@ sequenceDiagram
 | Cockpit (stdlib + HTML/JS) | `services/cockpit/` |
 | Cenários, red-team, datasets, runner de eval | `evals/` |
 
+**Latência.** Um turno com pesquisa passa por vários modelos em cadeia, então o tempo foi cortado onde o resultado não
+muda:
+- o cost_expert responde sem laço de modelo as tarefas que são uma chamada só do MCP (orçamento, custo, cenário, compra,
+  importação), usando o próprio despacho de ferramentas do Hermes: allowlist, trace e telemetria continuam valendo;
+- o orchestrator pede numa resposta só o que os especialistas podem fazer em paralelo;
+- o guard de entrada roda junto com a primeira chamada de modelo, e um bloqueio descarta essa resposta;
+- cada filho do researcher faz no máximo 3 chamadas por ferramenta web; nenhum agente usa `todo`.
+
 ## As cinco categorias do desafio
 
 ### Modelo
@@ -154,13 +162,18 @@ sequenceDiagram
   pedido e resposta contra `contracts/`, com uma nova tentativa e depois erro explícito. O modelo nunca vê o toolset A2A
   cru do Hermes.
 - Busca web via **Tavily** (`web_search`, `web_extract`), só no researcher, que distribui a pesquisa em filhos paralelos
-  com `delegate_task`.
+  com `delegate_task`. O limite de 3 chamadas por ferramenta web em cada filho fica no `pre_tool_call`, porque o Hermes
+  lança esses filhos com um número fixo de iterações.
+- **Cache de receitas:** antes de pesquisar, o recipe_expert consulta `find_cached_recipes` (todas as palavras do pedido
+  no título normalizado, sem acento nem caixa); receitas da web válidas pelo contrato entram com `cache_recipes`.
+  **Rejeitado:** RAG com embeddings (`pgvector`). Por quê: o acervo é pequeno, a busca por palavras é determinística e
+  testável, e busca semântica só entra se a busca por título se mostrar insuficiente.
 - Allowlist de ferramentas por agente em `pre_tool_call` (o único hook do Hermes que falha fechado). Terminal e arquivos
   estão desligados em todos os agentes.
 
 ### Estrutura de memória
 - **Estado de negócio no Postgres**, via especialistas: despensa, preços, compras, perfil da cozinha, pratos,
-  reservas, promoções.
+  reservas, promoções, medidas caseiras e o cache de receitas da web.
 - **Memória nativa do Hermes só no orchestrator**, e só para gostos e estilo da dona ("não curte coentro", "prefere explicação
   curta"). Toda escrita passa por um guard Haiku que só deixa passar `allow`; fatos de negócio são recusados, porque
   devem ir para o banco.
@@ -218,6 +231,8 @@ Cada item: a decisão, a alternativa rejeitada e o porquê. O detalhe está em *
 - **D11 — Semântica dos guards.**
   - A entrada vê a mensagem da dona mais a última do orchestrator (até 500 caracteres), porque "sim" sozinho não diz nada.
   - Categorias: fora de escopo **e** manipulação.
+  - Cumprimentos e conversa rápida (como ela está, quem é a assistente) estão no escopo: a Dona Sálvia responde numa frase
+    e volta para a cozinha.
   - Veredito `allow | block | uncertain`; score 0–1 foi rejeitado por falta de calibração.
   - `uncertain` passa na entrada e bloqueia na saída.
   - Falha de infraestrutura bloqueia dos dois lados, com uma mensagem própria.
@@ -257,7 +272,9 @@ Cada item: a decisão, a alternativa rejeitada e o porquê. O detalhe está em *
 - **D23 — Unidades.**
   - Tudo é normalizado para g/ml/unidade num lugar só.
   - Uso cruzado de dimensões falha alto e vira pergunta.
-  - Medidas caseiras vêm de uma tabela fixa.
+  - Medidas caseiras vêm da tabela `measures` no Postgres (16 semeadas). O tamanho de uma lata ou pacote que falta é
+    pesquisado pelo researcher (`measure_lookup`, em página real de produto) e só entra no CMV depois do clique
+    **Confirmar** da dona; se ela disser outro número, vale o dela.
   - "A gosto" usa uma estimativa pequena, marcada como estimativa.
 
   Rejeitado: LLM convertendo para gramas, com densidades confiantemente erradas.
@@ -299,7 +316,8 @@ Cada item: a decisão, a alternativa rejeitada e o porquê. O detalhe está em *
 - **D39 — Canais: CLI clássica + Telegram com allowlist.** Rejeitado: CLI própria, TUI Ink, WhatsApp (Cloud API exige
   conta business e webhook público; o bridge não oficial tem risco de banimento).
 - **D40 — Busca web: Tavily.** Rejeitado: Firecrawl (não necessário), rotação sem chave (limites no meio da demo).
-- **D42 — Persona e skin Dona Sálvia:** avó ajudante, a dona é a chef.
+- **D42 — Persona e skin Dona Sálvia:** avó ajudante, a dona é a chef. A arte do banner é um grid de pixels legível
+  (`agents/orchestrator/dona-salvia-hero.txt`) que `scripts/render_hero.py` converte em meios-blocos coloridos.
 - **D43 — Topologia completa primeiro (dona), depois fluxos, guardrails, observabilidade, evals, Telegram/skin,
   README.** Rejeitado: monólito primeiro.
 - **D44 — Testes antes da implementação em todo loop.** No `git log`, cada `test:` com o resumo da execução vermelha
@@ -380,19 +398,31 @@ Verificadas na imagem fixada `nousresearch/hermes-agent:v2026.9.11`. Cada uma vi
 |---|---|---|
 | Núcleo de custos | `pytest` unitário e de integração do costs-mcp | 100% |
 | Extração de requisitos | páginas fixas repetidas pelo `researcher-eval` | recall 100% equipamentos, ≥ 90% técnicas |
-| Guard de entrada | 60 mensagens rotuladas em `evals/guardrail_dataset.jsonl` | falsos positivos ≤ 5% |
+| Guard de entrada | 66 mensagens rotuladas em `evals/guardrail_dataset.jsonl` | falsos positivos ≤ 5% |
 | Cenários multi-turno | 9 cenários × 3 tentativas: a Dona Maria simulada conversa na CLI; graders de estado final e trajetória decidem; juiz Sonnet só alerta | pass^3 ≥ 80% |
 | Red-team | 7 casos (injeção, jailbreak, fora de escopo, página maliciosa, envenenamento de memória, escrita sem clique, alegação enganosa) | vazamento 0% |
 
 Cada rodada vira um *dataset run* no Langfuse (`kitchen-scenarios`), ligado aos traces e aos hashes de prompt.
 
-**Avaliador online no Langfuse (LLM-as-judge em turnos amostrados do orchestrator):** o Langfuse chama o modelo por uma
-*LLM connection* configurada com chave de API do provedor. Sem chave da Anthropic Console (D46), o juiz roda offline
-no `make evals`, e as notas vão nos metadados do dataset run. Com uma chave:
-1. crie a connection Anthropic em *Settings → LLM Connections*;
-2. crie um evaluator com o template de `evals/rubric.md`, variável `{{output}}` = resposta do orchestrator, amostragem de 10%
-   dos traces com `name = orchestrator`;
-3. compare as notas online com as da última rodada offline.
+**Conversas reais da dona (`make review-conversations SINCE=<data>`).** O Langfuse só roda um avaliador LLM com chave
+de API do provedor, e aqui o acesso aos modelos é pelas credenciais do Claude Code (D46). Por decisão da dona, o juiz roda
+fora do Langfuse e grava os resultados nele:
+- lê as sessões do orchestrator (CLI e Telegram) no `state.db`, sem as sessões das evals;
+- calcula sinais: mensagens bloqueadas que ela precisou reescrever, erros de ferramenta, cliques em Cancelar, latência
+  p90 por turno (alerta acima de 60 s) e custo por turno (alerta acima de US$ 1,00);
+- dá notas com `evals/rubric.md` e grava cada critério como score 1–5 na sessão, com ids estáveis (rodar de novo
+  atualiza, não duplica);
+- coloca as conversas suspeitas na fila de anotação `kitchen-review`;
+- escreve `evals/reviews/<data>.md` e rascunhos de linhas para o dataset do guard em `evals/proposals/<data>/`, ambos
+  fora do git porque guardam as conversas dela.
+
+Nada é aplicado sozinho: uma pessoa revisa, e o que for aceito vira teste antes de virar mudança. Por enquanto a revisão
+roda à mão e as conversas ficam 90 dias (pergunta aberta 15 no plano).
+
+**Exemplo do ciclo de melhoria.** A dona perguntou "como você está?" e o guard de entrada bloqueou. A conversa virou
+seis linhas de conversa rápida em `evals/guardrail_dataset.jsonl`; com o classificador real, cinco saíram bloqueadas
+(13,9% de falsos positivos, acima do limite de 5%). O prompt do guard passou a permitir cumprimentos e a nova rodada deu
+66/66 corretas, com 0 falso positivo (correção C54).
 
 **Resultados:** ver a seção *Latest eval run* abaixo, atualizada a cada rodada completa.
 

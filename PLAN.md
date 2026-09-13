@@ -2212,6 +2212,15 @@ evidence, what was changed, and where. Open questions that were "default applied
   (`agents/orchestrator/dona-salvia-hero.txt`); `scripts/render_hero.py` turns it into half-block markup (top pixel as
   foreground, bottom as background) with U+2800 for transparent cells. Checked by rendering Hermes' real banner at 120
   and 100 columns: rows aligned. The owner's colour edits to the skin were kept.
+- **C61 — Loop 6 resumed: the eval run must not freeze the owner's machine.** The host has 7.6 GiB of RAM and 1.9 GiB of
+  swap; the stack idles at ≈3.4 GiB. The machine froze three times on 2026-09-13 during live runs, the last one in the
+  first smoke trial after the four fixed layers: no OOM kill in the kernel log, VS Code's pty heartbeat lost, then the
+  power button. Tests first (red: 3 failed): the runner now samples `MemAvailable` every 3 s and, after two samples
+  under `KITCHEN_EVAL_MEMORY_FLOOR_MIB` (450), kills the in-container CLI sessions and exits 3 so the run can be resumed.
+  The same commit fixes `--resume` with a relative path, which `make evals` (running from `evals/`) had turned into
+  `evals/evals/results/<run>`, starting every layer again. The smoke run's requirement-extraction layer failed once
+  with "replied twice outside the contract" two seconds after `researcher-eval` came up on the volume created by the
+  C59 cutover; the rerun passed (equipment 6/6, techniques 3/3, operations 2/2) and the failure did not recur.
 
 ## Post-loop changes (owner requests, 2026-09-13)
 Requested by the owner while Loops 6–8 were running, test-first, each recorded as a correction. **Order decided by the

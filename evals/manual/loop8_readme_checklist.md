@@ -85,13 +85,13 @@ reading it. For each decision: the choice, the alternative rejected and why.
       output, LLM evals in CI, free price beyond the scenarios)
 
 ## Post-loop changes (PLAN.md PL1–PL9) — described where a reader looks for them
-- [ ] PL1: greetings and small talk are in scope (guard semantics)
-- [ ] PL3: Dona Sálvia persona; the banner hero's editable source (`dona-salvia-hero.txt`, `scripts/render_hero.py`)
-- [ ] PL6: household measures in Postgres; a researched can/package size enters CMV only after the owner's click
-- [ ] PL7: conversation review written into Langfuse (path A, no in-Langfuse evaluator) and one flywheel example
-- [ ] PL8: recipe cache before research, with the rejected alternative (RAG with embeddings) and why
-- [ ] PL9: latency levers (cost_expert fast path, batched expert requests, concurrent input guard, child web-call cap)
-- [ ] Every count quoted (guard dataset rows, seeded measures, scenarios, red-team cases) matches the repository
+- [x] PL1: greetings and small talk are in scope (guard semantics)
+- [x] PL3: Dona Sálvia persona; the banner hero's editable source (`dona-salvia-hero.txt`, `scripts/render_hero.py`)
+- [x] PL6: household measures in Postgres; a researched can/package size enters CMV only after the owner's click
+- [x] PL7: conversation review written into Langfuse (path A, no in-Langfuse evaluator) and one flywheel example
+- [x] PL8: recipe cache before research, with the rejected alternative (RAG with embeddings) and why
+- [x] PL9: latency levers (cost_expert fast path, batched expert requests, concurrent input guard, child web-call cap)
+- [x] Every count quoted (guard dataset rows, seeded measures, scenarios, red-team cases) matches the repository
 
 ## Review runs
 
@@ -102,3 +102,8 @@ reading it. For each decision: the choice, the alternative rejected and why.
 - 2026-09-13 (agent, before the post-loop README update): none of the PL items above is in the README (no mention of
   measures, recipe cache, latency levers or `make review-conversations`), and "Guard de entrada" still says 60 rows
   while `evals/guardrail_dataset.jsonl` has 66.
+- 2026-09-13 (agent, after the post-loop README update): each PL item above is in the section a reader would look in
+  (latency under Arquitetura, recipe cache and web-call cap under Ferramentas / MCP, measures in D23 and Estrutura de
+  memória, small talk in D11, the pixel-art hero in D42, the conversation review and the C54 flywheel example under Evals
+  e resultados). Counts checked against the repository: 66 guard rows, 16 seeded measures, 9 scenarios, 7 red-team
+  cases. Still open: "Evals and results" waits for the complete `make evals` report.
