@@ -6,9 +6,15 @@ model:
 terminal:
   cwd: /workspace
 plugins:
+  entries:
+    sabor_guardrails:
+      llm:  # the guards call Haiku through Hermes' plugin LLM client (NOTES.md §5)
+        allow_model_override: true
+        allowed_models: [claude-haiku-4-5-20251001]
   enabled:
     - sabor_a2a
     - sabor_observability
+    - sabor_guardrails
 agent:
   max_turns: 30
   run_budget_seconds: 930  # open question 9: above fifi's 480 s expert client, with room for clicks
@@ -38,3 +44,13 @@ mcp_servers:
         - get_launch_menu
 memory:
   memory_enabled: true  # taste and style only, never business facts (D15); experts and researcher run without memory
+display:  # no unverified text reaches the owner (Loop 4 step 7, Hermes fact 7)
+  streaming: false
+  platforms:
+    telegram:
+      streaming: false
+      interim_assistant_messages: false
+      tool_progress: "off"
+      long_running_notifications: "off"
+streaming:
+  enabled: false

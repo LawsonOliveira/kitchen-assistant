@@ -9,6 +9,7 @@ import json
 import os
 import threading
 
+from .costs import spent_usd
 from .validation import ContractError, parse_json_object
 
 # role -> costs-mcp tools whose results carry money display strings
@@ -63,7 +64,7 @@ def transform_llm_output(response_text: str = "", session_id: str = "", platform
     except ContractError:
         questions = None
     reply = {"result": _latest[session_id], "questions_for_owner": questions if isinstance(questions, list) else [],
-             "cost_usd_spent": 0.0}  # TODO(Loop 4 step 6c): the measured spend of this request
+             "cost_usd_spent": spent_usd(session_id)}
     return json.dumps(reply, ensure_ascii=False)
 
 

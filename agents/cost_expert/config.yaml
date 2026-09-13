@@ -9,6 +9,7 @@ plugins:
   enabled:
     - sabor_a2a
     - sabor_observability
+    - sabor_guardrails
 agent:
   disabled_toolsets: [terminal, file, code_execution, browser, computer_use, image_gen, tts, video, video_gen, vision, cronjob, kanban, spotify, homeassistant, x_search, web, clarify, memory, delegation, session_search]
 tools:

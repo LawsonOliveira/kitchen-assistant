@@ -20,6 +20,7 @@ from pathlib import Path
 from jsonschema import Draft202012Validator
 
 from . import web_replay
+from .costs import spent_usd
 from .validation import ContractError, bundled_schema, parse_json_object
 
 CHILD_MODEL = "claude-haiku-4-5-20251001"
@@ -197,7 +198,7 @@ def fan_out(lifecycle, request_cls, session_id: str, task_type: str, items: list
         visited = _visited.get(_root(session_id), set())
         merged["results"] = [recipe for recipe in results if recipe["source_url"] in visited]
         merged["unverified_source"] = [recipe["source_url"] for recipe in results if recipe["source_url"] not in visited]
-    merged["cost_usd_spent"] = 0.0  # TODO(Loop 4 step 6c): the measured spend of this request
+    merged["cost_usd_spent"] = spent_usd(session_id)
     with _lock:
         _merged[session_id] = merged
     return merged
@@ -206,7 +207,7 @@ def fan_out(lifecycle, request_cls, session_id: str, task_type: str, items: list
 def transform_llm_output(response_text: str = "", session_id: str = "", platform: str = "", **_):
     if platform == "subagent" or session_id not in _merged:
         return None  # no fan-out result: the caller's contract validation fails loud and retries once
-    return json.dumps(_merged[session_id], ensure_ascii=False)
+    return json.dumps({**_merged[session_id], "cost_usd_spent": spent_usd(session_id)}, ensure_ascii=False)
 
 
 def register(ctx) -> None:

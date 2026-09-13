@@ -43,10 +43,11 @@ def _error(code: str, message: str, **details) -> str:
     return json.dumps({"error": {"code": code, "message": message, "details": details}}, ensure_ascii=False)
 
 
-def _trace() -> dict:
-    # TODO(Loop 5 step 3): propagate the owner turn's trace; TODO(Loop 4 step 6c): the turn's real remaining budget.
-    return {"trace_id": uuid.uuid4().hex, "parent_span_id": None,
-            "turn_cost_remaining_usd": float(os.environ.get("SABOR_TURN_COST_CAP_USD", "5.00"))}
+def _trace(session_id: str = "") -> dict:
+    from .costs import remaining_usd
+
+    # TODO(Loop 5 step 3): propagate the owner turn's trace instead of a fresh id.
+    return {"trace_id": uuid.uuid4().hex, "parent_span_id": None, "turn_cost_remaining_usd": remaining_usd(session_id)}
 
 
 def _call(peer: str, request: dict, request_schema, response_schema) -> str:
@@ -67,22 +68,22 @@ def _call(peer: str, request: dict, request_schema, response_schema) -> str:
         return _error("a2a_failure", str(error))
 
 
-def _research(args: dict, **_) -> str:
+def _research(args: dict, session_id: str = "", **_) -> str:
     from .validation import CONTRACTS_DIR
 
     task_type = args.get("task_type")
     if task_type not in RESEARCH_TASK_TYPES:
         return _error("unknown_task_type", f"task_type must be one of {RESEARCH_TASK_TYPES}")
-    request = {"task_type": task_type, "trace": _trace(), "items": list(args.get("items") or [])}
+    request = {"task_type": task_type, "trace": _trace(session_id), "items": list(args.get("items") or [])}
     return _call("researcher", request, CONTRACTS_DIR / "research" / f"{task_type}.request.json",
                  CONTRACTS_DIR / "research" / f"{task_type}.response.json")
 
 
 def _ask(expert: str):
-    def handler(args: dict, **_) -> str:
+    def handler(args: dict, session_id: str = "", **_) -> str:
         from .validation import CONTRACTS_DIR
 
-        request = {"task": args.get("task"), "trace": _trace(), "owner_confirmation": args.get("owner_confirmation"),
+        request = {"task": args.get("task"), "trace": _trace(session_id), "owner_confirmation": args.get("owner_confirmation"),
                    "owner_statement": args.get("owner_statement"), "payload": args.get("payload") or {}}
         return _call(expert, request, CONTRACTS_DIR / "experts" / f"{expert}.request.json",
                      CONTRACTS_DIR / "experts" / f"{expert}.response.json")
@@ -135,17 +136,19 @@ def _schemas() -> dict:
     return schemas
 
 
-def _ensure_cost_field(response_text: str = "", platform: str = "", **_):
-    """A2A replies must carry cost_usd_spent; the real per-turn spend is added in Loop 4 (cost cap)."""
+def _ensure_cost_field(response_text: str = "", session_id: str = "", platform: str = "", **_):
+    """A2A replies report the measured spend of this request (D37), whatever the model wrote in cost_usd_spent."""
+    from .costs import spent_usd
+
     if platform == "subagent":
         return None
     try:
         data = json.loads(response_text[response_text.index("{"): response_text.rindex("}") + 1])
     except ValueError:
         return None  # not JSON: the caller's contract validation fails loud and retries once
-    if not isinstance(data, dict) or "cost_usd_spent" in data or not ({"result", "results"} & data.keys()):
+    if not isinstance(data, dict) or not ({"result", "results"} & data.keys()):
         return None
-    data["cost_usd_spent"] = 0.0  # TODO(Loop 4 step 6c): replace with the measured spend of this turn
+    data["cost_usd_spent"] = spent_usd(session_id)
     return json.dumps(data, ensure_ascii=False)
 
 

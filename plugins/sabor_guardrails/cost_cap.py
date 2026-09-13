@@ -50,7 +50,62 @@ class CostCap:
     def allows_next_call(self, trace_id: str) -> bool:
         return self.remaining(trace_id) > 0
 
+    def spent(self, trace_id: str) -> Decimal:
+        with self._lock:
+            return self._turn(trace_id)["own"]
+
     def breakdown(self, trace_id: str) -> dict[str, str]:
         with self._lock:
             turn = self._turn(trace_id)
             return {self.agent: str(turn["own"]), **{agent: str(usd) for agent, usd in turn["reported"].items()}}
+
+
+class SessionCosts:
+    """Hermes sessions → the turn they are spending for: a root session starts one turn per owner message (fifi) or
+    per A2A request (experts, researcher); delegated children count for their parent's current turn."""
+
+    def __init__(self, cap_usd: Decimal, agent: str):
+        self.cap = CostCap(cap_usd, agent)
+        self._turn_of: dict[str, str] = {}
+        self._parent: dict[str, str] = {}
+        self._lock = threading.Lock()
+
+    def begin(self, session_id: str, turn_id: str, received_remaining: Decimal | None = None) -> None:
+        key = f"{session_id}:{turn_id}"
+        with self._lock:
+            self._turn_of[session_id] = key
+        self.cap.start(key, received_remaining)
+
+    def link_child(self, child_session_id: str, parent_session_id: str) -> None:
+        with self._lock:
+            self._parent[child_session_id] = parent_session_id
+
+    def _trace(self, session_id: str) -> str:
+        with self._lock:
+            seen = set()
+            while session_id in self._parent and session_id not in seen:
+                seen.add(session_id)
+                session_id = self._parent[session_id]
+            return self._turn_of.get(session_id, session_id)
+
+    def add_own(self, session_id: str, usd: Decimal) -> None:
+        self.cap.add_own(self._trace(session_id), usd)
+
+    def add_reported(self, session_id: str, usd: Decimal, agent: str) -> None:
+        self.cap.add_reported(self._trace(session_id), usd, agent)
+
+    def spent(self, session_id: str) -> Decimal:
+        return self.cap.spent(self._trace(session_id))
+
+    def remaining(self, session_id: str) -> Decimal:
+        return self.cap.remaining(self._trace(session_id))
+
+    def allows_next_call(self, session_id: str) -> bool:
+        return self.cap.allows_next_call(self._trace(session_id))
+
+    def breakdown(self, session_id: str) -> dict[str, str]:
+        return self.cap.breakdown(self._trace(session_id))
+
+
+# Anthropic first-party USD per million tokens (input, output), 2026-09 (plugins/sabor_guardrails/NOTES.md §3).
+PRICES = {"claude-sonnet-5": ("2.00", "10.00"), "claude-haiku-4-5-20251001": ("1.00", "5.00")}

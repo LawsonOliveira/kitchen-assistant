@@ -14,7 +14,8 @@ logs:
 	$(COMPOSE) logs --no-log-prefix
 
 # Classic prompt_toolkit CLI (--cli), as the hermes user, from the workspace that holds .hermes.md.
-chat:
+chat:  # refuses to open the CLI when the guardrail self-test fails (Loop 4 step 8)
+	bash scripts/selftest.sh
 	$(COMPOSE) exec -u hermes -w /workspace -it fifi hermes --cli
 
 test:
