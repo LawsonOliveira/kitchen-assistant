@@ -2183,8 +2183,9 @@ and compose project), because they touch almost every file and restart the stack
   Plan: a `measures` table seeded from the current dicts, with `source` (`seed` | `web_estimate` | `owner_confirmed`),
   `source_url` and `evidence`; when a recipe uses an unknown measure, recipe_expert asks researcher (a new
   `measure_lookup` task type with provenance) and records it. **Decided (owner):** the table and the research flow.
-  Still open (D23 rejected LLM-guessed densities): whether a web measure is usable in CMV right away, flagged as an
-  estimate in the explanation, or only after the owner confirms it, as prices do (D27).
+  **Decided (owner):** like prices (D27), a web measure is stored as `web_estimate` and never enters CMV until the owner
+  confirms it with a click ("achei na internet que 1 lata tem 200 g, confere?"); her own correction goes through
+  `set_conversion_factor` and always wins.
 - **PL7 — Continuous improvement from the owner's real conversations.** Today nothing reads her past conversations:
   `make evals` uses synthetic scenarios, and the Langfuse online evaluator waits on open question 14. Plan:
   `evals/review_conversations.py` (`make review-conversations`) reads the orchestrator's sessions (CLI and Telegram) and
@@ -2205,6 +2206,10 @@ and compose project), because they touch almost every file and restart the stack
   No in-Langfuse LLM evaluator (no provider key). Still open: frequency, 👍/👎 buttons at the end of a flow, retention of
   raw conversations, how accepted proposals are delivered (report only or a local branch), and latency/cost alert
   limits.
+  **Defaults applied while the owner decides (open question 15):** manual `make review-conversations
+  SINCE=<date>` (host cron documented, not installed); no 👍/👎 buttons yet; raw conversations kept 90 days (documented,
+  no purge job yet); proposals are a report plus draft files under `evals/proposals/<date>/`, nothing applied or
+  committed automatically; alerts when a conversation's p90 turn latency exceeds 60 s or a turn costs more than US$ 1.00.
 - **PL8 — RAG.** There is no embedding or vector retrieval today. Retrieval is live web search with strict extraction
   (researcher), structured SQL through costs-mcp, Hermes' memory snapshot and on-demand skills. Candidate: a recipe
   cache in Postgres (researched recipes reused across rounds and conversations; cuts research latency and cost), keyed
@@ -2361,3 +2366,9 @@ Queued during implementation (each: what it blocks, the question, the default if
    **Default if unanswered:** keep the judge offline — `make evals` scores every trial with claude-sonnet-5 through
    Hermes' auxiliary client and publishes the dataset run with the judge scores in its metadata; the README documents
    the online-evaluator setup (template from `evals/rubric.md`, sampling of fifi turns) for when a key exists.
+15. **OPEN** — **Affects** PL7 details (nothing is blocked; the defaults in PL7 are implemented meanwhile): how often
+   should the conversation review run (weekly by hand, a host cron, daily)? Should Dona Sálvia ask "Te ajudei bem? 👍 / 👎"
+   at the end of a flow (one click; the answer becomes an `owner_feedback` score)? How long are her raw conversations
+   kept (default 90 days)? Should accepted proposals become a local branch with draft commits, or stay a report? Which
+   alert limits (default p90 turn latency 60 s, US$ 1.00 per turn)?
+   **Default if unanswered:** manual run, no buttons, 90 days, report and draft files only, 60 s and US$ 1.00.
