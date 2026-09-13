@@ -1,0 +1,13 @@
+{
+  "task": "normalize_recipe",
+  "trace": {
+    "trace_id": "trace-1",
+    "parent_span_id": "span-1",
+    "turn_cost_remaining_usd": 4.5
+  },
+  "owner_confirmation": null,
+  "owner_statement": null,
+  "payload": {
+    "owner_recipe_text": "Arroz com frango: rende 4 porções, 45 minutos, 400 g de arroz, 600 g de peito de frango, 10 g de alho, 30 ml de óleo e 1 pitada de sal."
+  }
+}
