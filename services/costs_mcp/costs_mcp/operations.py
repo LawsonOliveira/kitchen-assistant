@@ -261,6 +261,18 @@ def reject_candidate_dish(conn, dish_id: int, reason: str, evidence: str) -> dic
     return {"dish_id": dish_id, "status": "rejected"}
 
 
+def set_launch_batch_portions(conn, dish_id: int, launch_batch_portions: int, evidence: str) -> dict:
+    """She may change how many portions a candidate launches with (PLAN.md open question 11); an accepted dish keeps the
+    batch its stock reservation was made for. Her words are kept in audit_log."""
+    if isinstance(launch_batch_portions, bool) or not isinstance(launch_batch_portions, int) or launch_batch_portions <= 0:
+        raise DomainError("invalid_portions", "launch_batch_portions must be a positive integer")
+    if _dish(conn, dish_id)["status"] != "candidate":
+        raise DomainError("not_candidate", f"dish {dish_id} is not a candidate", dish_id=dish_id)
+    with conn.transaction():
+        db.set_launch_batch_portions(conn, dish_id, launch_batch_portions)
+    return {"dish_id": dish_id, "launch_batch_portions": launch_batch_portions, "pantry_match": _pantry_match(conn, _dish(conn, dish_id))}
+
+
 def confirm_dish_requirement(conn, dish_id: int, requirement: str, status: str, evidence: str) -> dict:
     if not requirement.startswith(FREE_TEXT_PREFIXES):
         raise DomainError("not_free_text_requirement", f"{requirement!r} is checked against the kitchen profile, not per dish",

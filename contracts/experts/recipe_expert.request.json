@@ -20,7 +20,8 @@
         "register_candidate",
         "reject_candidate",
         "confirm_requirement",
-        "accept"
+        "accept",
+        "set_launch_batch"
       ]
     },
     "trace": {
@@ -319,6 +320,50 @@
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 200
+                  }
+                }
+              }
+            }
+          },
+          {
+            "properties": {
+              "owner_statement": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "task": {
+            "const": "set_launch_batch"
+          }
+        }
+      },
+      "then": {
+        "allOf": [
+          {
+            "properties": {
+              "payload": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "dish_id",
+                  "launch_batch_portions"
+                ],
+                "properties": {
+                  "dish_id": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "launch_batch_portions": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 500
                   }
                 }
               }

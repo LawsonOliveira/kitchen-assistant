@@ -182,6 +182,10 @@ def reject_dish(conn, dish_id: int, reason: str) -> None:
     conn.execute("UPDATE dishes SET status = 'rejected', rejected_reason = %s, rejected_at = now() WHERE id = %s", (reason, dish_id))
 
 
+def set_launch_batch_portions(conn, dish_id: int, launch_batch_portions: int) -> None:
+    conn.execute("UPDATE dishes SET launch_batch_portions = %s WHERE id = %s", (launch_batch_portions, dish_id))
+
+
 def accept_dish(conn, dish_id: int) -> None:
     conn.execute("UPDATE dishes SET status = 'accepted', accepted_at = now() WHERE id = %s", (dish_id,))
 

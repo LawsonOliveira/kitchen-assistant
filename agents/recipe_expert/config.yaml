@@ -38,6 +38,7 @@ mcp_servers:
         - check_viability
         - register_candidate_dish
         - reject_candidate_dish
+        - set_launch_batch_portions
         - confirm_dish_requirement
         - accept_dish
         - update_kitchen_profile
