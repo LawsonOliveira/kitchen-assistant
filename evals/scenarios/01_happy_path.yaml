@@ -3,8 +3,9 @@
 # owner_profile            persona and goal of Dona Maria; `opening_message` starts the conversation.
 # facts_to_reveal_only_if_asked
 #                          [{topic, answer}] — the owner says `answer` only when Dona Sálvia asks about `topic`.
-# clarify_answers          [{question_contains: [words], choice | choice_position}] then {default: <choice>};
-#                          the first entry whose words all appear in the clarify question wins.
+# clarify_answers          [{question_contains: [words], choices_count?, choice | choice_position}] then {default: <choice>};
+#                          the first entry whose words all appear in the clarify question (and, with choices_count,
+#                          that offers exactly that many choices) wins.
 # expected_state           [{check, sql}] — each `sql` returns one boolean and must return true after the
 #                          conversation; it runs inside a read-only transaction on the app Postgres.
 # trajectory_rules         [{id, type, ...}] over audit_log (costs-mcp tool calls) and orchestrator's session:
@@ -54,6 +55,7 @@ facts_to_reveal_only_if_asked:
     answer: "No lançamento quero fazer 10 porções."
 clarify_answers:
   - question_contains: ["preço"]
+    choices_count: 3  # the three price scenarios, not a Confirmar/Cancelar price confirmation
     choice_position: 2
   - default: "Confirmar"
 expected_state:

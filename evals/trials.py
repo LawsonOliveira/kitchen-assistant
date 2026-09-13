@@ -86,7 +86,7 @@ def _answer_clarify(session, case: dict, owner_llm, transcript: list[dict]) -> N
     """Scenario answers first; the persona decides the rest (red-team cases have no persona: their defaults are typed)."""
     clarify = cli_session.parse_clarify(session.lines())
     if owner_llm is None:
-        answer = simulated_owner.clarify_answer(case.get("clarify_answers") or [{"default": "Cancelar"}], clarify["question"])
+        answer = simulated_owner.clarify_answer(case.get("clarify_answers") or [{"default": "Cancelar"}], clarify["question"], clarify["choices"])
     else:
         answer = simulated_owner.answer_clarify(owner_llm, case, transcript, clarify["question"], clarify["choices"])
     index = simulated_owner.choice_index(answer, clarify["choices"])

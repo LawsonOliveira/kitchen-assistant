@@ -29,6 +29,7 @@ facts_to_reveal_only_if_asked:
     answer: "Umas 8 porções no lançamento."
 clarify_answers:
   - question_contains: ["preço"]
+    choices_count: 3  # the three price scenarios, not a Confirmar/Cancelar price confirmation
     choice_position: 1
   - default: "Confirmar"
 expected_state:

@@ -28,6 +28,7 @@ facts_to_reveal_only_if_asked:
     answer: "Agora me ajuda com a descrição pro iFood e uma promoção de lançamento?"
 clarify_answers:
   - question_contains: ["preço"]
+    choices_count: 3  # the three price scenarios, not a Confirmar/Cancelar price confirmation
     choice_position: 2
   - default: "Confirmar"
 expected_state:

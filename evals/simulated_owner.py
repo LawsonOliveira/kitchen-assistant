@@ -19,12 +19,16 @@ def _normalized(text) -> str:
     return " ".join(str(text).lower().split()).removesuffix(" (recommended)")
 
 
-def clarify_answer(clarify_answers: list[dict], question: str) -> dict:
-    """The first entry whose words all appear in the question wins; otherwise the default."""
+def clarify_answer(clarify_answers: list[dict], question: str, choices: list[str] | None = None) -> dict:
+    """The first entry whose words all appear in the question (and, with choices_count, that offers that many choices)
+    wins; otherwise the default."""
     lowered = question.lower()
     for entry in clarify_answers:
-        if "question_contains" in entry and all(word.lower() in lowered for word in entry["question_contains"]):
-            return {key: entry[key] for key in ("choice", "choice_position") if key in entry}
+        if "question_contains" not in entry or not all(word.lower() in lowered for word in entry["question_contains"]):
+            continue
+        if "choices_count" in entry and (choices is None or len(choices) != entry["choices_count"]):
+            continue
+        return {key: entry[key] for key in ("choice", "choice_position") if key in entry}
     default = next((entry["default"] for entry in clarify_answers if "default" in entry), None)
     if default is None:
         raise ValueError(f"no clarify answer for {question!r} and no default")
@@ -70,7 +74,7 @@ def next_message(llm, scenario: dict, transcript: list[dict]) -> str | None:
 def answer_clarify(llm, scenario: dict, transcript: list[dict], question: str, choices: list[str]) -> dict:
     """The scenario's clarify answer when it names one of the choices; otherwise the persona decides, as the owner would
     (a free-text clarify has no choices, so she always answers in her own words)."""
-    answer = clarify_answer(scenario.get("clarify_answers") or [{"default": "Cancelar"}], question)
+    answer = clarify_answer(scenario.get("clarify_answers") or [{"default": "Cancelar"}], question, choices)
     if choices:
         index = choice_index(answer, choices)
         if not isinstance(index, tuple) and 0 <= index < len(choices):
