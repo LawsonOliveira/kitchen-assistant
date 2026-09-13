@@ -5,8 +5,16 @@ description: Normalize a web recipe to the Sabor da Maria contract.
 
 # Recipe normalization
 
-Use this whenever a recipe from `research` must become the recipe contract
-(`contracts/recipe.schema.json`) before it is sent to Dona Sálvia.
+Use this whenever a recipe from `research`, or one the owner dictated, must become the recipe contract before it is
+sent to Dona Sálvia. The contract is one JSON object with exactly these fields — there is no schema file to open:
+- name: the dish name, at most 80 characters;
+- source_url: the recipe page URL, or "owner" when Dona Maria dictated the recipe;
+- yield_portions and prep_time_minutes: integers of at least 1;
+- ingredients: 1 to 40 objects {name (at most 60 characters), quantity (a number above 0, or null only for to_taste),
+  unit, pantry_match (the exact pantry name, or null)};
+- requirements: strings from the vocabulary in step 6.
+register_candidate_dish checks the recipe and lists every error. An owner-dictated recipe never needs `research`:
+everything comes from her words, and a question goes to `questions_for_owner` when something is missing.
 
 1. **Pantry names.** Call `get_pantry` once and copy the exact pantry name into `pantry_match`
    (e.g. "arroz" -> "Arroz branco tipo 1", "frango" -> "Peito de frango"). If nothing in the pantry is the same
