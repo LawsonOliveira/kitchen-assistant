@@ -185,7 +185,8 @@ def main(argv: list[str] | None = None) -> int:
     run_dir = Path(args.resume) if args.resume else EVALS / "results" / datetime.now().strftime("%Y%m%d-%H%M%S")
     run_dir.mkdir(parents=True, exist_ok=True)
     layers = [_cached(run_dir / "layer-costs-unit.json", lambda: _command("costs core (unit)", ["uv", "run", "pytest", "tests/unit", "-q"], REPO / "services" / "costs_mcp")),
-              _cached(run_dir / "layer-costs-integration.json", lambda: _command("costs core (integration)", ["make", "-s", "test-integration"])),
+              # The integration suite reads the seeded database (37 ingredients, budget R$ 80,00), so it starts from a reset.
+              _cached(run_dir / "layer-costs-integration.json", lambda: (trials.reset(), _command("costs core (integration)", ["make", "-s", "test-integration"]))[1]),
               _cached(run_dir / "layer-requirements.json", lambda: _command("requirement extraction", ["make", "-s", "eval-requirements"]))]
 
     def run_guard():
