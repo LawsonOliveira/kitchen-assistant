@@ -61,3 +61,9 @@ def test_only_recipe_expert_records_and_confirms_measures():
     for tool in ("record_measure_quote", "confirm_measure"):
         assert tool in server.TOOL_PERMISSIONS["recipe_expert"]
         assert all(tool not in tools for agent, tools in server.TOOL_PERMISSIONS.items() if agent != "recipe_expert")
+
+
+def test_only_recipe_expert_reads_and_fills_the_recipe_cache():
+    for tool in ("find_cached_recipes", "cache_recipes"):
+        assert tool in server.TOOL_PERMISSIONS["recipe_expert"]
+        assert all(tool not in tools for agent, tools in server.TOOL_PERMISSIONS.items() if agent != "recipe_expert")
