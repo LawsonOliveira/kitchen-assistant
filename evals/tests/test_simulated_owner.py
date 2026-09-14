@@ -198,3 +198,19 @@ def test_the_persona_is_told_not_to_end_the_conversation_while_dona_salvia_is_wo
     # all she saw, and she closed the conversation at nine turns with the dish still unregistered.
     prompt = simulated_owner.system_prompt(SCENARIO)
     assert "still working" in prompt and "never end the conversation because she is silent" in prompt
+
+
+def test_no_scenario_requires_a_web_estimate_for_a_price_she_states():
+    # Dona Sálvia now asks her what she pays before researching (correction C74), so a scenario whose owner knows the
+    # price can no longer demand a web_estimate row: scenario 03 failed that check twice while doing the right thing.
+    import yaml
+    from pathlib import Path
+
+    for path in sorted((Path(__file__).resolve().parents[1] / "scenarios").glob("*.yaml")):
+        scenario = yaml.safe_load(path.read_text())
+        facts = " ".join(fact["answer"] for fact in scenario.get("facts_to_reveal_only_if_asked", [])).lower()
+        states_a_price = "r$" in facts and ("pago" in facts or "compro" in facts or "sai" in facts)
+        if not states_a_price:
+            continue
+        sql = " ".join(check["sql"] for check in scenario["expected_state"])
+        assert "web_estimate" not in sql, path.name

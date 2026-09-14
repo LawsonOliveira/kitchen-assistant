@@ -125,3 +125,11 @@ def test_every_number_she_sees_comes_with_its_arithmetic():
     soul = " ".join((AGENTS / "orchestrator" / "SOUL.md").read_text().replace("*", "").split()).lower()
     assert "every money number you show comes with the one-line account of where it came from" in soul
     assert "r$ 16,00 ÷ 2 kg = r$ 8,00 o quilo" in soul
+
+
+def test_the_arithmetic_also_goes_inside_the_question_and_the_closing_summary():
+    # Probe 2: scenario 07 scored 2 in didactic clarity and 2 in clarity of numbers with a single summary reply —
+    # "Preço R$ 9,90 (promoção R$ 8,42), custo R$ 2,72, lucro R$ 6,19" — where no number says where it came from, and
+    # everything else in that conversation happened inside clarify questions.
+    soul = " ".join((AGENTS / "orchestrator" / "SOUL.md").read_text().replace("*", "").split()).lower()
+    assert "inside a clarify question and in the closing summary" in soul
