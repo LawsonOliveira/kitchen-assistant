@@ -72,3 +72,13 @@ def test_the_task_guide_shows_short_enum_values(orchestrator_tools):
     # Loop 3 scenario 02: orchestrator sent status "confirmed" twice because the guide listed only field names.
     guide = orchestrator_tools["ask_recipe_expert"]["schema"]["description"]
     assert "status: available|unavailable" in guide and "kind: food|packaging" in orchestrator_tools["ask_cost_expert"]["schema"]["description"]
+
+
+def test_research_refuses_placeholder_items_before_the_researcher_is_asked():
+    # Full run trials 2 (2026-09-13): recipe_expert called research with items ["__unused__"], ["dummy"] and
+    # ["placeholder"]; the researcher answered in prose, the contract retry answered in prose again, and every round trip
+    # cost a model call on both sides.
+    for items in (["placeholder"], ["dummy"], ["__unused__"], []):
+        reply = json.loads(kitchen_a2a._research({"task_type": "recipe_search", "items": items}))
+        assert reply["error"]["code"] == "invalid_request", items
+        assert "placeholder" in reply["error"]["message"], items

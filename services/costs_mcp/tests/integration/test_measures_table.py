@@ -76,3 +76,6 @@ def test_there_is_nothing_to_confirm_without_a_web_estimate(conn):
     with pytest.raises(DomainError) as error:
         operations.confirm_measure(conn, "Leite de coco", "can", "Confirmar")
     assert error.value.code == "no_measure_estimate"
+    # Full run, scenario 01 trial 2: Dona Sálvia asked the owner to confirm the same measure four times because the error
+    # did not say what to do instead.
+    assert "set_conversion_factor" in str(error.value)

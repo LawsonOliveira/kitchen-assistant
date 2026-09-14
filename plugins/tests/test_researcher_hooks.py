@@ -214,3 +214,10 @@ def test_a_research_child_gets_a_few_web_calls_per_tool_then_answers_with_what_i
     assert hooks.pre_tool_call(tool_name="web_extract", args={"urls": ["https://a.example"]}, session_id="child-1") is None
     for _ in range(5):  # researcher itself is never capped
         assert hooks.pre_tool_call(tool_name="web_search", args={"query": "x"}, session_id="session-1") is None
+
+
+def test_the_measure_lookup_child_asks_for_the_package_content_not_a_nutrition_serving():
+    # Full run, scenario 01 trial 2: a measure_lookup answered "1 peito de frango (pacote) = 90 g" — a nutrition label
+    # serving — the owner confirmed it, and the dish was priced at R$ 1,90 for ten portions.
+    goal = hooks.CHILD_GOALS["measure_lookup"]
+    assert "nutrition" in goal and "serving" in goal
