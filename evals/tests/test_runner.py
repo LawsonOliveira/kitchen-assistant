@@ -146,3 +146,24 @@ def test_the_report_requires_a_judge_mean_of_four_in_every_criterion():
     weak = trials + [{"judge": {"scores": {"didactic_clarity": 2, "tone": 4}, "mean": 3.0}}]
     assert runner.judge_criterion_means(weak)["didactic_clarity"] == pytest.approx(3.333, abs=0.001)
     assert runner.criteria_meet_bar(weak) is False
+
+
+def test_the_reset_is_tried_again_before_a_trial_gives_up(monkeypatch):
+    # Rerun of scenario 01: one `make eval-reset` failed (a container was being recreated at that moment) and the whole
+    # run died with CalledProcessError, losing the trials that were still to come.
+    import subprocess as sp
+
+    import trials
+
+    calls = []
+
+    def flaky(argv, **kwargs):
+        calls.append(argv)
+        if len(calls) == 1:
+            raise sp.CalledProcessError(2, argv, output="", stderr="eval-reset: agents left stopped")
+        return sp.CompletedProcess(argv, 0, "", "")
+
+    monkeypatch.setattr(trials.subprocess, "run", flaky)
+    monkeypatch.setattr(trials.time, "sleep", lambda seconds: None)
+    trials.reset()
+    assert len(calls) == 2

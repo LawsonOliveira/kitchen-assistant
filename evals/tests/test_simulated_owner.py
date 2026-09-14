@@ -173,3 +173,21 @@ def test_a_price_choice_is_answered_by_value_not_by_position():
     assert simulated_owner.choice_index({"choice_contains": "9,90"}, prices) == 0
     for wanted, index in (("cheapest", 1), ("middle", 0), ("dearest", 2)):
         assert simulated_owner.choice_index({"choice_by_price": wanted}, prices) == index, wanted
+
+
+def test_a_scenario_that_expects_one_accepted_dish_says_she_launches_only_that_dish():
+    # Rerun of scenario 01 trial 2: the persona asked for a second dish (macarrão com bacon), the launch menu ended with
+    # two, and "exactly one accepted dish with a chosen scenario and price" failed.
+    import re
+
+    import yaml
+    from pathlib import Path
+
+    for path in sorted((Path(__file__).resolve().parents[1] / "scenarios").glob("*.yaml")):
+        scenario = yaml.safe_load(path.read_text())
+        one_dish = any(re.search(r"count\(\*\) = 1 from dishes where status = 'accepted'", " ".join(check["sql"].lower().split()))
+                       for check in scenario["expected_state"])
+        if not one_dish:
+            continue
+        behavior = " ".join(scenario["owner_profile"].get("behavior", [])).lower()
+        assert "only this one dish" in behavior, path.name
