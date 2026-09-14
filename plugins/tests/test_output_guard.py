@@ -55,3 +55,18 @@ def test_fixed_messages_match_the_plan():
     assert messages.MEMORY_BLOCK_MESSAGE == "memória recusada"
     assert messages.PROGRESS == {"ask_recipe_expert": "🔎 Tô procurando receitas…", "ask_cost_expert": "🧮 Fazendo as contas…",
                                  "ask_marketing_expert": "✍️ Escrevendo a descrição do prato…"}
+
+
+def test_an_ungrounded_amount_gets_its_own_message_not_the_scope_one():
+    # Probe of 19:01, scenario 04: after her click, Dona Sálvia's reply carried an amount she had computed herself, the
+    # verifier blocked it and the owner read "Só consigo te ajudar com cozinha e cardápio 🙂" — as if her purchase were
+    # off topic. Tone scored 3 and clarity of numbers 2 in that trial.
+    from kitchen_guardrails.messages import NUMBER_BLOCK_MESSAGE
+
+    def allow(_text):
+        class Verdict:
+            verdict = "allow"
+        return Verdict()
+
+    assert output_guard.review("Dá pra vender por R$ 12,34", grounding(), allow, platform="cli") == NUMBER_BLOCK_MESSAGE
+    assert NUMBER_BLOCK_MESSAGE != SCOPE_BLOCK_MESSAGE and "conferir" in NUMBER_BLOCK_MESSAGE
