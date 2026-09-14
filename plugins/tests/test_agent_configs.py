@@ -67,3 +67,10 @@ def test_candidates_are_presented_with_what_is_missing():
     # believing she would spend nothing, and the flow deadlocked when she cancelled the purchase.
     rule = next(line for line in (AGENTS / "orchestrator" / "SOUL.md").read_text().splitlines() if "suggest_dishes" in line)
     assert "missing_ingredients" in rule and "never call a dish" in rule
+
+
+def test_owner_statement_must_be_her_exact_words():
+    # Rerun of scenario 06 (all three trials): she answered the weight with a button ("1 kg (1000 g)"), Dona Sálvia sent a
+    # paraphrase as evidence, and "the_weight_came_from_the_owner" failed even though the number was hers.
+    soul = (AGENTS / "orchestrator" / "SOUL.md").read_text()
+    assert "exact sentence or the exact label of the button she clicked" in soul and "never your summary" in soul
