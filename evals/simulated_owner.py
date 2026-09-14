@@ -74,7 +74,9 @@ Facts you know. Say each one only when Dona Sálvia asks about its topic, in you
 Rules: write one short message in colloquial Brazilian Portuguese, as {profile['name']}, never as the assistant. Never
 invent facts beyond these; if asked something not covered, say you don't know. Your pantry, prices and budget are already
 in Dona Sálvia's system: never say you have or lack an ingredient unless a fact above says so. When your goal is reached
-and Dona Sálvia has nothing left to ask you, reply exactly {END_MARKER}."""
+and Dona Sálvia has nothing left to ask you, reply exactly {END_MARKER}.
+When the last line says she said nothing, she is still working on your request: ask her briefly how it is going, and
+never end the conversation because she is silent."""
 
 
 def _messages(transcript: list[dict]) -> list[dict]:

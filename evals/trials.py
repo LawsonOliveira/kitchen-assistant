@@ -22,7 +22,7 @@ import cli_session
 import simulated_owner
 
 REPO = Path(__file__).resolve().parents[1]
-MAX_OWNER_MESSAGES = 14
+MAX_OWNER_MESSAGES = 20  # a dictated recipe needs the whole journey: recipe, kitchen facts, cost, price, accept, menu
 JUDGE_MODEL = "claude-sonnet-5"
 
 
