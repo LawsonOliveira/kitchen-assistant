@@ -2298,6 +2298,16 @@ evidence, what was changed, and where. Open questions that were "default applied
   cockpit buffer, and both the input guard and the output verifier use that same message, so which one fired is unknown.
   The scenario trials were restarted from scratch on the fixed code (the guard and requirement layers kept, the two costs
   layers rerun).
+- **C68 — Scenario 01 on the fixed code: the conversations are fine, the scenario was not.** Trials: FAIL (judge 3.5),
+  pass (4.0), FAIL (4.75) — both failures only on "nothing was bought" and "budget untouched", because the simulated
+  owner accepted dishes that needed caldo, margarina and azeitonas and bought them (R$ 25,06). No guard blocked any of her
+  messages; the one block recorded in trial 2 was the self-test canary through the API server (which C67's new field
+  also picks up, since it lists every orchestrator guard block in the trial's window). Her profile only said she
+  "accepts the first dish that uses only pantry ingredients", so nothing told her to refuse a cheap purchase. Test first
+  (red: 1 failed): a scenario whose checks forbid every purchase must tell the persona she will not buy. The first
+  version of that test also matched scenario 02's "every food purchase belongs to a dish", whose owner is meant to buy,
+  and was narrowed in its own commit. Scenario 01's owner now says she does not want to spend anything in this launch.
+  Its three trials rerun after the rest of the run.
 
 ## Post-loop changes (owner requests, 2026-09-13)
 Requested by the owner while Loops 6–8 were running, test-first, each recorded as a correction. **Order decided by the
