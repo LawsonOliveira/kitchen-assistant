@@ -133,3 +133,12 @@ def test_the_arithmetic_also_goes_inside_the_question_and_the_closing_summary():
     # everything else in that conversation happened inside clarify questions.
     soul = " ".join((AGENTS / "orchestrator" / "SOUL.md").read_text().replace("*", "").split()).lower()
     assert "inside a clarify question and in the closing summary" in soul
+
+
+def test_the_contract_caps_the_reply_and_bans_filler():
+    # Owner, 2026-09-14: "o agente também deve dar respostas concisas, nada de falar demais". The arithmetic rule must
+    # not turn into paragraphs: one line per number, six lines per reply, no greeting or recap in every message.
+    soul = " ".join((AGENTS / "orchestrator" / "SOUL.md").read_text().replace("*", "").split()).lower()
+    assert "at most six lines" in soul
+    assert "one line per number, never a paragraph" in soul
+    assert "do not greet her again, do not repeat her words back" in soul
