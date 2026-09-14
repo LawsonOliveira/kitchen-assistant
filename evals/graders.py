@@ -20,7 +20,8 @@ def grade_state(scenario: dict, connection) -> list[dict]:
             cursor.execute("SET TRANSACTION READ ONLY")
             for item in scenario.get("expected_state", []):
                 cursor.execute(item["sql"])
-                value = cursor.fetchone()[0]
+                row = cursor.fetchone()  # a query that selected nothing is a failed check, not a crash
+                value = row[0] if row else None
                 results.append({"check": item["check"], "passed": value is True, "value": value})
     finally:
         connection.rollback()
