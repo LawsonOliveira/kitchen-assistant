@@ -142,3 +142,13 @@ def test_the_contract_caps_the_reply_and_bans_filler():
     assert "as few lines as the answer needs" in soul
     assert "one line per number, never a paragraph" in soul
     assert "do not greet her again, do not repeat her words back" in soul
+
+
+def test_the_contract_shows_the_account_of_each_kind_of_number():
+    # Probe of 19:48: all three scenarios passed their checks with didactic clarity 2 — the replies gave results only
+    # ("Restam R$ 0,00", "Preço fixado: R$ 48,90", "Custo por porção: R$ 2,72") and, when they did explain, offered
+    # "quer que eu detalhe o cálculo?" instead of showing one line of it.
+    soul = " ".join((AGENTS / "orchestrator" / "SOUL.md").read_text().replace("*", "").split()).lower()
+    for example in ("r$ 24,90 ÷ 5 kg = r$ 4,98/kg", "r$ 80,00 − r$ 47,50", "÷ 0,90", "− 15% ="):
+        assert example in soul, example
+    assert "offering to detail it later never replaces that line" in soul
