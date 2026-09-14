@@ -108,3 +108,18 @@ def test_the_memory_watchdog_fires_once_after_two_consecutive_samples_under_the_
     fired = []
     runner.watch_memory(lambda: next(samples), fired.append, floor_mib=450, interval_s=0)
     assert fired == [300]
+
+
+def test_a_trial_publishes_its_judge_scores_on_its_own_trace_with_stable_ids():
+    # The judge's notes only lived in the dataset run metadata, so Langfuse's Scores and Experiments screens showed
+    # nothing to compare between runs.
+    trial = {"id": "01_happy_path", "trial": 2, "passed": True, "trace_ids": ["trace-a", "trace-b"],
+             "judge": {"scores": {"tone": 4, "clarity_of_numbers": 5}, "mean": 4.5, "alert": False}}
+    payloads = runner.score_payloads("20260913-192309", trial)
+    assert [payload["name"] for payload in payloads] == ["judge_tone", "judge_clarity_of_numbers", "judge_mean", "trial_passed"]
+    assert {"id": "eval-20260913-192309-01_happy_path-2-judge_tone", "traceId": "trace-a", "name": "judge_tone", "value": 4,
+            "dataType": "NUMERIC", "comment": "make evals"} in payloads
+    assert {"id": "eval-20260913-192309-01_happy_path-2-trial_passed", "traceId": "trace-a", "name": "trial_passed", "value": 1,
+            "dataType": "NUMERIC", "comment": "make evals"} in payloads
+    assert [payload["id"] for payload in runner.score_payloads("20260913-192309", trial)] == [payload["id"] for payload in payloads]
+    assert runner.score_payloads("20260913-192309", {**trial, "trace_ids": []}) == []
