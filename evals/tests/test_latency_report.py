@@ -30,7 +30,7 @@ def test_each_call_type_is_summarised_by_agent_and_name():
     slowest = rows[0]
     assert slowest["p50_s"] == 120.0 and slowest["p90_s"] == 120.0
     model = next(row for row in rows if row["name"] == "claude-sonnet-5")
-    assert model["count"] == 2 and model["p50_s"] == 5.0
+    assert model["count"] == 2 and model["p50_s"] == 3.0  # nearest rank, the same rule the assertion above pins
 
 
 def test_expert_calls_that_overlap_in_time_count_as_parallel():
