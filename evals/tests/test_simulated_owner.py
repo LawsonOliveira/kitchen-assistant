@@ -191,3 +191,10 @@ def test_a_scenario_that_expects_one_accepted_dish_says_she_launches_only_that_d
             continue
         behavior = " ".join(scenario["owner_profile"].get("behavior", [])).lower()
         assert "only this one dish" in behavior, path.name
+
+
+def test_the_persona_is_told_not_to_end_the_conversation_while_dona_salvia_is_working():
+    # Rerun of scenario 01 trial 2: after her clarify answer the transcript ended with her own turn, the silence line was
+    # all she saw, and she closed the conversation at nine turns with the dish still unregistered.
+    prompt = simulated_owner.system_prompt(SCENARIO)
+    assert "still working" in prompt and "never end the conversation because she is silent" in prompt

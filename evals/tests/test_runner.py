@@ -179,3 +179,11 @@ def test_every_scenario_must_clear_the_bar_on_its_own():
     assert runner.criteria_meet_bar(good + good) is True
     assert runner.scenarios_meet_bar({"01": good}) is True
     assert runner.scenarios_meet_bar({"01": good, "02": weak}) is False
+
+
+def test_a_trial_allows_enough_owner_messages_for_a_dictated_recipe():
+    # Rerun of scenario 01 trial 1: find a recipe, dictate her own, register it, answer the kitchen questions, price it,
+    # accept it and save the menu copy does not fit in fourteen messages — the trial hit the cap at 60 turns.
+    import trials
+
+    assert trials.MAX_OWNER_MESSAGES >= 20
