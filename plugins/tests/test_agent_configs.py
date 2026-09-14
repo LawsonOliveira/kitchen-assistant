@@ -53,3 +53,10 @@ def test_the_price_of_a_missing_item_is_asked_of_the_owner_before_it_is_research
     # never asked for.
     rule = next(line for line in (AGENTS / "orchestrator" / "SOUL.md").read_text().splitlines() if "price_missing_item" in line)
     assert "ask her first" in rule and "only when she does not know" in rule
+
+
+def test_a_rejected_dish_is_recorded_in_the_same_reply():
+    # Full run 20260913-192309, scenario 09 trial 3: the owner rejected the estrogonofe ("fica muito molhado pra
+    # marmita"), Dona Sálvia said it was noted and moved on, but no rejection was ever recorded (judge mean 1.75).
+    rule = next(line for line in (AGENTS / "orchestrator" / "SOUL.md").read_text().splitlines() if "register_candidate" in line and "reject" in line)
+    assert "in the same reply" in rule and "before you suggest anything else" in rule
