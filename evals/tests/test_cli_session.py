@@ -94,3 +94,19 @@ def test_actions_for_a_choice_an_other_answer_and_a_free_text_answer():
     assert cli_session.clarify_actions(clarify, 1) == [("keys", ["down", "enter"])]
     assert cli_session.clarify_actions(clarify, ("other", "Tenho 3 bocas")) == [("keys", ["down", "down", "enter"]), ("text", "Tenho 3 bocas")]
     assert cli_session.clarify_actions(cli_session.parse_clarify(FREE_TEXT), ("other", "10 porções")) == [("text", "10 porções")]
+
+
+def test_a_cli_that_ignores_quit_is_killed_instead_of_hanging_the_run():
+    # Full run 20260913-192309, scenario 02 trial 1: a clarify box stayed open, the orchestrator gave up on it, and "/quit"
+    # went into that box instead of closing the CLI; the runner sat in waitpid for 75 minutes.
+    import subprocess
+    import time
+
+    quiet = {"stdin": subprocess.DEVNULL, "stdout": subprocess.DEVNULL, "stderr": subprocess.DEVNULL}
+    stubborn = subprocess.Popen(["sleep", "30"], **quiet)
+    started = time.time()
+    assert cli_session.reap(stubborn.pid, timeout_seconds=0.5) == "killed"
+    assert time.time() - started < 10
+
+    quick = subprocess.Popen(["true"], **quiet)
+    assert cli_session.reap(quick.pid, timeout_seconds=5) == "exited"
