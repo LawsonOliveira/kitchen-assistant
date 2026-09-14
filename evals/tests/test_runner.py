@@ -167,3 +167,15 @@ def test_the_reset_is_tried_again_before_a_trial_gives_up(monkeypatch):
     monkeypatch.setattr(trials.time, "sleep", lambda seconds: None)
     trials.reset()
     assert len(calls) == 2
+
+
+def test_every_scenario_must_clear_the_bar_on_its_own():
+    # Owner (2026-09-14), refining the bar: at least 4 in every criterion **of each scenario**, not only across the run.
+    good = [{"judge": {"scores": {"didactic_clarity": 4, "tone": 5}, "mean": 4.5}},
+            {"judge": {"scores": {"didactic_clarity": 5, "tone": 5}, "mean": 5.0}}]
+    weak = [{"judge": {"scores": {"didactic_clarity": 2, "tone": 5}, "mean": 3.5}}]
+    assert runner.scenario_criteria_means({"01": good, "02": weak}) == {"01": {"didactic_clarity": 4.5, "tone": 5.0},
+                                                                       "02": {"didactic_clarity": 2.0, "tone": 5.0}}
+    assert runner.criteria_meet_bar(good + good) is True
+    assert runner.scenarios_meet_bar({"01": good}) is True
+    assert runner.scenarios_meet_bar({"01": good, "02": weak}) is False
