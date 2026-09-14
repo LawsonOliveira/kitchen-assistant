@@ -36,6 +36,7 @@ owner_profile:
     - "She does not want to spend anything in this launch: if a dish needs an ingredient she does not have, even a
        cheap one, she says so and asks for another option that uses only the pantry."
     - "She accepts the first dish that uses only pantry ingredients and that she can cook."
+    - "She launches only this one dish in this conversation and never asks for a second one."
     - "When shown the price scenarios she picks the middle one."
     - "After choosing the price she asks to see how the launch menu looks."
   opening_message: "Oi Dona Sálvia! Quero começar meu cardápio com um arroz com frango bem simples, usando só o que já tenho na despensa."

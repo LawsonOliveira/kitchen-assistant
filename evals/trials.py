@@ -9,6 +9,7 @@ red-team guard rules) and orchestrator's memory files.
 import json
 import os
 import subprocess
+import time
 import urllib.error
 import urllib.request
 from contextlib import contextmanager
@@ -45,7 +46,14 @@ def now_iso() -> str:
 
 def reset() -> None:
     """make eval-reset; the caller must have set KITCHEN_ALLOW_EVAL_RESET=1 (it erases the running stack's state)."""
-    subprocess.run(["make", "-s", "eval-reset"], cwd=REPO, check=True, capture_output=True, text=True)
+    for attempt in (1, 2):  # a reset can lose a race with docker (a container being recreated); one retry saves the run
+        try:
+            subprocess.run(["make", "-s", "eval-reset"], cwd=REPO, check=True, capture_output=True, text=True)
+            return
+        except subprocess.CalledProcessError:
+            if attempt == 2:
+                raise
+            time.sleep(20)
 
 
 def _orchestrator_python(script: str, *args: str, stdin: str = "") -> str:
