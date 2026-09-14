@@ -142,3 +142,19 @@ def test_a_reply_without_text_ends_the_conversation_instead_of_crashing_the_run(
     assert simulated_owner.next_message(lambda system, messages: "   ", SCENARIO, transcript) is None
     assert simulated_owner.answer_clarify(lambda system, messages: None, SCENARIO, transcript,
                                           "Quantas porções?", []) == {"choice": ""}
+
+
+def test_the_persona_is_never_asked_to_continue_her_own_last_message():
+    # Full run 20260913-192309, scenario 02 trial 1: after a clarify the transcript ended with her own answer, so the
+    # request ended with an assistant turn (a prefill) and the model replied with no text — the trial stopped at 13 turns.
+    seen = {}
+
+    def llm(system, messages):
+        seen["messages"] = messages
+        return "Sálvia, tá aí?"
+
+    transcript = [{"speaker": "orchestrator", "text": "Quantos gramas tem uma batata?"},
+                  {"speaker": "owner", "text": "[escolheu] Não sei direito não."}]
+    assert simulated_owner.next_message(llm, SCENARIO, transcript) == "Sálvia, tá aí?"
+    assert seen["messages"][-1]["role"] == "user"
+    assert seen["messages"][-2] == {"role": "assistant", "content": "[escolheu] Não sei direito não."}
