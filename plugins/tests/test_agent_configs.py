@@ -96,3 +96,13 @@ def test_the_contract_shows_a_grouped_clarify_and_a_batch_that_fits_the_pantry()
     soul = " ".join((AGENTS / "orchestrator" / "SOUL.md").read_text().replace("*", "").split()).lower()
     assert "questions: [" in soul  # a worked example of one clarify carrying several questions
     assert "largest launch batch the pantry covers" in soul
+
+
+@pytest.mark.parametrize("agent", ["orchestrator", "recipe_expert", "cost_expert", "marketing_expert"])
+def test_the_costs_server_is_declared_parallel_safe(agent):
+    # Latency pass: Hermes runs a batch of tool calls concurrently only for its own allowlist and for MCP servers that
+    # declare supports_parallel_tool_calls (agent/tool_dispatch_helpers.py). costs-mcp reads are independent, so two
+    # reads in the same reply should not wait for each other.
+    config = (AGENTS / agent / "config.yaml").read_text()
+    costs = config[config.index("  costs:"):]
+    assert re.search(r"^\s*supports_parallel_tool_calls:\s*true", costs, flags=re.M), agent
