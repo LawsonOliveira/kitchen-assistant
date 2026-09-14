@@ -134,3 +134,31 @@ def test_confirm_measure_needs_her_click_and_accept_checks_viability_first():
         "measure": {"ingredient": "Cobertura", "measure": "unit"}}
     assert fast_path.answer(request("accept", {"dish_id": 3}, confirmation), tools)["result"] == {"dish": {"dish_id": 3, "status": "accepted"}}
     assert [tool for tool, _ in tools.calls][-2:] == ["mcp__costs__check_viability", "mcp__costs__accept_dish"]
+
+
+def test_the_fast_path_is_wired_for_both_experts():
+    import kitchen_a2a
+
+    class Ctx:
+        def __init__(self):
+            self.middleware = []
+
+        def register_tool(self, **kwargs):
+            pass
+
+        def register_hook(self, *args, **kwargs):
+            pass
+
+        def register_middleware(self, name, callback):
+            self.middleware.append((name, callback.__module__))
+
+        def register_system_prompt_section(self, *args, **kwargs):
+            pass
+
+    import os
+
+    for role in ("cost_expert", "recipe_expert"):
+        os.environ["KITCHEN_AGENT_ROLE"] = role
+        ctx = Ctx()
+        kitchen_a2a.register(ctx)
+        assert ("llm_execution", "kitchen_a2a.fast_path") in ctx.middleware, role
