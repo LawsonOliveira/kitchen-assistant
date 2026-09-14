@@ -84,7 +84,7 @@ def test_the_orchestrator_has_a_response_contract():
     # Normalised: the rules are written as markdown bullets, so bold marks and line breaks fall in the middle of phrases.
     section = " ".join(soul[soul.index("## How you answer"):].replace("*", "").split()).lower()
     assert "one clarify with several questions" in section  # group what she can answer at once
-    assert "at most eight lines" in section  # her phone is small and her time is short
+    assert "at most six lines" in section  # her phone is small and her time is short (owner tightened it from eight)
     assert "already answered" in section  # never ask twice for something the state already has
     assert "what is done and what is missing" in section  # close every step with the state of the journey
 
