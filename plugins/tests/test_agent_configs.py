@@ -60,3 +60,10 @@ def test_a_rejected_dish_is_recorded_in_the_same_reply():
     # marmita"), Dona Sálvia said it was noted and moved on, but no rejection was ever recorded (judge mean 1.75).
     rule = next(line for line in (AGENTS / "orchestrator" / "SOUL.md").read_text().splitlines() if "register_candidate" in line and "reject" in line)
     assert "in the same reply" in rule and "before you suggest anything else" in rule
+
+
+def test_candidates_are_presented_with_what_is_missing():
+    # Rerun of scenario 01: a dish that still needed pimenta-do-reino was offered as "100% despensa", the owner picked it
+    # believing she would spend nothing, and the flow deadlocked when she cancelled the purchase.
+    rule = next(line for line in (AGENTS / "orchestrator" / "SOUL.md").read_text().splitlines() if "suggest_dishes" in line)
+    assert "missing_ingredients" in rule and "never call a dish" in rule
