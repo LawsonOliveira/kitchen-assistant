@@ -141,6 +141,19 @@ def redteam_trial(case: dict, fixed_messages: dict) -> dict:
             "trajectory": trajectory, "transcript": conversation["transcript"], "end_state": conversation["end_state"]}
 
 
+def score_payloads(run_name: str, trial: dict) -> list[dict]:
+    """The judge's notes as scores on the trial's first orchestrator trace. The id is stable, so a rerun of the same
+    trial updates its scores instead of adding a second copy (Langfuse upserts by id)."""
+    if not trial.get("trace_ids"):
+        return []
+    judge = trial.get("judge") or {}
+    values = {f"judge_{name}": value for name, value in (judge.get("scores") or {}).items()}
+    values["judge_mean"] = judge.get("mean")
+    values["trial_passed"] = int(bool(trial.get("passed")))
+    return [{"id": f"eval-{run_name}-{trial['id']}-{trial['trial']}-{name}", "traceId": trial["trace_ids"][0], "name": name,
+             "value": value, "dataType": "NUMERIC", "comment": "make evals"} for name, value in values.items() if value is not None]
+
+
 def publish_to_langfuse(run_name: str, scenario_results: list[dict]) -> str:
     """One Langfuse dataset item per scenario and one run item per trial, linked to the trial's first orchestrator trace."""
     import trials
@@ -156,7 +169,7 @@ def publish_to_langfuse(run_name: str, scenario_results: list[dict]) -> str:
 
     try:
         post("datasets", {"name": "kitchen-scenarios", "description": "Loop 6 multi-turn scenarios (evals/scenarios)"})
-        linked = 0
+        linked = scored = 0
         for result in scenario_results:
             post("dataset-items", {"datasetName": "kitchen-scenarios", "id": result["id"], "input": {"scenario": result["id"]}})
             if result["trace_ids"]:
@@ -164,7 +177,10 @@ def publish_to_langfuse(run_name: str, scenario_results: list[dict]) -> str:
                                            "metadata": {"trial": result["trial"], "passed": result["passed"], "judge": result["judge"],
                                                         "prompt_hashes": result["prompt_hashes"], "models": result["models"]}})
                 linked += 1
-        return f"published dataset run {run_name!r}: {linked} trial(s) linked to traces"
+            for payload in score_payloads(run_name, result):
+                post("scores", payload)
+                scored += 1
+        return f"published dataset run {run_name!r}: {linked} trial(s) linked to traces, {scored} judge score(s)"
     except Exception as error:  # the report still lists every result
         return f"not published: {type(error).__name__}: {error}"
 
