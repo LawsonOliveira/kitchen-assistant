@@ -32,7 +32,7 @@ facts_to_reveal_only_if_asked:
 clarify_answers:
   - question_contains: ["preço"]
     choices_count: 3  # the three price scenarios, not a Confirmar/Cancelar price confirmation
-    choice_position: 1
+    choice_by_price: cheapest
   - default: "Confirmar"
 expected_state:
   - check: "the budget overrun was detected before buying"

@@ -8,6 +8,7 @@ no separate API key.
 
 import json
 import re
+from decimal import Decimal
 import subprocess
 from pathlib import Path
 
@@ -29,17 +30,32 @@ def clarify_answer(clarify_answers: list[dict], question: str, choices: list[str
             continue
         if "choices_count" in entry and (choices is None or len(choices) != entry["choices_count"]):
             continue
-        return {key: entry[key] for key in ("choice", "choice_position") if key in entry}
+        return {key: entry[key] for key in ("choice", "choice_position", "choice_contains", "choice_by_price") if key in entry}
     default = next((entry["default"] for entry in clarify_answers if "default" in entry), None)
     if default is None:
         raise ValueError(f"no clarify answer for {question!r} and no default")
     return {"choice": default}
 
 
+_PRICE = re.compile(r"R\$\s*(\d{1,3}(?:\.\d{3})*,\d{2})")
+
+
 def choice_index(answer: dict, choices: list[str]):
     """0-based index of the choice, or ("other", text) when the answer is not among the choices."""
     if "choice_position" in answer:
         return answer["choice_position"] - 1
+    if "choice_contains" in answer:
+        wanted = _normalized(answer["choice_contains"])
+        return next((index for index, choice in enumerate(choices) if wanted in _normalized(choice)), ("other", answer["choice_contains"]))
+    if "choice_by_price" in answer:
+        # The three price scenarios come in whatever order Dona Sálvia listed them, so rank them by their own amount.
+        priced = [(Decimal(match.group(1).replace(".", "").replace(",", ".")), index)
+                  for index, choice in enumerate(choices) if (match := _PRICE.search(choice))]
+        if len(priced) < 2:
+            return ("other", answer["choice_by_price"])
+        ranked = [index for _, index in sorted(priced)]
+        wanted = answer["choice_by_price"]
+        return ranked[0] if wanted == "cheapest" else ranked[-1] if wanted == "dearest" else ranked[len(ranked) // 2]
     wanted = _normalized(answer["choice"])
     return next((index for index, choice in enumerate(choices) if _normalized(choice) == wanted), ("other", answer["choice"]))
 

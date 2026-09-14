@@ -29,7 +29,7 @@ facts_to_reveal_only_if_asked:
 clarify_answers:
   - question_contains: ["preço"]
     choices_count: 3  # the three price scenarios, not a Confirmar/Cancelar price confirmation
-    choice_position: 2
+    choice_contains: "9,90"
   - default: "Confirmar"
 expected_state:
   - check: "the reference dish was accepted at R$ 9,90"
