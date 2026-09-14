@@ -2271,7 +2271,16 @@ evidence, what was changed, and where. Open questions that were "default applied
   reverted: Node heap caps for Langfuse web (512 MiB crashed at startup with "JavaScript heap out of memory"; 768 MiB
   started at 848 MiB RSS) and worker (384 MiB → 449 MiB RSS), and a 512 MiB `max_server_memory_usage` for ClickHouse
   (loaded, 608 MiB RSS) — none used less memory than before, so the compose file is unchanged. Next (owner proposal): move this
-  work from VS Code to the Claude Code CLI and close VS Code (≈ 0.6 GiB), then resume the run.
+  work from VS Code to the Claude Code CLI and close VS Code (≈ 0.6 GiB), then resume the run. Done: with VS Code and
+  Firefox closed the host had 3.2 GiB available and the run was resumed from the CLI session.
+- **C66 — Judge notes as Langfuse scores (owner request).** Looking at Langfuse's Evaluation menu, the owner asked which
+  of its screens this project can use. Datasets and Experiments already show the `kitchen-scenarios` runs, Human
+  Annotation and Scores are fed by `make review-conversations`, and Evaluators stays unavailable without a provider key
+  (open question 14). Missing piece: each trial's judge notes lived only in the dataset run metadata. Test first (red: 1
+  failed): `score_payloads` builds one score per rubric criterion plus `judge_mean` and `trial_passed` on the trial's
+  first orchestrator trace, with ids stable across reruns; `publish_to_langfuse` posts them and counts them in its
+  report line. The scores of the trials already finished in run `20260913-192309` were published by hand with the same
+  function.
 
 ## Post-loop changes (owner requests, 2026-09-13)
 Requested by the owner while Loops 6–8 were running, test-first, each recorded as a correction. **Order decided by the

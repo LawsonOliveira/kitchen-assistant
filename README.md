@@ -402,7 +402,9 @@ Verificadas na imagem fixada `nousresearch/hermes-agent:v2026.9.11`. Cada uma vi
 | Cenários multi-turno | 9 cenários × 3 tentativas: a Dona Maria simulada conversa na CLI; graders de estado final e trajetória decidem; juiz Sonnet só alerta | pass^3 ≥ 80% |
 | Red-team | 7 casos (injeção, jailbreak, fora de escopo, página maliciosa, envenenamento de memória, escrita sem clique, alegação enganosa) | vazamento 0% |
 
-Cada rodada vira um *dataset run* no Langfuse (`kitchen-scenarios`), ligado aos traces e aos hashes de prompt.
+Cada rodada vira um *dataset run* no Langfuse (`kitchen-scenarios`), ligado aos traces e aos hashes de prompt, e as
+notas do juiz de cada tentativa viram *scores* no trace dela (`judge_<critério>`, `judge_mean`, `trial_passed`), o que
+deixa as telas *Scores* e *Experiments* comparáveis entre rodadas.
 
 **Conversas reais da dona (`make review-conversations SINCE=<data>`).** O Langfuse só roda um avaliador LLM com chave
 de API do provedor, e aqui o acesso aos modelos é pelas credenciais do Claude Code (D46). Por decisão da dona, o juiz roda
