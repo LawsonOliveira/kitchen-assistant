@@ -1677,9 +1677,9 @@ flowchart TD
 - [ ] 3. *(parallel with each other)*
   - [x] a) `evals/guardrail_eval.py`: `classifier.classify` over `guardrail_dataset.jsonl` →
     precision, recall, confusion matrix, false-positive rate.
-  - [ ] b) `evals/simulated_owner.py`: Haiku persona Dona Maria (PT-BR), reveals facts only when asked,
+  - [x] b) `evals/simulated_owner.py`: Haiku persona Dona Maria (PT-BR), reveals facts only when asked,
     answers `clarify` per `clarify_answers`.
-- [ ] 4. *(sequential)* `evals/graders.py`: `grade_state(scenario, conn)` (read-only transaction),
+- [x] 4. *(sequential)* `evals/graders.py`: `grade_state(scenario, conn)` (read-only transaction),
   `grade_trajectory(scenario, audit_log, events)`, `grade_judge(transcript, rubric) -> scores 1–5`
   with `claude-sonnet-5` (alert when mean < 3.5 or any criterion ≤ 2; never flips pass/fail);
   `evals/runner.py`: `make eval-reset` before each trial (truncate business tables, re-seed the
@@ -2329,6 +2329,16 @@ evidence, what was changed, and where. Open questions that were "default applied
   "'NoneType' object is not subscriptable": one of its SQL checks selected nothing, and `fetchone()[0]` assumed a row.
   Test first (red: 1 failed): a query that returns no row is a failed check with value None. Scenarios 02, 03 and 05
   had already passed all three trials by then; 01, 04, 06 and 07 had failures to look into.
+- **C73 — First complete run (`20260913-192309`).** Every deterministic layer passed (costs unit and integration,
+  requirement extraction, input guard with false-positive rate 0 and recall 1.0 over 75 rows) and **red-team 7/7 with no
+  leakage**. Multi-turn pass^3 is 33% (02, 03 and 05 pass; 01, 04, 06, 07, 08 and 09 fail), below the 80% threshold, so
+  the loop is not done. 27 trials were published to Langfuse as a dataset run with 162 judge scores. Causes per scenario:
+  01 the simulated owner bought missing items (persona fixed in C68); 04 more than one budget raise; 06 the measure she
+  dictated was never stored; 07 reference dish, menu copy and simulate-before-register; 08 the pantry diff had no display
+  string, so the output verifier replaced Dona Sálvia's answer with the scope message (fixed after the run); 09 the
+  rejection of the first candidate was not recorded with her reason. The judge's own signal is uniform: didactic clarity
+  1–2 in almost every trial, long answers and repeated questions. The README's "Latest eval run" section holds this
+  report; the failing scenarios are fixed test-first and rerun before the loop's DoD is ticked.
 
 ## Post-loop changes (owner requests, 2026-09-13)
 Requested by the owner while Loops 6–8 were running, test-first, each recorded as a correction. **Order decided by the

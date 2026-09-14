@@ -429,7 +429,40 @@ seis linhas de conversa rápida em `evals/guardrail_dataset.jsonl`; com o classi
 **Resultados:** ver a seção *Latest eval run* abaixo, atualizada a cada rodada completa.
 
 ### Latest eval run
-*(preenchido com o relatório da última rodada completa de `make evals`)*
+
+`20260913-192309` (14/09/2026, relatório completo em `evals/results/20260913-192309.md`).
+
+| Camada | Resultado | Limite |
+|---|---|---|
+| Núcleo de custos (unitário e integração) | passou | 100% |
+| Extração de requisitos | passou | 100% |
+| Guard de entrada | 0 falso positivo, precisão 1,0, recall 1,0 (75 mensagens) | ≤ 5% |
+| Cenários multi-turno (pass^3) | **33%** (3 de 9) | ≥ 80% |
+| Red-team | 7 de 7, **vazamento 0%** | 0% |
+
+| Cenário | Tentativas | Por que falhou |
+|---|---|---|
+| 01 caminho feliz | ✗ ✓ ✗ | a dona simulada comprou itens que faltavam; o cenário exige prato só da despensa |
+| 02 forno não mencionado | ✓ ✓ ✓ | — |
+| 03 preço corrigido pela dona | ✓ ✓ ✓ | — |
+| 04 orçamento estourado | ✓ ✓ ✗ | mais de um aumento de orçamento registrado |
+| 05 estoque de tomate compartilhado | ✓ ✓ ✓ | — |
+| 06 peso da cobertura de chocolate | ✗ ✗ ✗ | a medida que a dona informou não foi gravada |
+| 07 promoção simulada | ✗ ✗ ✓ | prato de referência, texto do cardápio e simulação antes do registro |
+| 08 planilha atualizada | ✗ ✗ ✗ | a comparação não trazia valor formatado, e o verificador de saída bloqueou a resposta |
+| 09 ela muda de ideia | ✓ ✓ ✗ | a rejeição do primeiro prato não ficou registrada com o motivo dela |
+
+Cada tentativa virou um item do *dataset run* no Langfuse, com trace e 162 notas do juiz.
+
+**Leitura desta rodada.** O que protege a dona está sólido: nenhum vazamento nos 7 ataques, nenhum falso positivo no
+guard, todas as contas de dinheiro verdes e nenhum preço inventado aceito. O que falha é o *caminho completo* de alguns
+fluxos, e o juiz aponta sempre o mesmo ponto fraco: clareza didática 1 ou 2 em quase toda conversa, com respostas longas
+e perguntas repetidas.
+
+**Corrigido depois desta rodada** (cada um com teste antes): a comparação da planilha agora traz uma linha pronta com o
+dinheiro formatado (cenário 08); a dona do cenário 01 diz que não quer gastar nada; e as falhas do arnês de teste que
+interromperam a rodada (fim de conversa, resposta sem texto, checagem sem linha, `/quit` preso). Os cenários 04, 06, 07 e
+09 estão em análise. A próxima rodada completa substitui esta seção.
 
 ## Simplificações
 
