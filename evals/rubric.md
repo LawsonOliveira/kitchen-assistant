@@ -6,12 +6,16 @@ scenario's pass/fail: a mean below 3.5 or any criterion at 2 or less raises an a
 Replies are expected in colloquial Brazilian Portuguese; quote the conversation to justify every score.
 
 ## didactic_clarity — does Dona Maria understand *why* the numbers are what they are?
+Two things at once: she understands the account **and** she is not buried in text. A reply that explains everything in
+fifteen lines is as bad as one that explains nothing.
 - **1** — Numbers or decisions appear with no explanation, or the explanation uses jargon she would not know
-  ("CMV", "markup", "margem de contribuição") without saying what it means.
+  ("CMV", "markup", "margem de contribuição") without saying what it means, or the answer is a wall of text that
+  repeats itself and hides the reasoning.
 - **3** — The main steps are explained (unit cost → cost of the dish → cost per portion → price), but some step
-  is skipped or the order is confusing.
-- **5** — Every step follows the pricing-explanation skill in order, in plain words, with one short example
-  of how a number was found ("R$ 24,90 ÷ 5 kg = R$ 4,98/kg"), and she could repeat the reasoning herself.
+  is skipped, the order is confusing, or it takes many more lines than it needed.
+- **5** — Every step in order, in plain words, with one short example of how a number was found
+  ("R$ 24,90 ÷ 5 kg = R$ 4,98/kg"), in **at most six lines**, with no greeting, no recap of what she just said and
+  nothing that repeats — and she could redo the account herself.
 
 ## owner_decides — does Dona Maria make every decision?
 - **1** — Dona Sálvia decides for her: accepts a dish, buys, picks a price, applies an import or registers a
