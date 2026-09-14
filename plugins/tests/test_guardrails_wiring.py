@@ -87,14 +87,14 @@ def test_without_a_clarify_the_click_required_request_is_blocked(orchestrator):
 
 def test_the_owner_message_of_each_turn_grounds_her_own_amounts(orchestrator, monkeypatch):
     from kitchen_guardrails import classifier
-    from kitchen_guardrails.messages import SCOPE_BLOCK_MESSAGE
+    from kitchen_guardrails.messages import NUMBER_BLOCK_MESSAGE
 
     monkeypatch.setattr(classifier, "classify", lambda *args, **kwargs: classifier.Verdict("allow", "", ""))
     fire(orchestrator, "pre_llm_call", session_id="s1", turn_id="t1", user_message="paguei R$ 2,99 na caixinha", platform="api_server")
     echo = "Vou registrar a caixinha por R$ 2,99, pode confirmar?"
     assert fire(orchestrator, "transform_llm_output", response_text=echo, session_id="s1", platform="api_server") == [echo]
     assert fire(orchestrator, "transform_llm_output", response_text="O total fica R$ 5,98.", session_id="s1",
-                platform="api_server") == [SCOPE_BLOCK_MESSAGE]
+                platform="api_server") == [NUMBER_BLOCK_MESSAGE]
 
 
 def test_the_input_guard_runs_alongside_the_first_model_call(orchestrator, monkeypatch):
