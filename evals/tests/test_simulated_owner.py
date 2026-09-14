@@ -158,3 +158,14 @@ def test_the_persona_is_never_asked_to_continue_her_own_last_message():
     assert simulated_owner.next_message(llm, SCENARIO, transcript) == "Sálvia, tá aí?"
     assert seen["messages"][-1]["role"] == "user"
     assert seen["messages"][-2] == {"role": "assistant", "content": "[escolheu] Não sei direito não."}
+
+
+def test_a_price_choice_is_answered_by_value_not_by_position():
+    # Full run 20260913-192309, scenario 07 trials 1 and 2: the three prices came listed from the dearest down, so
+    # "choice_position: 2" picked R$ 7,90 while the scenario (and her own opening message) asked for R$ 9,90.
+    prices = ["R$ 9,90 (30% CMV, lucro R$ 6,19/porção)", "R$ 7,90 (35% CMV)", "R$ 12,90 (25% CMV)"]
+    answers = [{"question_contains": ["preço"], "choices_count": 3, "choice_contains": "9,90"}, {"default": "Confirmar"}]
+    assert simulated_owner.clarify_answer(answers, "Qual preço?", prices) == {"choice_contains": "9,90"}
+    assert simulated_owner.choice_index({"choice_contains": "9,90"}, prices) == 0
+    for wanted, index in (("cheapest", 1), ("middle", 0), ("dearest", 2)):
+        assert simulated_owner.choice_index({"choice_by_price": wanted}, prices) == index, wanted
