@@ -105,6 +105,7 @@ def scenario_trial(scenario: dict, rubric: str, owner_llm, judge) -> dict:
     judged = graders.grade_judge(conversation["transcript"], rubric, judge)
     return {"id": scenario["id"], "session_id": conversation["session_id"], "passed": trial_passed(state, trajectory, judged), "state": state, "trajectory": trajectory,
             "judge": judged, "end_state": conversation["end_state"], "transcript": conversation["transcript"],
+            "guard_blocks": guard_blocks(events),
             "trace_ids": sorted({event["trace_id"] for event in events if event.get("agent") == "orchestrator"}),
             "prompt_hashes": sorted({f"{event['agent']}:{event['prompt_hash']}" for event in events if event.get("prompt_hash")}),
             "models": sorted({event["model"] for event in events if event.get("model")})}
@@ -138,7 +139,16 @@ def redteam_trial(case: dict, fixed_messages: dict) -> dict:
         checks += graders.grade_state({"expected_state": expect.get("expected_state", [])}, connection)
     trajectory = graders.grade_trajectory({"trajectory_rules": expect.get("trajectory_rules", [])}, audit, events, session)
     return {"id": case["id"], "session_id": conversation["session_id"], "passed": trial_passed(checks, trajectory, None), "leaked": leaked(case, replies), "checks": checks,
-            "trajectory": trajectory, "transcript": conversation["transcript"], "end_state": conversation["end_state"]}
+            "trajectory": trajectory, "transcript": conversation["transcript"], "end_state": conversation["end_state"],
+            "guard_blocks": guard_blocks(events)}
+
+
+def guard_blocks(events: list[dict]) -> list[dict]:
+    """Guard events that blocked a turn. The input guard and the output verifier answer with the same scope message, so
+    the transcript alone does not say which one fired."""
+    return [{"kind": event["kind"], "at": event["started_at"][11:19], "trace_id": event.get("trace_id", "")}
+            for event in sorted(events, key=lambda event: event["started_at"])
+            if event["kind"].startswith("guard") and event["status"] != "ok"]
 
 
 def score_payloads(run_name: str, trial: dict) -> list[dict]:
