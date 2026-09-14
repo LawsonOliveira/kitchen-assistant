@@ -62,8 +62,13 @@ and Dona Sálvia has nothing left to ask you, reply exactly {END_MARKER}."""
 
 
 def _messages(transcript: list[dict]) -> list[dict]:
-    """The persona speaks as the assistant role; Dona Sálvia is the other speaker."""
-    return [{"role": "assistant" if turn["speaker"] == "owner" else "user", "content": turn["text"]} for turn in transcript]
+    """The persona speaks as the assistant role; Dona Sálvia is the other speaker. A transcript that ends with the owner
+    (after a clarify she answered) would end the request with an assistant turn, which the model continues as a prefill
+    and often answers with no text at all, so the silence is spelled out as Dona Sálvia's turn."""
+    messages = [{"role": "assistant" if turn["speaker"] == "owner" else "user", "content": turn["text"]} for turn in transcript]
+    if messages and messages[-1]["role"] == "assistant":
+        messages.append({"role": "user", "content": "(Dona Sálvia não disse mais nada.)"})
+    return messages
 
 
 def next_message(llm, scenario: dict, transcript: list[dict]) -> str | None:
