@@ -97,3 +97,40 @@ def test_the_middleware_answers_on_the_first_model_call_only(monkeypatch):
     assert fast_path.llm_execution(api_call_count=1, **kwargs) == {"synthetic": {"result": {"fits": True}, "questions_for_owner": [], "cost_usd_spent": 0}}
     assert model_calls == []
     assert fast_path.llm_execution(api_call_count=2, **kwargs) == "model"
+
+
+# --- recipe_expert (PLAN.md C77): the same idea, with the reply shape each task's contract asks for ----------------
+
+@pytest.mark.parametrize("task, payload, statement, tool, args, result, reply", [
+    ("record_kitchen_fact", {"key": "oven", "status": "available", "numeric_value": None}, "Tenho forno a gás",
+     "mcp__costs__update_kitchen_profile", {"key": "oven", "numeric_value": None, "status": "available", "evidence": "Tenho forno a gás"},
+     {"key": "oven", "status": "available"}, {"kitchen_fact": {"key": "oven", "status": "available"}}),
+    ("reject_candidate", {"dish_id": 3, "reason": "fica molhado"}, "fica molhado pra marmita",
+     "mcp__costs__reject_candidate_dish", {"dish_id": 3, "reason": "fica molhado", "evidence": "fica molhado pra marmita"},
+     {"dish_id": 3, "status": "rejected"}, {"dish": {"dish_id": 3, "status": "rejected"}}),
+    ("set_launch_batch", {"dish_id": 3, "launch_batch_portions": 10}, "quero 10 porções",
+     "mcp__costs__set_launch_batch_portions", {"dish_id": 3, "launch_batch_portions": 10, "evidence": "quero 10 porções"},
+     {"dish_id": 3, "status": "candidate", "launch_batch_portions": 10},
+     {"dish": {"dish_id": 3, "status": "candidate", "launch_batch_portions": 10}}),
+    ("confirm_requirement", {"dish_id": 3, "requirement": "oven", "status": "available"}, "tenho forno",
+     "mcp__costs__confirm_dish_requirement", {"dish_id": 3, "requirement": "oven", "status": "available", "evidence": "tenho forno"},
+     {"dish_id": 3, "requirement": "oven", "status": "available"},
+     {"requirement": {"dish_id": 3, "requirement": "oven", "status": "available"}}),
+])
+def test_recipe_expert_single_tool_tasks_skip_the_model(task, payload, statement, tool, args, result, reply):
+    # Latency pass: ask_recipe_expert was p90 194 s with 3.7 model calls per request, while these are one MCP call.
+    tools = FakeTools({tool: result})
+    assert fast_path.answer(request(task, payload, None, statement), tools) == {
+        "result": reply, "questions_for_owner": [], "cost_usd_spent": 0}
+    assert tools.calls == [(tool, args)]
+
+
+def test_confirm_measure_needs_her_click_and_accept_checks_viability_first():
+    tools = FakeTools({"mcp__costs__confirm_measure": {"ingredient": "Cobertura", "measure": "unit"},
+                       "mcp__costs__check_viability": {"viable": True}, "mcp__costs__accept_dish": {"dish_id": 3, "status": "accepted"}})
+    assert fast_path.answer(request("confirm_measure", {"ingredient_name": "Cobertura", "measure": "unit"}), tools) is None
+    confirmation = {"choice": "Confirmar", "summary": "1 barra = 1 kg"}
+    assert fast_path.answer(request("confirm_measure", {"ingredient_name": "Cobertura", "measure": "unit"}, confirmation), tools)["result"] == {
+        "measure": {"ingredient": "Cobertura", "measure": "unit"}}
+    assert fast_path.answer(request("accept", {"dish_id": 3}, confirmation), tools)["result"] == {"dish": {"dish_id": 3, "status": "accepted"}}
+    assert [tool for tool, _ in tools.calls][-2:] == ["mcp__costs__check_viability", "mcp__costs__accept_dish"]
