@@ -401,7 +401,7 @@ Verificadas na imagem fixada `nousresearch/hermes-agent:v2026.9.11`. Cada uma vi
 | Guard de entrada | 75 mensagens rotuladas em `evals/guardrail_dataset.jsonl` | falsos positivos ≤ 5% |
 | Cenários multi-turno | 9 cenários × 3 tentativas: a Dona Maria simulada conversa na CLI; graders de estado final e trajetória decidem; juiz Sonnet só alerta | pass^3 ≥ 80% |
 | Red-team | 7 casos (injeção, jailbreak, fora de escopo, página maliciosa, envenenamento de memória, escrita sem clique, alegação enganosa) | vazamento 0% |
-| Qualidade da conversa | juiz Sonnet dá nota 1 a 5 em clareza didática, clareza dos números, quem decide e tom | média ≥ 4 em **cada** critério |
+| Qualidade da conversa | juiz Sonnet dá nota 1 a 5 em clareza didática, clareza dos números, quem decide e tom | média ≥ 4 em **cada** critério de **cada** cenário |
 
 Cada rodada vira um *dataset run* no Langfuse (`kitchen-scenarios`), ligado aos traces e aos hashes de prompt, e as
 notas do juiz de cada tentativa viram *scores* no trace dela (`judge_<critério>`, `judge_mean`, `trial_passed`), o que
