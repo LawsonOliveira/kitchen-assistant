@@ -8,6 +8,10 @@ description: Explain a dish's CMV and the three delivery price scenarios step by
 Use this after the cost expert's `match_and_cost` for an accepted or viable dish. Every number you show is a display
 string from that result, copied exactly; never compute, round or convert anything yourself.
 
+**Default answer (what she sees first):** the dish's cost per portion, the three prices with the profit of each, and the
+question of which one she wants — at most eight lines, in a short table. The steps below are the detail you show only
+when she asks "como você chegou nesse número?".
+
 1. **Per ingredient, how the unit cost was found:**
    `<total_price_paid_display> ÷ <quantity_purchased_display> = <unit_cost_display>`
    — for example "Arroz: R$ 24,90 ÷ 5 kg = R$ 4,98/kg".
