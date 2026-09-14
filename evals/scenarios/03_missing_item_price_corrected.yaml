@@ -44,7 +44,8 @@ trajectory_rules:
     require_then: true
   - id: "cmv_uses_her_price"
     type: precedes
-    first: {tool: correct_price}
+    # Her price may be registered as a correction or as a quote confirmed by her; both come from her own words.
+    first: [{tool: correct_price}, {tool: record_price_quote, args: {source: "owner_confirmed"}}]
     then: [{tool: compute_dish_cost, result_text_contains: "R$ 3,49"}]
     require_then: true
 rubric_focus: [clarity_of_numbers, owner_decides]

@@ -84,7 +84,8 @@ def _is_clarify(message: dict) -> bool:
 
 
 def _precedes(rule, audit_log, events, session) -> bool:
-    firsts = [row for row in audit_log if _matches(row, rule["first"])]
+    first_matchers = rule["first"] if isinstance(rule["first"], list) else [rule["first"]]
+    firsts = [row for row in audit_log if any(_matches(row, matcher) for matcher in first_matchers)]
     thens = [row for row in audit_log if any(_matches(row, matcher) for matcher in rule["then"])]
     if rule.get("require_then") and not thens:
         return False
