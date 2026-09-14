@@ -2320,6 +2320,11 @@ evidence, what was changed, and where. Open questions that were "default applied
   'strip'", losing the trial and stopping every trial after it. Test first (red: 1 failed): a reply that is None or only
   spaces ends the conversation, and a clarify answered that way is an empty answer. The container call also sends `""`
   instead of `None`. Resumed at 00:04.
+- **C71 — Why the persona's reply had no text.** Scenario 02 trial 1 then ended at 13 turns with `end_state: idle`: after
+  a clarify she answered, the transcript ended with her own message, so the request to her model ended with an assistant
+  turn. The provider treats that as a prefill to continue, and the model answered with nothing — which C70 turns into the
+  end of the conversation. Test first (red: 1 failed): the request always ends with Dona Sálvia's turn; when she spoke
+  last, her silence is spelled out as "(Dona Sálvia não disse mais nada.)". The trial was deleted and rerun.
 
 ## Post-loop changes (owner requests, 2026-09-13)
 Requested by the owner while Loops 6–8 were running, test-first, each recorded as a correction. **Order decided by the
