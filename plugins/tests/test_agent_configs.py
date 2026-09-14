@@ -34,3 +34,14 @@ def test_every_file_a_skill_points_to_can_be_opened_from_the_skill(skill):
     # placeholder items "__unused__" and "dummy" — and registering the owner's own recipe took 17 minutes.
     referenced = re.findall(r"`([\w./-]+\.(?:json|md|yaml|py))`", skill.read_text())
     assert [path for path in referenced if not (skill.parent / path).exists()] == []
+
+
+def test_a_measure_is_asked_of_the_owner_before_it_is_researched():
+    # Full run 20260913-192309, scenario 06 (all three trials): Dona Sálvia asked her to confirm a web estimate of 105 g
+    # or 150 g for the chocolate bar she buys, priced the dish from it, and her own answer (1 kg) came later or never.
+    orchestrator = (AGENTS / "orchestrator" / "SOUL.md").read_text()
+    rule = next(line for line in orchestrator.splitlines() if "set_conversion_factor" in line)
+    assert "ask her first" in rule and "only when she does not know" in rule
+    recipe_expert = (AGENTS / "recipe_expert" / "SOUL.md").read_text()
+    measures = next(line for line in recipe_expert.splitlines() if "measure_lookup" in line)
+    assert "only when Dona Sálvia says she does not know" in measures
