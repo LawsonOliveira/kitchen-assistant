@@ -8,9 +8,18 @@ description: Explain a dish's CMV and the three delivery price scenarios step by
 Use this after the cost expert's `match_and_cost` for an accepted or viable dish. Every number you show is a display
 string from that result, copied exactly; never compute, round or convert anything yourself.
 
-**Default answer (what she sees first):** the dish's cost per portion, the three prices with the profit of each, and the
-question of which one she wants — at most eight lines, in a short table. The steps below are the detail you show only
-when she asks "como você chegou nesse número?".
+**Default answer: the whole chain in four lines**, so she can repeat the reasoning herself — never only the final price.
+One worked example of a unit cost, the dish's cost, the cost per portion with the iFood fee, and the three prices:
+
+```
+Arroz: R$ 24,90 ÷ 5 kg = R$ 4,98 o quilo; a receita usa 400 g = R$ 1,99
+Custo do prato: R$ 12,40 · rende 8 porções = R$ 1,55 por porção
+O iFood fica com 10%, então abaixo de R$ 1,72 a senhora perde dinheiro
+Preços: R$ 4,90 · R$ 5,90 · R$ 6,90 — qual a senhora quer?
+```
+
+Plain words only: never "CMV", "markup" or "margem de contribuição" — say "quanto do preço é ingrediente". The steps
+below are the detail you show when she asks "como você chegou nesse número?".
 
 1. **Per ingredient, how the unit cost was found:**
    `<total_price_paid_display> ÷ <quantity_purchased_display> = <unit_cost_display>`
