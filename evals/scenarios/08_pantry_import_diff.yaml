@@ -22,7 +22,11 @@ expected_state:
   - check: "exactly one import applied"
     sql: "SELECT count(*) = 1 FROM pantry_imports WHERE status = 'applied'"
   - check: "the diff shows only the Tomate price"
-    sql: "SELECT diff = '{\"added\": [], \"removed\": [], \"changed\": [{\"name\": \"Tomate\", \"fields\": {\"total_price_paid\": [\"16.00\", \"20.00\"]}}]}'::jsonb FROM pantry_imports WHERE status = 'applied'"
+    # The diff also carries a display line for grounding (correction C73), so the check reads the parts that matter.
+    sql: "SELECT diff->'added' = '[]'::jsonb AND diff->'removed' = '[]'::jsonb AND jsonb_array_length(diff->'changed') = 1
+          AND diff->'changed'->0->>'name' = 'Tomate'
+          AND diff->'changed'->0->'fields' = '{\"total_price_paid\": [\"16.00\", \"20.00\"]}'::jsonb
+          FROM pantry_imports WHERE status = 'applied'"
   - check: "Tomate's current price is the spreadsheet's new price"
     sql: "SELECT count(*) = 1 FROM current_ingredient_prices p JOIN ingredients i ON i.id = p.ingredient_id WHERE i.name = 'Tomate' AND p.total_price_paid = 20.00 AND p.quantity_purchased_base = 2000 AND p.source = 'spreadsheet'"
 trajectory_rules:
