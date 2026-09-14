@@ -2308,6 +2308,13 @@ evidence, what was changed, and where. Open questions that were "default applied
   version of that test also matched scenario 02's "every food purchase belongs to a dish", whose owner is meant to buy,
   and was narrowed in its own commit. Scenario 01's owner now says she does not want to spend anything in this launch.
   Its three trials rerun after the rest of the run.
+- **C69 — The run sat still for 75 minutes in `waitpid`.** Scenario 02 trial 1 opened a clarify the simulated owner never
+  answered (Dona Sálvia gave up on it and said so), and the CLI stayed with that box on screen. `CliSession.close()` sent
+  "/quit", which went into the box instead of closing the CLI, then blocked forever in `os.waitpid`: 22:13 to 23:37 with
+  nothing running (the process was in `do_wait`, no child but the `docker compose exec`). Test first (red: 1 failed):
+  `reap(pid, timeout_seconds)` returns "exited" or, after the deadline, kills the process and returns "killed". `close()`
+  now reaps with a 20 s deadline and, when it has to kill the host-side client, also runs `pkill -f 'hermes --cli'` inside
+  the orchestrator, because killing the client leaves the CLI running in the container.
 
 ## Post-loop changes (owner requests, 2026-09-13)
 Requested by the owner while Loops 6–8 were running, test-first, each recorded as a correction. **Order decided by the
