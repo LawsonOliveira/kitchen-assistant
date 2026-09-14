@@ -81,7 +81,8 @@ def test_the_orchestrator_has_a_response_contract():
     # burners, batch time, onion weight, tomato weight, two prices, then a confirmation for each — in 41 replies of about
     # 500 characters each. The owner's bar is 4 in every criterion of every scenario.
     soul = (AGENTS / "orchestrator" / "SOUL.md").read_text()
-    section = soul[soul.index("## How you answer"):]
+    # Normalised: the rules are written as markdown bullets, so bold marks and line breaks fall in the middle of phrases.
+    section = " ".join(soul[soul.index("## How you answer"):].replace("*", "").split()).lower()
     assert "one clarify with several questions" in section  # group what she can answer at once
     assert "at most eight lines" in section  # her phone is small and her time is short
     assert "already answered" in section  # never ask twice for something the state already has
