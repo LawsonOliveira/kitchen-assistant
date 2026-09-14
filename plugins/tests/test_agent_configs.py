@@ -74,3 +74,15 @@ def test_owner_statement_must_be_her_exact_words():
     # paraphrase as evidence, and "the_weight_came_from_the_owner" failed even though the number was hers.
     soul = (AGENTS / "orchestrator" / "SOUL.md").read_text()
     assert "exact sentence or the exact label of the button she clicked" in soul and "never your summary" in soul
+
+
+def test_the_orchestrator_has_a_response_contract():
+    # Full run 20260913-192309: didactic clarity averaged 2.5 and one scenario 01 trial asked 21 separate clarifies —
+    # burners, batch time, onion weight, tomato weight, two prices, then a confirmation for each — in 41 replies of about
+    # 500 characters each. The owner's bar is 4 in every criterion of every scenario.
+    soul = (AGENTS / "orchestrator" / "SOUL.md").read_text()
+    section = soul[soul.index("## How you answer"):]
+    assert "one clarify with several questions" in section  # group what she can answer at once
+    assert "at most eight lines" in section  # her phone is small and her time is short
+    assert "already answered" in section  # never ask twice for something the state already has
+    assert "what is done and what is missing" in section  # close every step with the state of the journey
