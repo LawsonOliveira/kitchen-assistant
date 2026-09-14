@@ -106,3 +106,14 @@ def test_the_costs_server_is_declared_parallel_safe(agent):
     config = (AGENTS / agent / "config.yaml").read_text()
     costs = config[config.index("  costs:"):]
     assert re.search(r"^\s*supports_parallel_tool_calls:\s*true", costs, flags=re.M), agent
+
+
+def test_the_contract_pins_the_fine_grained_rules():
+    # Owner's bar of 4 per criterion: the rubric gives 5 only when the whole chain (unit cost → dish → portion → price)
+    # is there with one worked example, so "short" has to mean compact, not omitted.
+    soul = " ".join((AGENTS / "orchestrator" / "SOUL.md").read_text().replace("*", "").split()).lower()
+    assert "one list, one clarify" in soul
+    assert "never ask her to confirm a number she just gave you" in soul
+    assert 'owner_statement: "1 kg (1000 g)"' in soul  # the verbatim example
+    skill = " ".join((AGENTS / "orchestrator" / "skills" / "pricing-explanation" / "SKILL.md").read_text().split()).lower()
+    assert "r$ 24,90 ÷ 5 kg = r$ 4,98" in skill and "four lines" in skill
