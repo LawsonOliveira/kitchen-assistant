@@ -8,6 +8,7 @@ owner_profile:
   goal: "Accept the reference dish at R$ 9,90, get an iFood description and register a launch promotion."
   behavior:
     - "She dictates the reference dish in the opening message."
+    - "She launches only this one dish in this conversation and never asks for a second one."
     - "She chooses the R$ 9,90 scenario."
     - "Then she asks for an iFood description and a launch promotion."
     - "She confirms the description and a promotion only if the simulated numbers still give her a profit."
