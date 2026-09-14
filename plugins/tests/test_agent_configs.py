@@ -45,3 +45,11 @@ def test_a_measure_is_asked_of_the_owner_before_it_is_researched():
     recipe_expert = (AGENTS / "recipe_expert" / "SOUL.md").read_text()
     measures = next(line for line in recipe_expert.splitlines() if "measure_lookup" in line)
     assert "only when Dona Sálvia says she does not know" in measures
+
+
+def test_the_price_of_a_missing_item_is_asked_of_the_owner_before_it_is_researched():
+    # Full run 20260913-192309, scenario 04 trial 3: the shrimp was bought at the web estimate (R$ 18,99 per 200 g), the
+    # shortfall became R$ 123,88 and the budget raise broke the R$ 100,00 cap — her own price (R$ 60,00 the kilo) was
+    # never asked for.
+    rule = next(line for line in (AGENTS / "orchestrator" / "SOUL.md").read_text().splitlines() if "price_missing_item" in line)
+    assert "ask her first" in rule and "only when she does not know" in rule
