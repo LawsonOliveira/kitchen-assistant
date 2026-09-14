@@ -33,7 +33,8 @@ owner_profile:
     Short, direct answers in colloquial Brazilian Portuguese. She makes the decisions.
   goal: "Launch a simple chicken-and-rice dish made only with what she already has in the pantry."
   behavior:
-    - "If a suggested dish needs an ingredient she does not have, she asks for another option that uses only the pantry."
+    - "She does not want to spend anything in this launch: if a dish needs an ingredient she does not have, even a
+       cheap one, she says so and asks for another option that uses only the pantry."
     - "She accepts the first dish that uses only pantry ingredients and that she can cook."
     - "When shown the price scenarios she picks the middle one."
     - "After choosing the price she asks to see how the launch menu looks."
