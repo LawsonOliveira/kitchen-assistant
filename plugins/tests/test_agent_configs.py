@@ -84,7 +84,7 @@ def test_the_orchestrator_has_a_response_contract():
     # Normalised: the rules are written as markdown bullets, so bold marks and line breaks fall in the middle of phrases.
     section = " ".join(soul[soul.index("## How you answer"):].replace("*", "").split()).lower()
     assert "one clarify with several questions" in section  # group what she can answer at once
-    assert "at most six lines" in section  # her phone is small and her time is short (owner tightened it from eight)
+    assert "as few lines as the answer needs" in section  # lean, with no fixed number (owner, 2026-09-14)
     assert "already answered" in section  # never ask twice for something the state already has
     assert "what is done and what is missing" in section  # close every step with the state of the journey
 
@@ -139,6 +139,6 @@ def test_the_contract_caps_the_reply_and_bans_filler():
     # Owner, 2026-09-14: "o agente também deve dar respostas concisas, nada de falar demais". The arithmetic rule must
     # not turn into paragraphs: one line per number, six lines per reply, no greeting or recap in every message.
     soul = " ".join((AGENTS / "orchestrator" / "SOUL.md").read_text().replace("*", "").split()).lower()
-    assert "at most six lines" in soul
+    assert "as few lines as the answer needs" in soul
     assert "one line per number, never a paragraph" in soul
     assert "do not greet her again, do not repeat her words back" in soul

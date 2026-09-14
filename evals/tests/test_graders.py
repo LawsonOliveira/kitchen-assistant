@@ -287,4 +287,4 @@ def test_the_didactic_criterion_balances_the_chain_against_length():
 
     rubric = (Path(__file__).resolve().parents[1] / "rubric.md").read_text().lower()
     criterion = rubric[rubric.index("## didactic_clarity"):rubric.index("## owner_decides")]
-    assert "six lines" in criterion and "repeats" in criterion
+    assert "lean" in criterion and "repeats" in criterion
