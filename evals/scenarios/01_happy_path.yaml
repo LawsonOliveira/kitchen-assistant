@@ -55,6 +55,8 @@ facts_to_reveal_only_if_asked:
   - topic: "launch batch size"
     answer: "No lançamento quero fazer 10 porções."
 clarify_answers:
+  - question_contains: ["compra"]  # she is not spending anything in this launch
+    choice: "Cancelar"
   - question_contains: ["preço"]
     choices_count: 3  # the three price scenarios, not a Confirmar/Cancelar price confirmation
     choice_by_price: middle
