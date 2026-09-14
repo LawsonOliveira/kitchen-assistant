@@ -116,7 +116,7 @@ def test_the_contract_pins_the_fine_grained_rules():
     assert "never ask her to confirm a number she just gave you" in soul
     assert 'owner_statement: "1 kg (1000 g)"' in soul  # the verbatim example
     skill = " ".join((AGENTS / "orchestrator" / "skills" / "pricing-explanation" / "SKILL.md").read_text().split()).lower()
-    assert "r$ 24,90 ÷ 5 kg = r$ 4,98" in skill and "four lines" in skill
+    assert "r$ 24,90 ÷ 5 kg = r$ 4,98" in skill and "the whole chain, lean" in skill
 
 
 def test_every_number_she_sees_comes_with_its_arithmetic():
