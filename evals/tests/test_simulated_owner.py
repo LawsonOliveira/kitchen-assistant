@@ -132,6 +132,10 @@ def test_a_scenario_that_expects_no_purchase_tells_the_persona_she_will_not_buy(
         behavior = [line.lower() for line in scenario["owner_profile"].get("behavior", [])]
         assert any(("buy" in line or "spend" in line) and any(word in line for word in ("never", "refuse", "does not", "no "))
                    for line in behavior), path.name
+        # Her words are not enough: the clarify default answered Confirmar to "Posso registrar a compra ...?" and the
+        # purchase went through anyway (full run 20260913-192309, scenario 01 trial 1 of the rerun).
+        purchase = "Posso registrar a compra de 1 pacote de pimenta-do-reino (50g) por R$ 11,81?"
+        assert simulated_owner.clarify_answer(scenario["clarify_answers"], purchase, ["Confirmar", "Cancelar"]) == {"choice": "Cancelar"}, path.name
 
 
 def test_a_reply_without_text_ends_the_conversation_instead_of_crashing_the_run():
