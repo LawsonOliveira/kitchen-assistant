@@ -2281,6 +2281,23 @@ evidence, what was changed, and where. Open questions that were "default applied
   first orchestrator trace, with ids stable across reruns; `publish_to_langfuse` posts them and counts them in its
   report line. The scores of the trials already finished in run `20260913-192309` were published by hand with the same
   function.
+- **C67 — Scenario 01 trial 2: the checks passed, the conversation did not.** The deterministic checks all passed, but
+  the judge alerted (mean 3.0, didactic clarity 1, clarity of numbers 2) and the transcript showed why. Three defects,
+  tests first (red: 3 failed):
+  (1) recipe_expert called `research` with the placeholder items "__unused__", "dummy" and "placeholder"; the researcher
+  answered in prose, the contract retry answered in prose again, and each round trip cost a model call on both sides.
+  The `research` tool now refuses an item shorter than three characters or on a placeholder list, before the request
+  leaves the agent.
+  (2) A `measure_lookup` answered "1 peito de frango (pacote) = 90 g" — a nutrition label serving — the simulated owner
+  confirmed it, and the dish ended priced at R$ 1,90 for ten portions. The child's goal now says the net content of the
+  package, never a serving size, and the usual weight of one piece for items sold loose.
+  (3) After `no_measure_estimate`, Dona Sálvia asked for the same confirmation four times. The error now says to ask the
+  owner for the amount and send it to `set_conversion_factor`.
+  Still open, to watch in the next trials: two of her messages, including the opening one, were answered with the scope
+  message ("Só consigo te ajudar com cozinha e cardápio 🙂"); the guard events for that window had already left the
+  cockpit buffer, and both the input guard and the output verifier use that same message, so which one fired is unknown.
+  The scenario trials were restarted from scratch on the fixed code (the guard and requirement layers kept, the two costs
+  layers rerun).
 
 ## Post-loop changes (owner requests, 2026-09-13)
 Requested by the owner while Loops 6–8 were running, test-first, each recorded as a correction. **Order decided by the

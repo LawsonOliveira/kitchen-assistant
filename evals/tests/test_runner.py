@@ -123,3 +123,14 @@ def test_a_trial_publishes_its_judge_scores_on_its_own_trace_with_stable_ids():
             "dataType": "NUMERIC", "comment": "make evals"} in payloads
     assert [payload["id"] for payload in runner.score_payloads("20260913-192309", trial)] == [payload["id"] for payload in payloads]
     assert runner.score_payloads("20260913-192309", {**trial, "trace_ids": []}) == []
+
+
+def test_a_trial_records_which_guard_blocked_a_turn():
+    # Scenario 01 trial 2: two of her messages were answered with the scope message, and the trial JSON did not say
+    # whether the input guard or the output verifier produced it — both use the same text.
+    events = [{"kind": "guard_input", "name": "input_guard", "status": "blocked", "started_at": "2026-09-13T23:48:02.000+00:00", "trace_id": "t1"},
+              {"kind": "guard_output", "name": "output_guard", "status": "ok", "started_at": "2026-09-13T23:48:05.000+00:00", "trace_id": "t1"},
+              {"kind": "llm_call", "name": "claude-sonnet-5", "status": "ok", "started_at": "2026-09-13T23:48:01.000+00:00", "trace_id": "t1"},
+              {"kind": "guard_output", "name": "output_guard", "status": "blocked", "started_at": "2026-09-13T23:50:00.000+00:00", "trace_id": "t2"}]
+    assert runner.guard_blocks(events) == [{"kind": "guard_input", "at": "23:48:02", "trace_id": "t1"},
+                                           {"kind": "guard_output", "at": "23:50:00", "trace_id": "t2"}]
