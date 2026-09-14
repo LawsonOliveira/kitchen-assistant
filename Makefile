@@ -40,6 +40,9 @@ smoke-a2a:
 smoke-research:  # live: real Tavily and model calls through the researcher contract
 	bash scripts/smoke_research.sh
 
+latency-report:  # where a turn's time goes, from the events and the audit log (PLAN.md C76). SINCE: ISO timestamp
+	cd evals && $(UV) run python latency_report.py $(if $(SINCE),--since "$(SINCE)")
+
 review-conversations:  # PL7: score her real CLI/Telegram conversations since SINCE=YYYY-MM-DD (default 7 days) into evals/reviews and Langfuse
 	cd evals && $(UV) run python review_conversations.py $(if $(SINCE),--since $(SINCE),)
 
