@@ -84,3 +84,7 @@ def test_diff_lists_exactly_the_changed_price(make_workbook):
     assert result["added"] == [] and result["removed"] == []
     assert [item["name"] for item in result["changed"]] == ["Tomate"]
     assert result["changed"][0]["fields"]["total_price_paid"] == ["16.00", "20.00"]
+    # Full run 20260913-192309, scenario 08 (all three trials): Dona Sálvia read the diff and told the owner the new
+    # price, but no field of the diff was a display string, so the output verifier called every "R$" invented and
+    # answered with the scope message instead.
+    assert result["changed"][0]["display"] == "Tomate: preço pago de R$ 16,00 para R$ 20,00"
