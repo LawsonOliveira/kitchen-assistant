@@ -278,3 +278,13 @@ def test_precedes_accepts_several_first_matchers():
                          call(2, "record_price_quote", {"source": "owner_confirmed"}, {"ok": True}, agent="cost_expert")):
         assert outcome(rules(rule), [registration, cost]) == [("cmv_uses_her_price", True)]
     assert outcome(rules(rule), [cost]) == [("cmv_uses_her_price", False)]
+
+
+def test_the_didactic_criterion_balances_the_chain_against_length():
+    # Owner, 2026-09-14: conciseness belongs in the didactic score, so the judge weighs explanation against verbosity
+    # instead of rewarding walls of text.
+    from pathlib import Path
+
+    rubric = (Path(__file__).resolve().parents[1] / "rubric.md").read_text().lower()
+    criterion = rubric[rubric.index("## didactic_clarity"):rubric.index("## owner_decides")]
+    assert "six lines" in criterion and "repeats" in criterion
