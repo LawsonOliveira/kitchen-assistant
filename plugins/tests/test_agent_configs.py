@@ -124,7 +124,7 @@ def test_every_number_she_sees_comes_with_its_arithmetic():
     # (promotion) stayed at 2 — those flows explain other numbers, and the rule only lived in the pricing skill.
     soul = " ".join((AGENTS / "orchestrator" / "SOUL.md").read_text().replace("*", "").split()).lower()
     assert "every money number you show comes with the one-line account of where it came from" in soul
-    assert "r$ 16,00 ÷ 2 kg = r$ 8,00 o quilo" in soul
+    assert "r$ 24,90 ÷ 5 kg = r$ 4,98/kg" in soul  # the worked line now lives in the per-kind list
 
 
 def test_the_arithmetic_also_goes_inside_the_question_and_the_closing_summary():
