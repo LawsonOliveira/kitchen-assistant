@@ -188,7 +188,7 @@ def register(ctx) -> None:
         researcher_hooks.register(ctx)
         ctx.register_system_prompt_section(
             "kitchen-researcher-child", lambda info: CHILD_INSTRUCTIONS if info.get("platform") == "subagent" else "")
-    if role == "cost_expert":
+    if role in ("cost_expert", "recipe_expert"):
         from . import fast_path
 
         ctx.register_middleware("llm_execution", fast_path.llm_execution)  # PL9: single-tool tasks skip the model loop
