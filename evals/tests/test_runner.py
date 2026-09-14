@@ -187,3 +187,22 @@ def test_a_trial_allows_enough_owner_messages_for_a_dictated_recipe():
     import trials
 
     assert trials.MAX_OWNER_MESSAGES >= 20
+
+
+def test_a_scenario_that_names_a_document_ships_it_and_the_runner_places_it():
+    # Rerun of scenario 08: every reset wipes /opt/data/cache/documents, so the spreadsheet the opening message points to
+    # was gone and Dona Sálvia answered "esse arquivo não está na pastinha certa" for 40 turns.
+    import yaml
+
+    import trials
+
+    for path in sorted((REPO / "evals" / "scenarios").glob("*.yaml")):
+        scenario = yaml.safe_load(path.read_text())
+        opening = scenario["owner_profile"]["opening_message"]
+        if "/opt/data/cache/documents/" not in opening:
+            continue
+        document = (scenario.get("setup") or {}).get("document")
+        assert document, path.name
+        assert (REPO / "evals" / "scenarios" / document).exists(), document
+        assert opening.rsplit("/", 1)[1].split()[0].rstrip(".") == document.rsplit("/", 1)[1], path.name
+    assert callable(trials.place_document)
