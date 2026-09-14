@@ -132,3 +132,13 @@ def test_a_scenario_that_expects_no_purchase_tells_the_persona_she_will_not_buy(
         behavior = [line.lower() for line in scenario["owner_profile"].get("behavior", [])]
         assert any(("buy" in line or "spend" in line) and any(word in line for word in ("never", "refuse", "does not", "no "))
                    for line in behavior), path.name
+
+
+def test_a_reply_without_text_ends_the_conversation_instead_of_crashing_the_run():
+    # Full run 20260913-192309, scenario 02 trial 1: the persona's model answered with no text content and the runner died
+    # with "'NoneType' object has no attribute 'strip'", losing the trial and stopping the whole run.
+    transcript = [{"speaker": "orchestrator", "text": "Prontinho, Dona Maria!"}]
+    assert simulated_owner.next_message(lambda system, messages: None, SCENARIO, transcript) is None
+    assert simulated_owner.next_message(lambda system, messages: "   ", SCENARIO, transcript) is None
+    assert simulated_owner.answer_clarify(lambda system, messages: None, SCENARIO, transcript,
+                                          "Quantas porções?", []) == {"choice": ""}
