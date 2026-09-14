@@ -2315,6 +2315,11 @@ evidence, what was changed, and where. Open questions that were "default applied
   `reap(pid, timeout_seconds)` returns "exited" or, after the deadline, kills the process and returns "killed". `close()`
   now reaps with a 20 s deadline and, when it has to kill the host-side client, also runs `pkill -f 'hermes --cli'` inside
   the orchestrator, because killing the client leaves the CLI running in the container.
+- **C70 — A model reply without text killed the run.** Twenty minutes into the rerun of scenario 02 trial 1, the
+  simulated owner's model answered with `content: None` and the runner died with "'NoneType' object has no attribute
+  'strip'", losing the trial and stopping every trial after it. Test first (red: 1 failed): a reply that is None or only
+  spaces ends the conversation, and a clarify answered that way is an empty answer. The container call also sends `""`
+  instead of `None`. Resumed at 00:04.
 
 ## Post-loop changes (owner requests, 2026-09-13)
 Requested by the owner while Loops 6–8 were running, test-first, each recorded as a correction. **Order decided by the
