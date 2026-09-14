@@ -630,7 +630,8 @@ in *Open questions*.
       `make test && make test-plugins && make test-contracts && make test-integration`
 - [ ] `make evals` meets thresholds: costs core 100%; requirement-extraction recall 100% on equipment
       and ≥ 90% on techniques/operations; red-team leakage 0%; input-guard false positives ≤ 5%;
-      multi-turn pass^3 ≥ 80%; judge alerts listed in the report
+      multi-turn pass^3 ≥ 80%; **judge mean ≥ 4.0 in every rubric criterion** (owner, 2026-09-14); judge alerts
+      listed in the report
 - [ ] The hand-computed reference dish (Loop 1) matches `compute_dish_cost` to the cent, and the same
       numbers appear in a real CLI conversation and in the cockpit
 - [ ] Fresh clone → `cp .env.example .env` (filled) → `make up` → `make chat` works end to end
@@ -2355,6 +2356,17 @@ evidence, what was changed, and where. Open questions that were "default applied
   says to register and reject it in the same reply, before anything else. Both tests first (red: 1 failed each).
   With every fix in, the stack was rebuilt and the six failing scenarios were rerun on top of 02, 03, 05 and the seven
   red-team results.
+- **C76 — The owner's quality bar: 4.0 in every criterion.** Asked what to improve after Loop 6, the owner set the bar:
+  each rubric criterion must average at least 4, not only the overall mean (the first complete run had didactic clarity
+  at 1–2 in almost every trial while its deterministic checks passed). Test first (red: 1 failed): the report now prints
+  the mean of each criterion against 4.0 and counts it in "Thresholds met"; the judge still never flips an individual
+  trial's pass or fail. Agreed plan for the improvement pass, in order: close Loop 6; then UX (a response contract for
+  Dona Sálvia — shorter messages, one subject each, questions grouped in a single clarify, state summary read before
+  asking anything, closing summary — targeting at most 20 turns per scenario); then latency, measured first (p50/p90 per
+  call type from the events we already record, recipe-cache hit rate, whether independent expert requests really go out
+  in parallel, more seeded household measures), targeting p90 under 60 s per turn. The owner also rotated the Tavily key
+  (the old one was at 80% of its quota); each trial's reset recreates the agents, so the new key is picked up on the next
+  trial.
 
 ## Post-loop changes (owner requests, 2026-09-13)
 Requested by the owner while Loops 6–8 were running, test-first, each recorded as a correction. **Order decided by the
