@@ -68,7 +68,9 @@ def _messages(transcript: list[dict]) -> list[dict]:
 
 def next_message(llm, scenario: dict, transcript: list[dict]) -> str | None:
     """transcript: [{"speaker": "owner"|"orchestrator", "text"}]. None when the persona ends the conversation."""
-    text = llm(system_prompt(scenario), _messages(transcript)).strip()
+    text = (llm(system_prompt(scenario), _messages(transcript)) or "").strip()
+    if not text:
+        return None  # a model reply without text content (it happens) ends the conversation instead of killing the run
     # The persona often appends the marker to a goodbye ("Obrigada mesmo! FIM"); only the upper-case word ends it.
     return None if text.upper() == END_MARKER or re.search(rf"(^|\s){END_MARKER}$", text) else text
 
@@ -84,7 +86,7 @@ def answer_clarify(llm, scenario: dict, transcript: list[dict], question: str, c
     options = "\n".join(f"- {choice}" for choice in choices) or "(no buttons: answer in your own words)"
     prompt = (f"Dona Sálvia asks you, with buttons:\n{question}\nOptions:\n{options}\n"
               "Reply with exactly the text of one option, or a short answer in your own words if none fits.")
-    return {"choice": llm(system_prompt(scenario), _messages(transcript) + [{"role": "user", "content": prompt}]).strip()}
+    return {"choice": (llm(system_prompt(scenario), _messages(transcript) + [{"role": "user", "content": prompt}]) or "").strip()}
 
 
 IN_ORCHESTRATOR = r'''
@@ -93,7 +95,7 @@ from agent.auxiliary_client import call_llm
 request = json.load(sys.stdin)
 response = call_llm(provider="anthropic", model=request["model"], messages=request["messages"],
                     max_tokens=request["max_tokens"], temperature=request["temperature"], timeout=120)
-print("REPLY " + json.dumps({"text": response.choices[0].message.content,
+print("REPLY " + json.dumps({"text": response.choices[0].message.content or "",
                              "usage": getattr(response.usage, "__dict__", {})}, ensure_ascii=False))
 '''
 
