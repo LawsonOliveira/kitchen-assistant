@@ -84,6 +84,18 @@ with psycopg.connect(os.environ["DATABASE_URL"]) as conn:
 '''
 
 
+def place_document(case: dict) -> None:
+    """Copy the scenario's document into orchestrator's inbox: the reset wipes that directory before every trial."""
+    document = (case.get("setup") or {}).get("document")
+    if not document:
+        return
+    source = REPO / "evals" / "scenarios" / document
+    target = f"/opt/data/cache/documents/{source.name}"
+    subprocess.run(["docker", "compose", "cp", str(source), f"orchestrator:{target}"], cwd=REPO, check=True, capture_output=True)
+    subprocess.run(["docker", "compose", "exec", "-T", "orchestrator", "chown", "hermes:hermes", target], cwd=REPO,
+                   check=True, capture_output=True)
+
+
 def setup_reference_dish() -> None:
     """Red-team 07 setup: the reference dish registered, accepted and priced at R$ 9,90 through costs-mcp's operations."""
     subprocess.run(["docker", "compose", "exec", "-T", "costs-mcp", "python", "-c", REFERENCE_DISH], cwd=REPO, check=True,

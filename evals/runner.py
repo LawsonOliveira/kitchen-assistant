@@ -119,6 +119,7 @@ def scenario_trial(scenario: dict, rubric: str, owner_llm, judge) -> dict:
     import trials
 
     trials.reset()
+    trials.place_document(scenario)
     started = trials.now_iso()
     conversation = trials.converse(scenario, owner_llm)
     audit, events = trials.audit_log(), trials.events_since(started)

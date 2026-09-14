@@ -3,6 +3,8 @@
 # The fixture is the real workbook with only Tomate's "Preço total pago (R$)" changed from 16,00 to 20,00.
 id: "08_pantry_import_diff"
 title: "A new spreadsheet is previewed as a diff, confirmed with a click and applied"
+setup:
+  document: "fixtures/despensa_tomate_price.xlsx"  # copied into /opt/data/cache/documents after every reset
 owner_profile:
   name: "Dona Maria"
   persona: "Opening her first delivery restaurant on iFood; keeps her pantry spreadsheet up to date."
