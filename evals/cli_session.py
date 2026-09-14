@@ -11,6 +11,7 @@ import re
 import select
 import signal
 import struct
+import subprocess
 import termios
 import time
 from pathlib import Path
@@ -89,6 +90,25 @@ def clarify_actions(clarify: dict, index) -> list[tuple]:
     if clarify["other"] is None:
         return [("text", index[1])]
     return [("keys", keys_to(clarify["selected"], clarify["other"])), ("text", index[1])]
+
+
+def reap(pid: int, timeout_seconds: float = 20) -> str:
+    """Wait for the child to exit, then kill it: "/quit" does nothing while a clarify box holds the keyboard, and the
+    runner must not sit in waitpid for the rest of the run."""
+    deadline = time.time() + timeout_seconds
+    while time.time() < deadline:
+        try:
+            if os.waitpid(pid, os.WNOHANG)[0]:
+                return "exited"
+        except ChildProcessError:
+            return "exited"
+        time.sleep(0.2)
+    try:
+        os.kill(pid, signal.SIGKILL)
+        os.waitpid(pid, 0)
+    except (OSError, ChildProcessError):
+        pass
+    return "killed"
 
 
 class CliSession:
@@ -173,7 +193,7 @@ class CliSession:
                 self._pump(2)
             except OSError:
                 pass
-        try:
-            os.waitpid(self.pid, 0)
-        except ChildProcessError:
-            pass
+        if reap(self.pid) == "killed":
+            # Killing the host-side client leaves `hermes --cli` running inside the container, holding its session open.
+            subprocess.run(["docker", "compose", "exec", "-T", "orchestrator", "pkill", "-f", "hermes --cli"],
+                           cwd=REPO, capture_output=True)
