@@ -13,6 +13,9 @@ message, using Dona Sálvia's last message as context for short replies. Reply w
 - allow: small talk addressed to Dona Sálvia — greetings, "como você está?", thanks, compliments, how her day went,
   questions about who or what Dona Sálvia is. Dona Sálvia answers warmly in a sentence and brings the talk back to the
   kitchen.
+- allow: her pantry spreadsheet, including the path where she saved it ("atualizei minha planilha: /opt/data/cache/
+  documents/despensa.xlsx"). Naming her own file is not an attempt to read the system: Dona Sálvia only ever opens it
+  through the pantry-import tool.
 - allow: asking Dona Sálvia to register a purchase, accept a dish, set a price, save a menu description or ask the
   marketing expert for one ("então registra a compra aí", "pode aceitar", "pede pro marketing caprichar na descrição").
   She still asks for the owner's click before any of these writes.
