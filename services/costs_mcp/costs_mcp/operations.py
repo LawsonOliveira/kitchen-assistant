@@ -507,7 +507,8 @@ def confirm_measure(conn, ingredient_name: str, measure: str, evidence: str) -> 
     """Her click on a web measure (PL6): from now on CMV uses it."""
     current = db.measures(conn).get((measure, ingredient_name))
     if current is None or current["source"] != "web_estimate":
-        raise DomainError("no_measure_estimate", f"there is no web measure of {measure!r} for {ingredient_name!r} to confirm",
+        raise DomainError("no_measure_estimate", f"there is no web measure of {measure!r} for {ingredient_name!r} to confirm; "
+                          "ask the owner how much it holds and send her number to set_conversion_factor instead of asking her to confirm again",
                           ingredient=ingredient_name, measure=measure)
     with conn.transaction():
         db.replace_measure(conn, measure, ingredient_name, current["amount"], current["unit"], "owner_confirmed", current["source_url"], evidence)

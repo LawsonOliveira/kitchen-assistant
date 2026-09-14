@@ -44,8 +44,10 @@ CHILD_GOALS = {
     "menu_reference": "Find how delivery restaurants on iFood name and describe: {item}. Use web_search and "
                       "web_extract, and reply with only the JSON object.",
     "measure_lookup": "Find how many grams or ml one household measure holds, as sold or used in Brazil: {item}. For a can or "
-                      "package, use the net content printed on a real product page; for a cup, spoon or clove, a real "
-                      "Brazilian cooking reference. Use web_search and web_extract, and reply with only the JSON object.",
+                      "package, use the net content printed on a real product page — never a nutrition label's serving "
+                      "size (\"porção de 90 g\"), which says nothing about the package; for an item sold loose, the usual "
+                      "weight of one piece; for a cup, spoon or clove, a real Brazilian cooking reference. Use web_search "
+                      "and web_extract, and reply with only the JSON object.",
 }
 TOOL_DESCRIPTION = ("Research every item of the request in parallel (one web child per item) and return the merged, "
                     "schema-checked JSON reply. Call it exactly once per request.")

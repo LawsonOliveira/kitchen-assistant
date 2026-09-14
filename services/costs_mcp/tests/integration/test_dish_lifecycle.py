@@ -116,10 +116,6 @@ def test_a_to_taste_ingredient_missing_from_the_pantry_lowers_the_coverage(conn)
     # Smoke trial 01 (2026-09-13): cebola, alho, tomate, sal and pimenta-do-reino "a gosto" were left out of the coverage,
     # so a recipe that still needed pimenta-do-reino was shown as "Cobertura da despensa: 100%", and the owner, who wanted a
     # pantry-only dish, accepted it and bought the pepper.
-    from conftest import EVIDENCE, ingredient, make_recipe, viable_profile
-
-    from costs_mcp import operations
-
     viable_profile(conn)
     in_pantry = make_recipe([ingredient("Peito de frango", 500, "g"), ingredient("Sal", None, "to_taste")], name="Frango com sal")
     needs_pepper = make_recipe([ingredient("Peito de frango", 500, "g"), ingredient("Pimenta-do-reino", None, "to_taste", None)],

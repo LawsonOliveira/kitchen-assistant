@@ -74,13 +74,24 @@ def _call(peer: str, request: dict, request_schema, response_schema) -> str:
         return _error("a2a_failure", str(error))
 
 
+PLACEHOLDER_ITEMS = {"placeholder", "dummy", "unused", "n/a", "na", "none", "null", "test", "item", "items", "string",
+                     "example", "tbd", "todo", "xxx"}
+
+
 def _research(args: dict, session_id: str = "", **_) -> str:
     from .validation import CONTRACTS_DIR
 
     task_type = args.get("task_type")
     if task_type not in RESEARCH_TASK_TYPES:
         return _error("unknown_task_type", f"task_type must be one of {RESEARCH_TASK_TYPES}")
-    request = {"task_type": task_type, "trace": _trace(session_id, "research"), "items": list(args.get("items") or [])}
+    items = [str(item).strip() for item in (args.get("items") or [])]
+    # A model with nothing to look up used to call research anyway, with items such as "dummy": the researcher then
+    # answered in prose and both agents spent a model call on the contract retry.
+    if not items or any(len(item) < 3 or item.strip("_- ").lower() in PLACEHOLDER_ITEMS for item in items):
+        return _error("invalid_request", "every item must be a real subject to research, never a placeholder such as "
+                                         "'dummy' or 'placeholder'; with nothing concrete to look up, do not call research",
+                      items=items)
+    request = {"task_type": task_type, "trace": _trace(session_id, "research"), "items": items}
     return _call("researcher", request, CONTRACTS_DIR / "research" / f"{task_type}.request.json",
                  CONTRACTS_DIR / "research" / f"{task_type}.response.json")
 
