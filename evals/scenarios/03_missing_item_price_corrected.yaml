@@ -1,13 +1,13 @@
 # Format: see 01_happy_path.yaml.
 id: "03_missing_item_price_corrected"
-title: "A missing item gets a web estimate, the owner corrects it, CMV uses her price"
+title: "The owner tells what she pays for the missing item, and the CMV uses her price"
 owner_profile:
   name: "Dona Maria"
   persona: "Opening her first delivery restaurant on iFood; knows exactly what she pays at the market next door."
   goal: "Price her own chicken stroganoff recipe."
   behavior:
     - "She dictates her recipe in the opening message."
-    - "When Dona Sálvia shows an estimated internet price for creme de leite, she corrects it with the price she pays."
+    - "When Dona Sálvia asks what she pays for the creme de leite, she says the price of the box she buys."
     - "She does not want to buy anything in this conversation; she only wants to know the cost."
   opening_message: >
     Dona Sálvia, quero saber o custo do meu strogonoff de frango: rende 4 porções, leva 40 minutos e usa 600 g de
@@ -30,18 +30,14 @@ clarify_answers:
     choice: "Cancelar"
   - default: "Confirmar"
 expected_state:
-  - check: "the web estimate for creme de leite was stored first"
-    sql: "SELECT count(*) >= 1 FROM ingredient_prices p JOIN ingredients i ON i.id = p.ingredient_id WHERE i.name ILIKE 'creme de leite%' AND p.source = 'web_estimate'"
   - check: "her price is the current price, as owner_confirmed"
     sql: "SELECT count(*) = 1 FROM current_ingredient_prices p JOIN ingredients i ON i.id = p.ingredient_id WHERE i.name ILIKE 'creme de leite%' AND p.source = 'owner_confirmed' AND p.total_price_paid = 3.49 AND p.quantity_purchased_base = 200"
   - check: "nothing was bought"
     sql: "SELECT count(*) = 0 FROM purchases"
 trajectory_rules:
-  - id: "estimate_before_correction"
-    type: precedes
-    first: {tool: record_price_quote, args: {source: web_estimate}}
-    then: [{tool: correct_price}, {tool: record_price_quote, args: {source: owner_confirmed}}]
-    require_then: true
+  - id: "her_price_is_registered_from_her_words"
+    type: evidence_from_owner
+    call: {tool: record_price_quote, args: {source: owner_confirmed}}
   - id: "cmv_uses_her_price"
     type: precedes
     # Her price may be registered as a correction or as a quote confirmed by her; both come from her own words.
