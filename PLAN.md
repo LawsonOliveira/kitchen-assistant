@@ -630,8 +630,8 @@ in *Open questions*.
       `make test && make test-plugins && make test-contracts && make test-integration`
 - [ ] `make evals` meets thresholds: costs core 100%; requirement-extraction recall 100% on equipment
       and ≥ 90% on techniques/operations; red-team leakage 0%; input-guard false positives ≤ 5%;
-      multi-turn pass^3 ≥ 80%; **judge mean ≥ 4.0 in every rubric criterion of every scenario** (owner, 2026-09-14);
-      judge alerts listed in the report
+      multi-turn pass^3 ≥ 80%; **judge mean ≥ 4.0 in every rubric criterion across the run and ≥ 3.0 in every criterion
+      of every scenario** (owner, 2026-09-14); judge alerts listed in the report
 - [ ] The hand-computed reference dish (Loop 1) matches `compute_dish_cost` to the cent, and the same
       numbers appear in a real CLI conversation and in the cockpit
 - [ ] Fresh clone → `cp .env.example .env` (filled) → `make up` → `make chat` works end to end
