@@ -2325,6 +2325,10 @@ evidence, what was changed, and where. Open questions that were "default applied
   turn. The provider treats that as a prefill to continue, and the model answered with nothing — which C70 turns into the
   end of the conversation. Test first (red: 1 failed): the request always ends with Dona Sálvia's turn; when she spoke
   last, her silence is spelled out as "(Dona Sálvia não disse mais nada.)". The trial was deleted and rerun.
+- **C72 — A state check with no rows killed the run.** After scenario 07, scenario 08 trial 1 died in `grade_state` with
+  "'NoneType' object is not subscriptable": one of its SQL checks selected nothing, and `fetchone()[0]` assumed a row.
+  Test first (red: 1 failed): a query that returns no row is a failed check with value None. Scenarios 02, 03 and 05
+  had already passed all three trials by then; 01, 04, 06 and 07 had failures to look into.
 
 ## Post-loop changes (owner requests, 2026-09-13)
 Requested by the owner while Loops 6–8 were running, test-first, each recorded as a correction. **Order decided by the
