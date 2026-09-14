@@ -6,7 +6,7 @@ from fakes import FakeClassifier
 from kitchen_guardrails import messages, output_guard
 from kitchen_guardrails.classifier import GuardInfraError
 from kitchen_guardrails.grounding import SessionGrounding
-from kitchen_guardrails.messages import INFRA_BLOCK_MESSAGE, SCOPE_BLOCK_MESSAGE
+from kitchen_guardrails.messages import INFRA_BLOCK_MESSAGE, NUMBER_BLOCK_MESSAGE, SCOPE_BLOCK_MESSAGE
 
 
 def grounding():
@@ -17,7 +17,7 @@ def grounding():
 
 def test_ungrounded_money_is_blocked_before_asking_the_policy():
     fake = FakeClassifier("allow")
-    assert output_guard.review("Dá pra vender por R$ 12,34", grounding(), fake, platform="cli") == SCOPE_BLOCK_MESSAGE
+    assert output_guard.review("Dá pra vender por R$ 12,34", grounding(), fake, platform="cli") == NUMBER_BLOCK_MESSAGE
     assert fake.calls == []
 
 
