@@ -13,6 +13,7 @@ import openpyxl
 import psycopg
 
 from costs_mcp import db
+from costs_mcp.pricing import format_brl
 from costs_mcp.units import UnknownUnitError, parse_unit
 
 SHEETS = {
@@ -131,9 +132,26 @@ def diff(current: list[IngredientRecord], new: list[IngredientRecord]) -> dict:
         fields = {field: [_show(field, getattr(old, field)), _show(field, getattr(fresh, field))]
                   for field in DIFF_FIELDS if getattr(old, field) != getattr(fresh, field)}
         if fields:
-            changed.append({"name": name, "fields": fields})
+            changed.append({"name": name, "fields": fields, "display": _change_display(name, fields, fresh.base_unit)})
     return {"added": sorted(new_by_name.keys() - old_by_name.keys()),
             "removed": sorted(old_by_name.keys() - new_by_name.keys()), "changed": changed}
+
+
+FIELD_LABELS = {"base_unit": "unidade", "stock_base": "estoque", "total_price_paid": "preço pago",
+                "quantity_purchased_base": "quantidade comprada"}
+
+
+def _change_display(name: str, fields: dict, base_unit: str) -> str:
+    """One owner-facing line per changed ingredient. Money is formatted here because Dona Sálvia may only repeat amounts
+    that came from a display string (D12)."""
+    parts = []
+    for field, (old_value, new_value) in fields.items():
+        if field == "total_price_paid":
+            old_value, new_value = format_brl(Decimal(old_value)), format_brl(Decimal(new_value))
+        elif field in ("stock_base", "quantity_purchased_base"):
+            old_value, new_value = f"{old_value} {base_unit}", f"{new_value} {base_unit}"
+        parts.append(f"{FIELD_LABELS[field]} de {old_value} para {new_value}")
+    return f"{name}: {'; '.join(parts)}"
 
 
 def _show(field: str, value) -> str:
