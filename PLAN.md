@@ -2339,6 +2339,22 @@ evidence, what was changed, and where. Open questions that were "default applied
   rejection of the first candidate was not recorded with her reason. The judge's own signal is uniform: didactic clarity
   1–2 in almost every trial, long answers and repeated questions. The README's "Latest eval run" section holds this
   report; the failing scenarios are fixed test-first and rerun before the loop's DoD is ticked.
+- **C74 — The owner is the first source about her own pantry.** Two failures had the same shape: scenario 06 asked her to
+  confirm a web guess for the chocolate bar she buys ("105 g", "150 g"; her answer, 1 kg, came later or never, and a
+  portion of mousse was priced at R$ 106,90), and scenario 04 bought shrimp at the web estimate (R$ 18,99 per 200 g),
+  which pushed the budget raise past the scenario's R$ 100,00 cap while her own price (R$ 60,00 the kilo) was never
+  asked for. Tests first (red: 1 failed each): Dona Sálvia now asks her first for a household measure and for the price
+  of a missing item, with "Não sei" among the choices, and her number goes straight to `set_conversion_factor` or
+  `correct_price` as her own statement; research happens only when she does not know, and then comes back as an estimate
+  to confirm. recipe_expert no longer researches a measure on its own. Besides the right number, this removes a web
+  round trip from the common path.
+- **C75 — Price choices answered by value, and the rejection recorded in the same reply.** Scenario 07 failed twice
+  because the three prices were listed dearest first and `choice_position: 2` picked R$ 7,90 when she had asked for
+  R$ 9,90; the scenarios now use `choice_by_price` (cheapest/middle/dearest, ranked from the amounts in the choices) or
+  `choice_contains`. Scenario 09 trial 3 failed because a rejected dish was never recorded; the orchestrator's rule now
+  says to register and reject it in the same reply, before anything else. Both tests first (red: 1 failed each).
+  With every fix in, the stack was rebuilt and the six failing scenarios were rerun on top of 02, 03, 05 and the seven
+  red-team results.
 
 ## Post-loop changes (owner requests, 2026-09-13)
 Requested by the owner while Loops 6–8 were running, test-first, each recorded as a correction. **Order decided by the
