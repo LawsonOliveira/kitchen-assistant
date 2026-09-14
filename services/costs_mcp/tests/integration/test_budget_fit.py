@@ -125,3 +125,16 @@ def test_a_web_estimate_never_replaces_a_price_the_owner_already_has(conn):
 def test_a_newer_web_estimate_may_replace_an_older_estimate(conn):
     quote_creme(conn, price="5.00")
     assert quote_creme(conn, price="4.50")["package_price_display"] == "R$ 4,50"
+
+
+def test_a_gap_error_lists_every_gap_at_once(conn):
+    # Full run 20260913-192309: Dona Sálvia asked 21 separate questions in one conversation because each budget_fit
+    # answered with one gap at a time; with every gap in the first answer she can ask them all in one clarify.
+    viable_profile(conn)
+    recipe = make_recipe([ingredient("Creme de leite", 300, "g", None),
+                          ingredient("Cobertura de chocolate", 1, "unit", "Cobertura de chocolate")])
+    dish = operations.register_candidate_dish(conn, recipe, 4, 4, EVIDENCE)["dish_id"]
+    with pytest.raises(DomainError) as error:
+        operations.check_budget_fit(conn, dish)
+    assert error.value.details["ingredients"] == ["Creme de leite"]
+    assert [item["ingredient"] for item in error.value.details["conversions"]] == ["Cobertura de chocolate"]
