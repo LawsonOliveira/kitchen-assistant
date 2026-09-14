@@ -111,3 +111,20 @@ def test_no_scenario_takes_a_price_quote_confirmation_for_the_price_scenario_cho
 def test_the_persona_never_describes_her_pantry_beyond_the_facts():
     # Live trial: the persona said "sal e óleo eu tenho sim, salsinha no quintal", facts the scenario never gave.
     assert "pantry" in simulated_owner.system_prompt(SCENARIO)
+
+
+def test_a_scenario_that_expects_no_purchase_tells_the_persona_she_will_not_buy():
+    # Full run 20260913-192309, scenario 01 trials 1 and 3: the persona accepted dishes that needed caldo, margarina and
+    # azeitonas and bought them (R$ 25,06), so "nothing was bought" and "budget untouched" failed even with judge means of
+    # 3.5 and 4.75. Her profile only said she "accepts the first dish that uses only pantry ingredients".
+    import yaml
+    from pathlib import Path
+
+    for path in sorted((Path(__file__).resolve().parents[1] / "scenarios").glob("*.yaml")):
+        scenario = yaml.safe_load(path.read_text())
+        expects_no_purchase = any("FROM purchases" in check["sql"] and "= 0" in check["sql"] for check in scenario["expected_state"])
+        if not expects_no_purchase:
+            continue
+        behavior = [line.lower() for line in scenario["owner_profile"].get("behavior", [])]
+        assert any(("buy" in line or "spend" in line) and any(word in line for word in ("never", "refuse", "does not", "no "))
+                   for line in behavior), path.name
