@@ -79,3 +79,15 @@ def test_there_is_nothing_to_confirm_without_a_web_estimate(conn):
     # Full run, scenario 01 trial 2: Dona Sálvia asked the owner to confirm the same measure four times because the error
     # did not say what to do instead.
     assert "set_conversion_factor" in str(error.value)
+
+
+def test_the_common_units_of_her_pantry_need_no_question(conn):
+    # Latency pass: every measure missing from the table becomes a question to her and sometimes a web lookup. One
+    # medium onion or tomato is a standard weight she can still correct, so it is seeded.
+    from costs_mcp import db
+
+    measures = db.measures(conn)
+    for name in ("Cebola", "Tomate", "Batata", "Ovos", "Peito de frango"):
+        assert ("unit", name) in measures, name
+        assert measures[("unit", name)]["source"] == "seed"
+    assert ("cup", "Feijão carioquinha") in measures
