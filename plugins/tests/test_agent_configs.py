@@ -117,3 +117,11 @@ def test_the_contract_pins_the_fine_grained_rules():
     assert 'owner_statement: "1 kg (1000 g)"' in soul  # the verbatim example
     skill = " ".join((AGENTS / "orchestrator" / "skills" / "pricing-explanation" / "SKILL.md").read_text().split()).lower()
     assert "r$ 24,90 ÷ 5 kg = r$ 4,98" in skill and "four lines" in skill
+
+
+def test_every_number_she_sees_comes_with_its_arithmetic():
+    # Probe of 17:32: with the pricing chain in the skill, scenario 03 reached didactic clarity 4, but 04 (budget) and 07
+    # (promotion) stayed at 2 — those flows explain other numbers, and the rule only lived in the pricing skill.
+    soul = " ".join((AGENTS / "orchestrator" / "SOUL.md").read_text().replace("*", "").split()).lower()
+    assert "every money number you show comes with the one-line account of where it came from" in soul
+    assert "r$ 16,00 ÷ 2 kg = r$ 8,00 o quilo" in soul
