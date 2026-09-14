@@ -47,6 +47,9 @@ def outcome(scenario, audit_log, events=(), session=()):
 
 # --- state ---------------------------------------------------------------------------------------------------------
 
+NO_ROW = object()  # psycopg returns None from fetchone() when the query selected nothing
+
+
 class FakeCursor:
     def __init__(self, connection):
         self.connection = connection
@@ -61,7 +64,8 @@ class FakeCursor:
         self.connection.executed.append(sql)
 
     def fetchone(self):
-        return (self.connection.values.pop(0),)
+        value = self.connection.values.pop(0)
+        return None if value is NO_ROW else (value,)
 
 
 class FakeConnection:
@@ -88,6 +92,15 @@ def test_state_assertions_pass_and_fail_inside_a_read_only_transaction_that_is_r
         ("one accepted dish", True), ("budget untouched", False), ("no purchases", False)]
     assert connection.executed[0] == "SET TRANSACTION READ ONLY" and connection.executed[1:] == [c["sql"] for c in STATE["expected_state"]]
     assert connection.rolled_back
+
+
+def test_a_check_whose_query_returns_no_row_fails_instead_of_killing_the_run():
+    # Full run 20260913-192309, scenario 08 trial 1: a check queried a table with no matching row, fetchone() returned
+    # None and the runner died with "'NoneType' object is not subscriptable", losing every trial after it.
+    connection = FakeConnection([True, NO_ROW, False])
+    results = graders.grade_state(STATE, connection)
+    assert [(result["check"], result["passed"], result["value"]) for result in results] == [
+        ("one accepted dish", True, True), ("budget untouched", False, None), ("no purchases", False, False)]
 
 
 # --- trajectory: precedes ------------------------------------------------------------------------------------------
