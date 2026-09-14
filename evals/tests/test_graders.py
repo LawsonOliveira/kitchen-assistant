@@ -265,3 +265,16 @@ def test_judge_alert_when_the_mean_is_below_3_5_or_any_criterion_is_2_or_less(sc
 def test_a_judge_reply_missing_a_criterion_or_out_of_range_fails_loud(scores):
     with pytest.raises(ValueError):
         graders.grade_judge([owner(1, "oi")], RUBRIC, lambda transcript, rubric: scores)
+
+
+def test_precedes_accepts_several_first_matchers():
+    # Scenario 03: her price may be registered by correct_price or by record_price_quote with source owner_confirmed —
+    # both come from her own words, and the rule should not care which tool the model picked.
+    rule = {"id": "cmv_uses_her_price", "type": "precedes",
+            "first": [{"tool": "correct_price"}, {"tool": "record_price_quote", "args": {"source": "owner_confirmed"}}],
+            "then": [{"tool": "compute_dish_cost", "result_text_contains": "R$ 3,49"}], "require_then": True}
+    cost = call(3, "compute_dish_cost", {"dish_id": 1}, {"lines": [{"cost_display": "R$ 3,49"}]}, agent="cost_expert")
+    for registration in (call(2, "correct_price", {"ingredient_name": "Creme de leite"}, {"ok": True}, agent="cost_expert"),
+                         call(2, "record_price_quote", {"source": "owner_confirmed"}, {"ok": True}, agent="cost_expert")):
+        assert outcome(rules(rule), [registration, cost]) == [("cmv_uses_her_price", True)]
+    assert outcome(rules(rule), [cost]) == [("cmv_uses_her_price", False)]
