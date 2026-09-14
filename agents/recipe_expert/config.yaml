@@ -25,6 +25,7 @@ skills:
 mcp_servers:
   costs:
     url: http://costs-mcp:8000/mcp
+    supports_parallel_tool_calls: true  # its reads are independent (PLAN.md C77, latency pass)
     headers:
       Authorization: "Bearer ${COSTS_MCP_TOKEN}"
     tools:
