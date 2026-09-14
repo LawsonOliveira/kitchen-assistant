@@ -12,10 +12,10 @@ fifteen lines is as bad as one that explains nothing.
   ("CMV", "markup", "margem de contribuição") without saying what it means, or the answer is a wall of text that
   repeats itself and hides the reasoning.
 - **3** — The main steps are explained (unit cost → cost of the dish → cost per portion → price), but some step
-  is skipped, the order is confusing, or it takes many more lines than it needed.
+  is skipped, the order is confusing, or it is padded with lines the explanation did not need.
 - **5** — Every step in order, in plain words, with one short example of how a number was found
-  ("R$ 24,90 ÷ 5 kg = R$ 4,98/kg"), in **at most six lines**, with no greeting, no recap of what she just said and
-  nothing that repeats — and she could redo the account herself.
+  ("R$ 24,90 ÷ 5 kg = R$ 4,98/kg"), in a **lean** answer — no greeting, no recap of what she just said, nothing that
+  repeats, not one line more than the explanation needs — and she could redo the account herself.
 
 ## owner_decides — does Dona Maria make every decision?
 - **1** — Dona Sálvia decides for her: accepts a dish, buys, picks a price, applies an import or registers a

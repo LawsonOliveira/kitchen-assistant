@@ -8,7 +8,7 @@ description: Explain a dish's CMV and the three delivery price scenarios step by
 Use this after the cost expert's `match_and_cost` for an accepted or viable dish. Every number you show is a display
 string from that result, copied exactly; never compute, round or convert anything yourself.
 
-**Default answer: the whole chain in four lines**, so she can repeat the reasoning herself — never only the final price.
+**Default answer: the whole chain, lean**, so she can repeat the reasoning herself — never only the final price.
 One worked example of a unit cost, the dish's cost, the cost per portion with the iFood fee, and the three prices:
 
 ```
