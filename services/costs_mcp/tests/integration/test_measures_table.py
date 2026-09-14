@@ -25,7 +25,8 @@ def coconut_line(conn, dish):
 def test_the_d23_table_is_seeded_into_the_measures_table(conn):
     rows = conn.execute("SELECT measure, ingredient_name, amount_base, amount_base_unit FROM measures "
                         "WHERE source = 'seed' AND superseded_at IS NULL").fetchall()
-    assert len(rows) == 16 and ("clove", "Alho", Decimal("5"), "g") in rows
+    # 16 rows of the D23 table plus the common units of her pantry (migration 005, latency pass).
+    assert len(rows) == 28 and ("clove", "Alho", Decimal("5"), "g") in rows
 
 
 def test_an_unknown_measure_is_a_conversion_to_find(conn):
