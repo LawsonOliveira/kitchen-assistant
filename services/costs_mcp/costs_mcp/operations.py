@@ -418,11 +418,14 @@ def check_budget_fit(conn, dish_id: int) -> dict:
                       "package_quantity_base": plain(price["quantity_purchased_base"]), "packages_needed": packages,
                       "package_price_display": format_brl(price["total_price_paid"]), "subtotal_display": format_brl(subtotal),
                       "price_source": price["source"]})
+    # Every gap goes in the first answer, so Dona Sálvia can ask the owner for all of them in one clarify.
     if without_price:
-        raise DomainError("missing_price_quote", "quote these ingredients first", ingredients=without_price)
+        raise DomainError("missing_price_quote", "quote these ingredients first", ingredients=without_price,
+                          conversions=match["conversions_needed"])
     if match["conversions_needed"]:
         raise DomainError("missing_conversion", "ask the owner for a conversion factor",
-                          ingredient=match["conversions_needed"][0]["ingredient"], conversions=match["conversions_needed"])
+                          ingredient=match["conversions_needed"][0]["ingredient"], conversions=match["conversions_needed"],
+                          ingredients=[])
     remaining = db.budget_status(conn)["remaining"]
     return {"missing_items": items, "total_display": format_brl(total), "budget_remaining_display": format_brl(remaining),
             "budget_remaining_after_purchase_display": format_brl(remaining - total) if total <= remaining else None,
