@@ -87,3 +87,12 @@ def test_the_orchestrator_has_a_response_contract():
     assert "at most eight lines" in section  # her phone is small and her time is short
     assert "already answered" in section  # never ask twice for something the state already has
     assert "what is done and what is missing" in section  # close every step with the state of the journey
+
+
+def test_the_contract_shows_a_grouped_clarify_and_a_batch_that_fits_the_pantry():
+    # Rerun of scenario 01 with the response contract: replies got shorter (500 → 305 characters) but the questions were
+    # still asked one at a time (22 clarifies), and the launch batch of 10 portions did not fit the pantry, so the flow
+    # deadlocked on a purchase she refuses.
+    soul = " ".join((AGENTS / "orchestrator" / "SOUL.md").read_text().replace("*", "").split()).lower()
+    assert "questions: [" in soul  # a worked example of one clarify carrying several questions
+    assert "largest launch batch the pantry covers" in soul
