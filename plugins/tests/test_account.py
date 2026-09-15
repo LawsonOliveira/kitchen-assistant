@@ -32,7 +32,7 @@ def test_an_account_she_already_wrote_in_her_own_words_is_not_repeated():
     # Probe 20260915-075404: the injection worked and she also copied the minimum herself, so Dona Maria read
     # "R$ 2,72 ÷ 0,90 = R$ 3,02, porque o iFood fica com 10%. R$ 2,72 ÷ 0,90 = R$ 3,02 é o mínimo pra não perder
     # dinheiro." The same operation twice is exactly the padding the didactic criterion punishes.
-    question = "R$ 2,72 ÷ 0,90 = R$ 3,02 é o mínimo pra não perder dinheiro. Qual preço a senhora quer?"
+    question = "R$ 2,60 ÷ 0,90 = R$ 2,89 é o mínimo pra não perder dinheiro. Qual preço a senhora quer?"
     assert with_account(question, [MINIMUM]) is None
     assert with_account(question, [CHAIN, MINIMUM]) == f"{CHAIN}. {question}"  # the other account is still new to her
 
