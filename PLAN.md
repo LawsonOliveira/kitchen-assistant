@@ -2530,6 +2530,18 @@ evidence, what was changed, and where. Open questions that were "default applied
   the output verifier: while the ledger shows a dish unaccepted or unpriced and her reply asks nothing, the next
   question is appended to what she wrote. A reply the guard already replaced keeps its own message.
 
+- **C89 — Two live findings from the owner's own session.** He opened the CLI and asked "Me acha receitas de verdade na
+  internet que aproveitem minha despensa. Comida caseira, tipo lasanha e escondidinho." — the product's core request —
+  and the input guard answered with the scope message. Reproduced against the real classifier: blocked, and so were
+  "Procura na internet uma receita de escondidinho" and "Pesquisa aí o preço do camarão nos mercados online". The
+  prompt lists what is allowed and never mentioned the web, so "na internet" read as a task outside the kitchen. Test
+  first: three rows in `evals/guardrail_dataset.jsonl` (78 -> 81, all three red), then the prompt allows asking her to
+  look something up when it is about her business, with his sentence among the examples — 81/81, precision 1.0,
+  recall 1.0, false positives 0.
+  He also noticed the cockpit lights every node at once when it opens: `GET /stream` replays the last 500 events and
+  the page animates whatever it receives, so history looked like live traffic. Replayed events now carry
+  `replayed: true` and the page fills its tables with them without pulsing the topology.
+
 ## Post-loop changes (owner requests, 2026-09-13)
 Requested by the owner while Loops 6–8 were running, test-first, each recorded as a correction. **Order decided by the
 owner:** Loop 6 pauses; Loop 7 (the owner's Telegram checks) and Loop 8 finish, then PL1–PL9, then Loop 6 resumes and
