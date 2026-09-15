@@ -2424,6 +2424,23 @@ evidence, what was changed, and where. Open questions that were "default applied
   ledger now produces the account as data: `cost_chain_display`, `min_price_chain_display`, `profit_chain_display` per
   scenario and `promotion_chain_display`, and her contract says to copy them word for word.
 
+- **C82 — Probe C (`20260915-031343-probeC`): eight of nine passed and the mechanical faults are gone.** Judge means:
+  didactic clarity 2.78, clarity of numbers 4.00, owner decides 4.33, tone 4.33. Failures across the three probes went
+  1 → 4 → 1, and the one left (scenario 09) was `no_scenarios_while_requirements_are_unknown`: `compute_dish_cost` ran
+  for a dish whose requirements were still open. Fixed in the ledger, not the prompt — it now raises
+  `requirements_unknown` and names what to ask her, while a raw recipe with no dish_id is still priced freely so she
+  can answer "quanto custaria?" before anything is registered.
+  Probe C also settled the didactic question: the ledger returned `cost_chain_display` and the contract told her to
+  copy it word for word, and she still wrote "Fixar o preço em R$ 8,90? (custo R$ 2,60 por porção)" — three rounds,
+  three times the same 2, while every other criterion scored 4 or 5. So the code stopped asking: the guard keeps every
+  `*_chain_display` the tools return and Hermes' `pre_tool_call` "modify" directive puts the account in front of the
+  question that shows its result ("R$ 25,96 ÷ 10 porções = R$ 2,60 por porção. Fixar o preço em R$ 8,90?"), at most two
+  accounts, never when the question already explains itself.
+  **Open, not fixed:** scenario 02 asks 27 questions in both probe A and probe C. About nine are click-required
+  confirmations that cannot be grouped (one decision per clarify, D14), but the rest are re-asks of the same subject in
+  different words. No trial failed for it and the fix would need fuzzy matching of questions, so it waits for evidence
+  from the full run rather than landing untested before it.
+
 ## Post-loop changes (owner requests, 2026-09-13)
 Requested by the owner while Loops 6–8 were running, test-first, each recorded as a correction. **Order decided by the
 owner:** Loop 6 pauses; Loop 7 (the owner's Telegram checks) and Loop 8 finish, then PL1–PL9, then Loop 6 resumes and
