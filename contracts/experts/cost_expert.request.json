@@ -21,6 +21,7 @@
         "set_packaging",
         "register_purchase",
         "correct_price",
+        "correct_pantry_stock",
         "set_conversion_factor",
         "adjust_budget",
         "select_price_scenario",
@@ -419,6 +420,60 @@
                     "type": "string",
                     "pattern": "^[0-9]{1,6}\\.[0-9]{2}$",
                     "description": "reais with two decimals, e.g. \"16.00\""
+                  },
+                  "quantity": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "unit": {
+                    "enum": [
+                      "g",
+                      "kg",
+                      "ml",
+                      "l",
+                      "unit"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "properties": {
+              "owner_statement": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "task": {
+            "const": "correct_pantry_stock"
+          }
+        }
+      },
+      "then": {
+        "allOf": [
+          {
+            "properties": {
+              "payload": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "ingredient",
+                  "quantity",
+                  "unit"
+                ],
+                "properties": {
+                  "ingredient": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 60
                   },
                   "quantity": {
                     "type": "number",

@@ -71,6 +71,27 @@ def test_an_expert_never_sends_more_questions_than_its_contract_accepts():
         assert f"at most {cap}" in rule, expert
 
 
+def test_what_she_already_has_is_registered_as_stock_never_as_a_purchase():
+    # Full run 20260915-095503, scenario 03 trials 1 and 2: she cancelled the purchase and said the creme de leite was
+    # already at home; the only tool that adds stock was register_purchase, so R$ 3,49 left a budget she never spent.
+    rule = next(line for line in (AGENTS / "orchestrator" / "SOUL.md").read_text().splitlines()
+                if "correct_pantry_stock" in line)
+    assert "já tem" in rule or "already" in rule
+    assert "never a purchase" in rule or "nunca uma compra" in rule
+    expert = next(line for line in (AGENTS / "cost_expert" / "SOUL.md").read_text().splitlines()
+                  if "correct_pantry_stock" in line)
+    assert "owner_statement" in expert
+
+
+def test_the_closing_line_hands_the_next_step_back_as_a_question():
+    # Full run 20260915-095503, scenario 05 (all three trials): she registered the second dish and closed with "já pode
+    # seguir pra próxima etapa quando quiser 🌿". Dona Maria had nothing to answer, so the conversation ended at eight
+    # messages with no dish accepted — the scenario's whole point.
+    rule = next(line for line in (AGENTS / "orchestrator" / "SOUL.md").read_text().splitlines()
+                if "closing line" in line.lower())
+    assert "?" in rule and ("next" in rule.lower() or "próxim" in rule.lower())
+
+
 def test_cancelar_is_her_answer_and_never_a_technical_problem():
     # Full run 20260915-071004, scenario 01 trial 1: she cancelled a purchase she had said from the start she would not
     # make, and Dona Sálvia told her the system was broken and asked again, twice.
