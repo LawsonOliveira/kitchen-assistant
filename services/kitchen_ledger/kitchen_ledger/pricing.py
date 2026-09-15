@@ -99,6 +99,33 @@ def format_unit_cost(total_price_paid: Decimal, quantity_purchased_base: Decimal
     return f"{format_brl(unit_cost(total_price_paid, quantity_purchased_base) * factor)}/{label}"
 
 
+def _pct(rate: Decimal) -> str:
+    """"10%", not "10.00%": she reads it out loud."""
+    return f"{(rate * 100).quantize(Decimal(1), rounding=ROUND_HALF_UP)}%"
+
+
+def cost_chain_display(recipe_cmv_value: Decimal, yield_portions: int, per_portion: Decimal) -> str:
+    """The account of the cost per portion, as Dona Maria would redo it (probes A and B)."""
+    return f"{format_brl(recipe_cmv_value)} ÷ {yield_portions} porções = {format_brl(per_portion)} por porção"
+
+
+def min_price_chain_display(per_portion: Decimal, fee_rate: Decimal) -> str:
+    keep = (Decimal(1) - fee_rate).quantize(Decimal("0.01"))
+    return (f"{format_brl(per_portion)} ÷ {str(keep).replace('.', ',')} = {format_brl_min(min_price(per_portion, fee_rate))}, "
+            f"porque o iFood fica com {_pct(fee_rate)}")
+
+
+def profit_chain_display(display_price: Decimal, owner_receives: Decimal, per_portion: Decimal, fee_rate: Decimal) -> str:
+    profit = owner_receives - per_portion
+    return (f"{format_brl(display_price)} − {_pct(fee_rate)} = {format_brl(owner_receives)}; "
+            f"{format_brl(owner_receives)} − {format_brl(per_portion)} = {format_brl(profit)} de lucro por porção")
+
+
+def promotion_chain_display(price: Decimal, discount_pct: Decimal, promo_price: Decimal, profit: Decimal) -> str:
+    return (f"{format_brl(price)} − {_pct(discount_pct)} = {format_brl(promo_price)}, "
+            f"lucro {format_brl(profit)} por porção")
+
+
 @dataclass(frozen=True)
 class Alert:
     code: str

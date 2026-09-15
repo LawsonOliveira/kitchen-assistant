@@ -21,8 +21,9 @@ from kitchen_ledger import db
 from kitchen_ledger.measures import MissingConversionError, UnconfirmedMeasureError, resolve_measure
 from kitchen_ledger.pantry_import import IngredientRecord, PantryImportError, diff, load_records, plain
 from kitchen_ledger.pricing import (
-    cmv_per_portion, format_brl, format_brl_min, format_unit_cost, min_price, min_price_with_packaging,
-    price_alerts, price_scenarios, recipe_cmv, unit_cost,
+    cmv_per_portion, cost_chain_display, format_brl, format_brl_min, format_unit_cost, min_price,
+    min_price_chain_display, min_price_with_packaging, price_alerts, price_scenarios, profit_chain_display,
+    promotion_chain_display, recipe_cmv, unit_cost,
 )
 from kitchen_ledger.units import NonPositiveQuantityError, UnknownUnitError, parse_unit, to_base
 
@@ -590,7 +591,10 @@ def compute_dish_cost(conn, dish_id: int | None = None, recipe: dict | None = No
         "recipe_cmv_display": format_brl(cost["recipe_cmv"]),
         "yield_portions": yield_portions,
         "cmv_per_portion_display": format_brl(per_portion),
+        # The account itself is a display string, so Dona Sálvia can show it without writing arithmetic of her own (D12).
+        "cost_chain_display": cost_chain_display(cost["recipe_cmv"], yield_portions, per_portion),
         "min_price_display": format_brl_min(min_price(per_portion, FEE_RATE)),
+        "min_price_chain_display": min_price_chain_display(per_portion, FEE_RATE),
         "packaging_unit_cost_display": None if packaging is None else format_brl(packaging),
         "min_price_with_packaging_display": None if packaging is None else format_brl_min(min_price_with_packaging(per_portion, packaging, FEE_RATE)),
         "scenarios": [{
@@ -598,6 +602,7 @@ def compute_dish_cost(conn, dish_id: int | None = None, recipe: dict | None = No
             "display_price": format_brl(s.display_price),
             "owner_receives_display": format_brl(s.owner_receives),
             "profit_display": format_brl(s.profit),
+            "profit_chain_display": profit_chain_display(s.display_price, s.owner_receives, per_portion, FEE_RATE),
             "profit_after_packaging_display": None if s.profit_after_packaging is None else format_brl(s.profit_after_packaging),
             "margin_display": f"{(s.margin_on_sale * 100).quantize(Decimal('0.1'), rounding=ROUND_HALF_UP)}%".replace(".", ","),
             "below_min": s.below_min,
@@ -658,6 +663,7 @@ def simulate_promotion(conn, dish_id: int, discount_pct) -> dict:
     promo_price = dish["selected_price"] * (Decimal(1) - discount)
     profit = promo_price * (Decimal(1) - FEE_RATE) - per_portion
     return {"promo_price_display": format_brl(promo_price), "profit_display": format_brl(profit),
+            "promotion_chain_display": promotion_chain_display(dish["selected_price"], discount, promo_price, profit),
             "margin_display": f"{(profit / promo_price * 100).quantize(Decimal('0.1'), rounding=ROUND_HALF_UP)}%".replace(".", ","),
             "below_min": promo_price < min_price(per_portion, FEE_RATE)}
 
