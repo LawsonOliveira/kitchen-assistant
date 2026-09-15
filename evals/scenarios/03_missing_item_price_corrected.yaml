@@ -26,6 +26,8 @@ facts_to_reveal_only_if_asked:
   - topic: "launch batch size"
     answer: "4 porções no lançamento."
 clarify_answers:
+  - question_contains: ["aceitar"]  # accepting a dish is a decision, not a purchase, even when it says "R$ 0,00 pra comprar"
+    choice: "Confirmar"
   - question_contains: ["compra"]
     choice: "Cancelar"
   - default: "Confirmar"
