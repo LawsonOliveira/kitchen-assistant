@@ -136,15 +136,16 @@ def test_a_trial_records_which_guard_blocked_a_turn():
                                            {"kind": "guard_output", "at": "23:50:00", "trace_id": "t2"}]
 
 
-def test_the_report_requires_a_judge_mean_of_four_in_every_criterion():
-    # Owner's bar (2026-09-14): at least 4 in each rubric criterion, not only overall. The first complete run had
-    # didactic clarity at 1-2 in almost every trial while its deterministic checks passed.
+def test_the_report_requires_a_judge_mean_of_three_and_a_half_in_every_criterion():
+    # Owner's bar, lowered from 4.0 on 2026-09-15 after three probe rounds: the run averages at least 3.5 in each
+    # rubric criterion, and no scenario averages below 3.0 in any of them.
+    assert runner.THRESHOLDS["judge_criterion_mean"] == 3.5
     trials = [{"judge": {"scores": {"didactic_clarity": 3, "tone": 5}, "mean": 4.0}},
-              {"judge": {"scores": {"didactic_clarity": 5, "tone": 5}, "mean": 5.0}}]
-    assert runner.judge_criterion_means(trials) == {"didactic_clarity": 4.0, "tone": 5.0}
+              {"judge": {"scores": {"didactic_clarity": 4, "tone": 5}, "mean": 4.5}}]
+    assert runner.judge_criterion_means(trials) == {"didactic_clarity": 3.5, "tone": 5.0}
     assert runner.criteria_meet_bar(trials) is True
     weak = trials + [{"judge": {"scores": {"didactic_clarity": 2, "tone": 4}, "mean": 3.0}}]
-    assert runner.judge_criterion_means(weak)["didactic_clarity"] == pytest.approx(3.333, abs=0.001)
+    assert runner.judge_criterion_means(weak)["didactic_clarity"] == pytest.approx(3.0, abs=0.001)
     assert runner.criteria_meet_bar(weak) is False
 
 
