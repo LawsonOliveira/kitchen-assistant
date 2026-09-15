@@ -14,7 +14,7 @@
             --node: #262a31; --active: #ff922b; --ok: #51cf66; --error: #ff6b6b; --blocked: #fcc419; --edge: #495057; }
   }
   * { box-sizing: border-box; }
-  body { margin: 0; padding: 16px; background: var(--bg); color: var(--ink);
+  body { margin: 0; padding: 12px; max-width: 560px; background: var(--bg); color: var(--ink);
          font: 14px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
   header { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 12px; }
   h1 { font-size: 18px; margin: 0 12px 0 0; }
@@ -22,8 +22,12 @@
            border: 1px solid var(--line); background: var(--panel); color: var(--muted); }
   .badge::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
   .badge.ok::before { background: var(--ok); } .badge.error::before { background: var(--error); }
-  .grid { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 1fr); gap: 12px; }
-  @media (max-width: 900px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+  /* Portrait by design: the cockpit shares the screen with the Hermes CLI, so it never spreads sideways. */
+  .grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  body.wide { max-width: none; }
+  body.wide .grid { grid-template-columns: minmax(0, 3fr) minmax(0, 1fr); }
+  #layout-toggle { font: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--line);
+                   border-radius: 999px; padding: 3px 10px; cursor: pointer; }
   .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px; min-width: 0; }
   .panel h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 0 0 8px; }
   svg { width: 100%; height: auto; display: block; }
@@ -57,13 +61,14 @@
   <span id="badge-stream" class="badge">Eventos</span>
   <span id="badge-langfuse" class="badge">Langfuse</span>
   <span id="badge-guardrails" class="badge">Guardrails</span>
+  <button id="layout-toggle" type="button" title="alterna entre a pilha vertical e a fita horizontal">⇄ deitar</button>
   <a id="langfuse-link" href="#" target="_blank" rel="noopener">abrir Langfuse</a>
 </header>
 
 <div class="grid">
   <section class="panel">
     <h2>Pipeline do turno</h2>
-    <svg viewBox="0 0 960 280" role="img" aria-label="Pipeline: guarda de entrada, Dona Sálvia, especialistas, pesquisador, MCP, guarda de saída">
+    <svg id="pipeline" viewBox="0 0 340 530" role="img" aria-label="Pipeline: guarda de entrada, Dona Sálvia, especialistas, pesquisador, MCP, guarda de saída">
       <defs>
         <marker id="arrow" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
           <path d="M0,0 L10,5 L0,10 z" fill="var(--edge)"></path>
@@ -71,14 +76,14 @@
       </defs>
       <g id="edges"></g>
       <g id="nodes">
-        <g class="node" data-node="guard_input" data-x="70" data-y="140" data-label="guarda de entrada"></g>
-        <g class="node" data-node="orchestrator" data-x="230" data-y="140" data-label="Dona Sálvia"></g>
-        <g class="node" data-node="recipe_expert" data-x="440" data-y="50" data-label="receitas"></g>
-        <g class="node" data-node="cost_expert" data-x="440" data-y="140" data-label="custos"></g>
-        <g class="node" data-node="marketing_expert" data-x="440" data-y="230" data-label="marketing"></g>
-        <g class="node" data-node="researcher" data-x="660" data-y="70" data-label="pesquisador"></g>
-        <g class="node" data-node="mcp" data-x="660" data-y="210" data-label="kitchen-ledger"></g>
-        <g class="node" data-node="guard_output" data-x="880" data-y="140" data-label="guarda de saída"></g>
+        <g class="node" data-node="guard_input" data-vx="170" data-vy="34" data-hx="70" data-hy="140" data-label="guarda de entrada"></g>
+        <g class="node" data-node="orchestrator" data-vx="170" data-vy="124" data-hx="230" data-hy="140" data-label="Dona Sálvia"></g>
+        <g class="node" data-node="recipe_expert" data-vx="56" data-vy="232" data-hx="440" data-hy="50" data-label="receitas"></g>
+        <g class="node" data-node="cost_expert" data-vx="170" data-vy="232" data-hx="440" data-hy="140" data-label="custos"></g>
+        <g class="node" data-node="marketing_expert" data-vx="284" data-vy="232" data-hx="440" data-hy="230" data-label="marketing"></g>
+        <g class="node" data-node="researcher" data-vx="105" data-vy="340" data-hx="660" data-hy="70" data-label="pesquisador"></g>
+        <g class="node" data-node="mcp" data-vx="235" data-vy="340" data-hx="660" data-hy="210" data-label="kitchen-ledger"></g>
+        <g class="node" data-node="guard_output" data-vx="170" data-vy="448" data-hx="880" data-hy="140" data-label="guarda de saída"></g>
       </g>
     </svg>
     <div class="turn" id="turn">Aguardando o primeiro turno…</div>
@@ -106,12 +111,14 @@
 // guard_input → orchestrator → experts → researcher → MCP → guard_output.
 const NODES = {};
 for (const g of document.querySelectorAll("[data-node]")) {
-  NODES[g.dataset.node] = { x: Number(g.dataset.x), y: Number(g.dataset.y), label: g.dataset.label, g };
+  NODES[g.dataset.node] = { label: g.dataset.label, g,
+    vertical: { x: Number(g.dataset.vx), y: Number(g.dataset.vy) },
+    horizontal: { x: Number(g.dataset.hx), y: Number(g.dataset.hy) } };
 }
 const EXPERTS = ["recipe_expert", "cost_expert", "marketing_expert"];
 const EDGES = [["guard_input", "orchestrator"], ["orchestrator", "guard_output"], ["orchestrator", "mcp"],
   ...EXPERTS.map((e) => ["orchestrator", e]), ...EXPERTS.map((e) => [e, "researcher"]), ...EXPERTS.map((e) => [e, "mcp"])];
-const W = 120, H = 44, SVG = "http://www.w3.org/2000/svg";
+const SVG = "http://www.w3.org/2000/svg";
 const MAX_ROWS = 200, PULSE_MS = 2500;
 
 function svg(tag, attrs, parent) {
@@ -121,19 +128,41 @@ function svg(tag, attrs, parent) {
   return el;
 }
 
-const edgeEls = {};
-for (const [from, to] of EDGES) {
-  const a = NODES[from], b = NODES[to];
-  const dx = b.x - a.x, dy = b.y - a.y, len = Math.hypot(dx, dy);
-  const trimX = (dx / len) * (W / 2 + 4), trimY = (dy / len) * (H / 2 + 4);
-  edgeEls[`${from}>${to}`] = svg("line", { class: "edge", x1: a.x + trimX, y1: a.y + trimY, x2: b.x - trimX, y2: b.y - trimY },
-    document.getElementById("edges"));
+// Two layouts for the same pipeline: vertical by default, because the cockpit shares the screen with the Hermes CLI.
+const LAYOUTS = { vertical: { box: "0 0 340 530", w: 104, h: 40 }, horizontal: { box: "0 0 960 280", w: 120, h: 44 } };
+const edgeEls = {}, nodeEls = {};
+let W = LAYOUTS.vertical.w, H = LAYOUTS.vertical.h;
+
+function draw(name) {
+  const layout = LAYOUTS[name] || LAYOUTS.vertical;
+  W = layout.w; H = layout.h;
+  document.querySelector("#pipeline").setAttribute("viewBox", layout.box);
+  const edges = document.getElementById("edges");
+  edges.replaceChildren();
+  for (const [from, to] of EDGES) {
+    const a = NODES[from][name], b = NODES[to][name];
+    const dx = b.x - a.x, dy = b.y - a.y, len = Math.hypot(dx, dy);
+    const trimX = (dx / len) * (W / 2 + 4), trimY = (dy / len) * (H / 2 + 4);
+    edgeEls[`${from}>${to}`] = svg("line", { class: "edge", x1: a.x + trimX, y1: a.y + trimY, x2: b.x - trimX, y2: b.y - trimY }, edges);
+  }
+  for (const [id, node] of Object.entries(NODES)) {
+    const { x, y } = node[name];
+    const sub = nodeEls[id] ? nodeEls[id].sub.textContent : "";
+    node.g.replaceChildren();
+    svg("rect", { x: x - W / 2, y: y - H / 2, width: W, height: H, rx: 10 }, node.g);
+    svg("text", { x, y: y - 6 }, node.g).textContent = node.label;
+    nodeEls[id] = { g: node.g, sub: svg("text", { x, y: y + 11, class: "sub" }, node.g) };
+    nodeEls[id].sub.textContent = sub;
+  }
 }
-const nodeEls = {};
-for (const [id, n] of Object.entries(NODES)) {
-  svg("rect", { x: n.x - W / 2, y: n.y - H / 2, width: W, height: H, rx: 10 }, n.g);
-  svg("text", { x: n.x, y: n.y - 6 }, n.g).textContent = n.label;
-  nodeEls[id] = { g: n.g, sub: svg("text", { x: n.x, y: n.y + 11, class: "sub" }, n.g) };
+
+let layoutName = localStorage.getItem("cockpit-layout") === "horizontal" ? "horizontal" : "vertical";
+function applyLayout(name) {
+  layoutName = name;
+  localStorage.setItem("cockpit-layout", name);
+  document.body.classList.toggle("wide", name === "horizontal");
+  document.getElementById("layout-toggle").textContent = name === "vertical" ? "⇄ deitar" : "⇅ empilhar";
+  draw(name);
 }
 
 const timers = {}, running = {};
@@ -249,6 +278,8 @@ function handle(e) {
 }
 
 document.getElementById("langfuse-link").href = `${location.protocol}//${location.hostname}:3000`;
+document.getElementById("layout-toggle").onclick = () => applyLayout(layoutName === "vertical" ? "horizontal" : "vertical");
+applyLayout(layoutName);
 const stream = new EventSource("/stream");
 stream.onopen = () => setBadge("badge-stream", "ok", "conectado ao cockpit");
 stream.onerror = () => setBadge("badge-stream", "error", "reconectando…");
