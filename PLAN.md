@@ -2505,6 +2505,16 @@ evidence, what was changed, and where. Open questions that were "default applied
   The owner's decision on how to finish: keep scenario 01's three trials, discard the trials of 02-06, and resume the
   same run directory so the report covers 27 trials of the corrected system.
 
+- **C87 — The refusal loop the write guard could not see.** Run `20260915-095503-final`, scenario 03 trial 2: the
+  candidate needed pimenta-do-reino, Dona Maria cancelled the purchase, and Dona Sálvia asked the very same question
+  again, word for word, three times — telling her each time "pode ser aquele probleminha no aplicativo". 147 messages,
+  28 minutes, nothing decided. C84 had taught the click guard to answer a refusal as her decision, but only on the
+  write path: repeating the question itself passed through no guard. Test first: the click ledger now remembers the
+  questions answered Cancelar in the session and blocks a clarify that repeats one word for word, telling the model to
+  act on the no or ask something different. Narrow on purpose — exact text, same session — so a reworded question
+  still reaches her and the guard never decides for her. The owner asked to apply it at once and continue the run from
+  scenario 03's second trial.
+
 ## Post-loop changes (owner requests, 2026-09-13)
 Requested by the owner while Loops 6–8 were running, test-first, each recorded as a correction. **Order decided by the
 owner:** Loop 6 pauses; Loop 7 (the owner's Telegram checks) and Loop 8 finish, then PL1–PL9, then Loop 6 resumes and
