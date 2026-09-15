@@ -125,6 +125,22 @@ def test_a_to_taste_ingredient_missing_from_the_pantry_lowers_the_coverage(conn)
     assert coverage == [100, 50]
 
 
+def test_the_same_name_with_a_changed_recipe_is_the_same_dish_revised(conn):
+    # Full run 20260915-061131, scenario 01 trial 1: Dona Maria took the fermento out and put cebolinha in, Dona Sálvia
+    # registered the corrected recipe, and idempotency handed back the old one — "o sistema não deixa repetir esse
+    # nome". She spent four turns inventing names ("Omelete de Frango com Cebolinha Fresca") and the dish was never
+    # accepted or priced. A retry repeats a recipe; a revision changes it, and it is still the same candidate.
+    first = operations.register_candidate_dish(conn, make_recipe(RICE, name="Omelete de Frango"), yield_portions=4,
+                                               launch_batch_portions=10, evidence=EVIDENCE)["dish_id"]
+    revised = make_recipe([ingredient("Arroz branco tipo 1", 400, "g"), ingredient("Cebolinha", 20, "g")],
+                          name="Omelete de Frango")
+    again = operations.register_candidate_dish(conn, revised, yield_portions=4, launch_batch_portions=10, evidence=EVIDENCE)
+    assert again["dish_id"] == first
+    assert conn.execute("SELECT count(*) FROM dishes WHERE lower(name) = 'omelete de frango'").fetchone()[0] == 1
+    stored = conn.execute("SELECT recipe FROM dishes WHERE id = %s", (first,)).fetchone()[0]
+    assert [line["ingredient"] for line in stored["ingredients"]] == ["Arroz branco tipo 1", "Cebolinha"]
+
+
 def test_registering_the_same_recipe_twice_returns_the_dish_it_already_has(conn):
     # Probe A, scenario 09: the orchestrator's contract client retries a request once when the expert answers off
     # contract (validation.call_with_contract), and the expert had already written the dish. Two "Frango ao molho de
