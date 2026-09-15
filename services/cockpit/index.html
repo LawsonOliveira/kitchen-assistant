@@ -22,7 +22,7 @@
            border: 1px solid var(--line); background: var(--panel); color: var(--muted); }
   .badge::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
   .badge.ok::before { background: var(--ok); } .badge.error::before { background: var(--error); }
-  /* Portrait by design: the cockpit shares the screen with the Hermes CLI, so it never spreads sideways. */
+  /* One column in both layouts: the pipeline first, the business state under it, the timeline last. */
   .grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
   body.wide { max-width: none; padding: 16px; font-size: 14px; }
   /* 200px wide: the boxes carry a name and nothing else, and the table keeps only what fits. */
@@ -35,7 +35,6 @@
   body:not(.wide) th:nth-child(8), body:not(.wide) td:nth-child(8),
   body:not(.wide) th:nth-child(9), body:not(.wide) td:nth-child(9) { display: none; }
   body:not(.wide) .turn { gap: 8px; font-size: 11px; }
-  body.wide .grid { grid-template-columns: minmax(0, 3fr) minmax(0, 1fr); }
   #layout-toggle { font: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--line);
                    border-radius: 999px; padding: 3px 10px; cursor: pointer; }
   .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px; min-width: 0; }
