@@ -609,6 +609,19 @@ day one. Loop 0 is still an end-to-end flow, and the pure costs core is testable
 Rejected: tests after implementation. Why: tests written after the code get shaped around what the code
 already does. Expected values come from the brief, `CLAUDE.md` or hand computation written in this plan.
 
+**D47 — A rule that must hold lives in code, not in the prompt.** Measured three times over 2026-09-15: a rule
+written in `SOUL.md` and ignored by the model costs a failed trial every time, while the same rule enforced by the
+ledger or the guard simply holds. Four rules moved: `register_candidate_dish` is idempotent by name (a retried
+request cannot create a second dish) and treats a changed recipe as a revision of the same candidate;
+`compute_dish_cost` refuses a dish whose requirements are still open, naming what to ask her; the click guard tells
+the model that a Cancelar is her decision, not a failure; and the account behind every number — the ledger returns
+`cost_chain_display`, `min_price_chain_display`, `profit_chain_display` and `promotion_chain_display`, and the guard
+puts the right one in front of the question that shows its result, through Hermes' `pre_tool_call` "modify"
+directive. Rejected: asking the model again with a stronger sentence — three rounds of exactly that left didactic
+clarity at 2.33-2.78, and the first run with the account injected scored 3.80. Rejected too: blocking the reply when
+the account is missing, which would cost a model round trip and could end the conversation (the claim block already
+showed how that reads to Dona Maria).
+
 **D45 — Publishing is manual and last.** No loop creates a GitHub remote; the owner publishes and
 submits (see *Final manual step*).
 

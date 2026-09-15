@@ -325,6 +325,16 @@ Cada item: a decisão, a alternativa rejeitada e o porquê. O detalhe está em *
   README.** Rejeitado: monólito primeiro.
 - **D44 — Testes antes da implementação em todo loop.** No `git log`, cada `test:` com o resumo da execução vermelha
   vem antes do `feat:`.
+- **D47 — Regra que precisa valer mora no código, não no prompt.** Medido três vezes em 15/09: regra escrita na
+  `SOUL.md` e ignorada pelo modelo custa uma tentativa perdida; a mesma regra no ledger ou no guard simplesmente vale.
+  Foram movidas quatro: registrar a mesma receita duas vezes devolve o prato que já existe (um *retry* não cria prato
+  novo) e uma receita alterada vira revisão do mesmo candidato; calcular custo com requisito em aberto é recusado, com
+  a lista do que perguntar; um **Cancelar** é anunciado ao modelo como decisão dela, não falha; e a conta de cada
+  número vem pronta do ledger (`cost_chain_display`, `min_price_chain_display`, `profit_chain_display`,
+  `promotion_chain_display`) e o guard a coloca na frente da pergunta que mostra o resultado, via diretiva `modify` do
+  `pre_tool_call`. Rejeitado: pedir de novo ao modelo com uma frase mais forte — três rodadas assim deixaram a clareza
+  didática em 2,33–2,78, e a primeira rodada com a conta injetada deu 3,80. Rejeitado também: bloquear a resposta sem
+  conta, que custaria uma ida ao modelo e pode matar a conversa (o bloqueio de alegação já mostrou como isso soa).
 - **D45 — Publicação manual e por último,** feita pela dona.
 - **D46 — Acesso aos modelos pelas credenciais do Claude Code (dona).** Rejeitado: chave da Anthropic Console.
 
@@ -335,12 +345,15 @@ Cada item: a decisão, a alternativa rejeitada e o porquê. O detalhe está em *
   - falha de infraestrutura responde "Tive um probleminha técnico, tenta de novo em instantes".
 - **Verificador de saída:** todo `R$` precisa ter vindo de um display string do MCP ou da mensagem da própria dona.
   Depois vem a política: escopo, vazamento de instruções, alegações de saúde ou "orgânico", comparação com
-  concorrentes. `uncertain` bloqueia.
+  concorrentes. `uncertain` bloqueia. Cada motivo tem sua mensagem: número sem lastro pede um instante para conferir
+  a conta, alegação avisa que o texto do cardápio será reescrito, o resto responde fora de escopo.
 - **Guard de memória:** só `allow` grava.
 - **Allowlist de ferramentas** por agente em `pre_tool_call`.
 - **Registro de cliques:**
   - uma escrita que exige confirmação só sai se o último `clarify` da sessão teve **Confirmar** ainda não usado;
-  - um pedido recusado antes de ser enviado devolve o clique.
+  - um pedido recusado antes de ser enviado devolve o clique;
+  - se o último `clarify` foi respondido **Cancelar**, a mensagem diz isso ao modelo — decisão dela, não falha — e
+    manda agir sobre o não em vez de repetir a pergunta.
 - **Teto de custo por turno** entre agentes.
 - **Fail-open vs fail-closed:** hooks e middleware do Hermes falham **abertos**; só `pre_tool_call` falha fechado. Por
   isso cada guard envolve o próprio corpo e devolve um bloqueio em qualquer exceção. `make chat` recusa abrir a CLI se o
