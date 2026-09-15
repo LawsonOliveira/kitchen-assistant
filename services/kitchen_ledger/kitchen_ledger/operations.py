@@ -652,6 +652,20 @@ def _alerts_for_accepted_dishes(conn) -> list[dict]:
     return alerts
 
 
+def correct_pantry_stock(conn, ingredient_name: str, quantity, unit: str, evidence: str) -> dict:
+    """What she says is in her pantry right now (full run, scenario 03): the spreadsheet can be out of date, and saying
+    so is a correction — never a purchase, so the budget and the shopping list stay untouched."""
+    quantity_base, base_unit = _quantity_base(quantity, unit)
+    # She may have something the spreadsheet never listed, so the ingredient is created when it is new (as the import does).
+    row = _ingredient_or_create(conn, ingredient_name, "food", base_unit)
+    if base_unit != row["base_unit"]:
+        raise DomainError("incompatible_units", f"{ingredient_name!r} is measured in {row['base_unit']}", ingredient=ingredient_name)
+    with conn.transaction():  # every call is already written to audit_log by the server, with her words as evidence
+        db.upsert_pantry_stock(conn, row["id"], quantity_base)
+    return {"ingredient": ingredient_name, "stock_display": _quantity_display(quantity_base, base_unit),
+            "alerts": _alerts_for_accepted_dishes(conn)}
+
+
 def correct_price(conn, ingredient_name: str, total_price_paid, quantity, unit: str, evidence: str) -> dict:
     row = _ingredient(conn, ingredient_name)
     quantity_base, base_unit = _quantity_base(quantity, unit)

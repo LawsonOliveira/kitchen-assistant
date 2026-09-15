@@ -31,7 +31,7 @@ TOOL_PERMISSIONS = {
     },
     "cost_expert": READ_TOOLS | {
         "compute_dish_cost", "check_budget_fit", "simulate_promotion", "record_price_quote", "set_dish_packaging",
-        "register_purchase", "adjust_budget", "correct_price", "set_conversion_factor", "select_price_scenario",
+        "register_purchase", "adjust_budget", "correct_price", "correct_pantry_stock", "set_conversion_factor", "select_price_scenario",
         "import_pantry",
     },
     "marketing_expert": READ_TOOLS | {"save_menu_copy", "register_promotion"},
