@@ -2398,6 +2398,18 @@ evidence, what was changed, and where. Open questions that were "default applied
   calls, which really is about money. Done before probe B, at the owner's decision, so every eval that counts runs on
   the final names; probe A was discarded and restarted.
 
+- **C80 — Probe A (`20260914-224802-probeA`), one trial per scenario.** Eight of nine passed; the judge's means were
+  didactic clarity 2.67 (1 in scenario 07, 2 in 01 and 04), clarity of numbers 3.56 (2 in 05), owner decides 4.78 and
+  tone 4.56 (3 in 02, which asked 27 questions). Three faults were fixed test-first before probe B:
+  (a) scenario 09 failed "a rejected dish never came back as a new candidate" because the A2A client retries a request
+  once when the peer answers off contract and the write had already landed — `register_candidate_dish` is now
+  idempotent by name and refuses a name she rejected, since no prompt can promise not to repeat a write;
+  (b) the retry itself came from recipe_expert answering with more than the five `questions_for_owner` its contract
+  accepts, so every expert's contract line now states the cap, read from the schema by the test;
+  (c) didactic clarity collapses exactly where the money is born inside a clarify, and the rule written after the last
+  run asked for the account "before the options", which never happens because Dona Sálvia writes no reply there — the
+  account now goes inside the question itself, price and promotion alike.
+
 ## Post-loop changes (owner requests, 2026-09-13)
 Requested by the owner while Loops 6–8 were running, test-first, each recorded as a correction. **Order decided by the
 owner:** Loop 6 pauses; Loop 7 (the owner's Telegram checks) and Loop 8 finish, then PL1–PL9, then Loop 6 resumes and
