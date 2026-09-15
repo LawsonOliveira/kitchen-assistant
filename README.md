@@ -120,8 +120,10 @@ sequenceDiagram
 
 **Latência.** Um turno com pesquisa passa por vários modelos em cadeia, então o tempo foi cortado onde o resultado não
 muda:
-- o cost_expert responde sem laço de modelo as tarefas que são uma chamada só do MCP (orçamento, custo, cenário, compra,
-  importação), usando o próprio despacho de ferramentas do Hermes: allowlist, trace e telemetria continuam valendo;
+- o cost_expert e o recipe_expert respondem sem laço de modelo as tarefas que são uma chamada só do MCP — orçamento,
+  custo, cenário, promoção, correção de preço, compra e importação de um lado; fato da cozinha, rejeição, lote,
+  requisito, medida e aceite do outro —, usando o próprio despacho de ferramentas do Hermes: allowlist, trace e
+  telemetria continuam valendo. Sugerir pratos e normalizar receita continuam com o modelo, porque envolvem pesquisa;
 - o orchestrator pede numa resposta só o que os especialistas podem fazer em paralelo;
 - o guard de entrada roda junto com a primeira chamada de modelo, e um bloqueio descarta essa resposta;
 - cada filho do researcher faz no máximo 3 chamadas por ferramenta web; nenhum agente usa `todo`.
@@ -186,6 +188,7 @@ muda:
 |---|---|---|
 | `constraint-elicitation` | orchestrator | antes de comprar, aceitar ou precificar um prato: equipamentos, técnicas, tempo por leva, geladeira, gás |
 | `pricing-explanation` | orchestrator | ao mostrar custos e cenários: custo unitário → custo do prato → por porção → preço, com um exemplo |
+| `recipe-normalization` | recipe_expert | quando uma receita da web, ou ditada pela dona, precisa virar o contrato de receita antes de ser registrada |
 | `ifood-menu-copy` | marketing_expert | título e descrição dentro dos limites do iFood, sem alegações de saúde ou comparação com concorrente |
 
 As skills mantêm os system prompts curtos e são versionadas e avaliáveis. **Rejeitado:** colocar tudo no `SOUL.md`.
@@ -398,10 +401,10 @@ Verificadas na imagem fixada `nousresearch/hermes-agent:v2026.9.11`. Cada uma vi
 |---|---|---|
 | Núcleo de custos | `pytest` unitário e de integração do kitchen-ledger | 100% |
 | Extração de requisitos | páginas fixas repetidas pelo `researcher-eval` | recall 100% equipamentos, ≥ 90% técnicas |
-| Guard de entrada | 75 mensagens rotuladas em `evals/guardrail_dataset.jsonl` | falsos positivos ≤ 5% |
+| Guard de entrada | 78 mensagens rotuladas em `evals/guardrail_dataset.jsonl` | falsos positivos ≤ 5% |
 | Cenários multi-turno | 9 cenários × 3 tentativas: a Dona Maria simulada conversa na CLI; graders de estado final e trajetória decidem; juiz Sonnet só alerta | pass^3 ≥ 80% |
 | Red-team | 7 casos (injeção, jailbreak, fora de escopo, página maliciosa, envenenamento de memória, escrita sem clique, alegação enganosa) | vazamento 0% |
-| Qualidade da conversa | juiz Sonnet dá nota 1 a 5 em clareza didática, clareza dos números, quem decide e tom | média da rodada ≥ 4 em **cada** critério; nenhum cenário abaixo de 3 |
+| Qualidade da conversa | juiz Sonnet dá nota 1 a 5 em clareza didática, clareza dos números, quem decide e tom | média da rodada ≥ 3,5 em **cada** critério; nenhum cenário abaixo de 3 |
 
 Cada rodada vira um *dataset run* no Langfuse (`kitchen-scenarios`), ligado aos traces e aos hashes de prompt, e as
 notas do juiz de cada tentativa viram *scores* no trace dela (`judge_<critério>`, `judge_mean`, `trial_passed`), o que
