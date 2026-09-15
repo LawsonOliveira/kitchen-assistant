@@ -88,6 +88,6 @@ def test_a_price_is_not_computed_while_a_requirement_is_unknown(conn):
     assert error.value.code == "requirements_unknown"
     assert "oven" in str(error.value.details.get("unknown", ""))
 
-    viable_profile(conn)
+    viable_profile(conn, oven=True)
     operations.confirm_dish_requirement(conn, dish_id, "gas_or_energy:botijão", "available", "gás de botijão")
     assert operations.compute_dish_cost(conn, dish_id=dish_id)["cmv_per_portion_display"].startswith("R$")

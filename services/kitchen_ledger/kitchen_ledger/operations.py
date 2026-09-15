@@ -567,6 +567,12 @@ def _dish_cost(conn, dish: dict) -> dict:
 def compute_dish_cost(conn, dish_id: int | None = None, recipe: dict | None = None) -> dict:
     if dish_id is not None:
         dish = _dish(conn, dish_id)
+        # A price for a dish she may not be able to cook wastes her decision (D25, probe C scenario 09): the rule was
+        # only in the orchestrator's prompt, and it skipped it.
+        open_requirements = _viability(conn, dish_id)
+        if open_requirements["unknown"] or open_requirements["missing"]:
+            raise DomainError("requirements_unknown", "ask the owner about these requirements before pricing the dish",
+                              dish_id=dish_id, **open_requirements)
         cost, yield_portions = _dish_cost(conn, dish), dish["yield_portions"]
     elif recipe is not None:
         errors = list(RECIPE_VALIDATOR.iter_errors(recipe))
