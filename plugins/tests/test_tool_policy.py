@@ -45,8 +45,24 @@ def test_an_unknown_role_is_allowed_nothing():
     assert tool_policy.decide("", "clarify") == {"action": "block", "message": tool_policy.BLOCKED_MESSAGE}
 
 
-def clarify_single(answer):
-    return json.dumps({"question": "Confirma a compra?", "choices_offered": ["Confirmar", "Cancelar"], "user_response": answer})
+def clarify_single(answer, question="Confirma a compra?"):
+    return json.dumps({"question": question, "choices_offered": ["Confirmar", "Cancelar"], "user_response": answer})
+
+
+def test_the_same_question_is_not_asked_again_after_a_cancelar():
+    # Full run 20260915-095503, scenario 03 trial 2: "Registrar a compra de 1 potinho de pimenta-do-reino (30 g) por
+    # R$ 4,89?" was asked, cancelled, and asked again word for word — three times — and Dona Maria heard "pode ser
+    # aquele probleminha no aplicativo". 147 messages, nothing decided. Her no is an answer; asking it again is not.
+    ledger = tool_policy.ClickLedger()
+    question = "Registrar a compra de 1 potinho de pimenta-do-reino (30 g) por R$ 4,89?"
+    ledger.record_clarify("s1", clarify_single("Cancelar", question=question))
+    again = {"questions": [{"question": question, "choices": ["Confirmar", "Cancelar"]}]}
+    blocked = tool_policy.check_repeat(ledger, "s1", "clarify", again)
+    assert blocked["action"] == "block" and "Cancelar" in blocked["message"]
+
+    other = {"questions": [{"question": "Quer reduzir o lote pra não precisar comprar?", "choices": ["Sim", "Não"]}]}
+    assert tool_policy.check_repeat(ledger, "s1", "clarify", other) is None
+    assert tool_policy.check_repeat(ledger, "s2", "clarify", again) is None  # another session never heard it
 
 
 def test_a_refusal_is_answered_as_her_decision_not_as_a_failure():
