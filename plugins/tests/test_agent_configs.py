@@ -152,3 +152,10 @@ def test_the_contract_shows_the_account_of_each_kind_of_number():
     for example in ("r$ 24,90 ÷ 5 kg = r$ 4,98/kg", "r$ 80,00 − r$ 47,50", "÷ 0,90", "− 15% ="):
         assert example in soul, example
     assert "offering to detail it later never replaces that line" in soul
+
+
+def test_the_closing_line_carries_state_not_bare_numbers():
+    # Probe of 20:34, scenario 07 (didactic clarity 1): the replies were lists of results — "Custo: R$ 2,72 por porção /
+    # Lucro: R$ 6,19 / Preço promo: R$ 8,91" — with no account anywhere. The closing line invites exactly that.
+    soul = " ".join((AGENTS / "orchestrator" / "SOUL.md").read_text().replace("*", "").split()).lower()
+    assert "the closing line names what is done and what is missing, never numbers" in soul
