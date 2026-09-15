@@ -31,6 +31,17 @@ def test_policy_block_or_uncertain_blocks(verdict):
     assert output_guard.review("Esse prato emagrece!", grounding(), FakeClassifier(verdict), platform="telegram") == SCOPE_BLOCK_MESSAGE
 
 
+@pytest.mark.parametrize("category", ["claim", "health claim", "nutrition_claim"])
+def test_a_blocked_claim_says_what_happened_instead_of_the_scope_message(category):
+    # Probe B, scenario 01: the marketing text said the dish was "nutritiva", the policy blocked the whole reply, and
+    # Dona Maria read "Só consigo te ajudar com cozinha e cardápio" right after fixing her price. The journey died
+    # there. A claim is not an off-topic message, and she should hear that the text is being rewritten.
+    reply = output_guard.review("Uma refeição simples e nutritiva", grounding(), FakeClassifier("block", category),
+                                platform="cli")
+    assert reply == messages.CLAIM_BLOCK_MESSAGE
+    assert reply != SCOPE_BLOCK_MESSAGE
+
+
 @pytest.mark.parametrize("error", [GuardInfraError("timeout"), RuntimeError("bug")])
 def test_policy_failure_blocks_with_the_infra_message(error):
     assert output_guard.review("Oi, Dona Maria!", grounding(), FakeClassifier(error), platform="cli") == INFRA_BLOCK_MESSAGE

@@ -36,6 +36,15 @@ def test_every_file_a_skill_points_to_can_be_opened_from_the_skill(skill):
     assert [path for path in referenced if not (skill.parent / path).exists()] == []
 
 
+def test_the_menu_copy_skill_bans_the_word_that_cost_a_trial():
+    # Probe B, scenario 01: marketing wrote "Uma refeição simples e nutritiva". The skill lists "saudável", "fit",
+    # "light" and "rico em proteína", never "nutritiva", and the output policy blocked the reply that carried it.
+    skill = (AGENTS / "marketing_expert" / "skills" / "ifood-menu-copy" / "SKILL.md").read_text()
+    assert "nutritiv" in skill
+    policy = (AGENTS.parent / "plugins" / "kitchen_guardrails" / "prompts" / "output_policy.md").read_text()
+    assert "nutritiv" in policy
+
+
 def test_an_expert_never_sends_more_questions_than_its_contract_accepts():
     # Probe A, scenario 09: recipe_expert answered with six questions_for_owner, the contract accepts five, and the A2A
     # client retried the same request — registering "Frango ao molho de açafrão" a second time before failing again.
