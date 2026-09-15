@@ -36,6 +36,32 @@ def test_every_file_a_skill_points_to_can_be_opened_from_the_skill(skill):
     assert [path for path in referenced if not (skill.parent / path).exists()] == []
 
 
+def test_an_expert_never_sends_more_questions_than_its_contract_accepts():
+    # Probe A, scenario 09: recipe_expert answered with six questions_for_owner, the contract accepts five, and the A2A
+    # client retried the same request — registering "Frango ao molho de açafrão" a second time before failing again.
+    import json
+
+    schema = json.loads((AGENTS.parent / "contracts" / "experts" / "recipe_expert.response.json").read_text())
+    def find(node, key):
+        if isinstance(node, dict):
+            for name, value in node.items():
+                if name == key:
+                    return value
+                found = find(value, key)
+                if found is not None:
+                    return found
+        elif isinstance(node, list):
+            for value in node:
+                found = find(value, key)
+                if found is not None:
+                    return found
+    cap = find(schema, "questions_for_owner")["maxItems"]
+    for expert in ("recipe_expert", "cost_expert", "marketing_expert"):
+        rule = next(line for line in (AGENTS / expert / "SOUL.md").read_text().splitlines()
+                    if "questions_for_owner" in line and "at most" in line)
+        assert f"at most {cap}" in rule, expert
+
+
 def test_the_price_question_carries_the_arithmetic_that_led_to_it():
     # Probe A: didactic clarity 1 in scenario 07 and 2 in 01 and 04, the three flows where the money is born inside a
     # clarify. Dona Sálvia jumps from the tool result straight to the question, so a rule about "the reply before the
