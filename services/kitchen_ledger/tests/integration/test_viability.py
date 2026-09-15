@@ -76,3 +76,18 @@ def test_kitchen_profile_accepts_only_vocabulary_keys(conn, key, numeric_value, 
     with pytest.raises(DomainError) as error:
         operations.update_kitchen_profile(conn, key, numeric_value, "available", EVIDENCE)
     assert error.value.code == code
+
+
+def test_a_price_is_not_computed_while_a_requirement_is_unknown(conn):
+    # Probe C, scenario 09: compute_dish_cost ran for a dish whose requirements were still unknown, so Dona Maria saw
+    # price scenarios for a dish she might not be able to cook (no_scenarios_while_requirements_are_unknown failed).
+    # The rule was only in her prompt; the ledger enforces it and names what to ask her.
+    dish_id = candidate(conn, ["oven", "gas_or_energy:botijão"], name="Frango assado no forno")
+    with pytest.raises(operations.DomainError) as error:
+        operations.compute_dish_cost(conn, dish_id=dish_id)
+    assert error.value.code == "requirements_unknown"
+    assert "oven" in str(error.value.details.get("unknown", ""))
+
+    viable_profile(conn)
+    operations.confirm_dish_requirement(conn, dish_id, "gas_or_energy:botijão", "available", "gás de botijão")
+    assert operations.compute_dish_cost(conn, dish_id=dish_id)["cmv_per_portion_display"].startswith("R$")
