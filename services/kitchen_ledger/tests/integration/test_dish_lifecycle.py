@@ -123,3 +123,25 @@ def test_a_to_taste_ingredient_missing_from_the_pantry_lowers_the_coverage(conn)
     coverage = [operations.check_pantry_match(conn, operations.register_candidate_dish(conn, recipe, 4, 4, EVIDENCE)["dish_id"])
                 ["pantry_coverage_pct"] for recipe in (in_pantry, needs_pepper)]
     assert coverage == [100, 50]
+
+
+def test_registering_the_same_recipe_twice_returns_the_dish_it_already_has(conn):
+    # Probe A, scenario 09: the orchestrator's contract client retries a request once when the expert answers off
+    # contract (validation.call_with_contract), and the expert had already written the dish. Two "Frango ao molho de
+    # açafrão" landed 25 seconds apart, Dona Sálvia rejected the copy to clean up, and "a rejected dish never came back
+    # as a new candidate" failed. A write that a retry can repeat has to be idempotent.
+    recipe = make_recipe(RICE, name="Frango ao molho de açafrão")
+    first = operations.register_candidate_dish(conn, recipe, yield_portions=6, launch_batch_portions=6, evidence=EVIDENCE)
+    again = operations.register_candidate_dish(conn, recipe, yield_portions=6, launch_batch_portions=6, evidence=EVIDENCE)
+    assert again["dish_id"] == first["dish_id"]
+    assert conn.execute("SELECT count(*) FROM dishes WHERE lower(name) = lower(%s)", (recipe["name"],)).fetchone()[0] == 1
+
+
+def test_a_rejected_recipe_does_not_come_back_as_a_candidate(conn):
+    # Same scenario, the other half: once she says no to a dish, registering it again is an error, not a new candidate.
+    recipe = make_recipe(RICE, name="Frango ensopado")
+    dish_id = operations.register_candidate_dish(conn, recipe, yield_portions=6, launch_batch_portions=6, evidence=EVIDENCE)["dish_id"]
+    operations.reject_candidate_dish(conn, dish_id, reason="fica aquele caldo todo", evidence=EVIDENCE)
+    with pytest.raises(DomainError) as error:
+        operations.register_candidate_dish(conn, recipe, yield_portions=6, launch_batch_portions=6, evidence=EVIDENCE)
+    assert error.value.code == "dish_rejected"
