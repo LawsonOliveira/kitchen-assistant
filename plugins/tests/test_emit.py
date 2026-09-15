@@ -119,6 +119,21 @@ def cockpit():
         server.server_close()
 
 
+def test_a_span_announces_itself_before_the_work_and_closes_when_it_ends(monkeypatch):
+    """The cockpit only ever saw finished events, so a node lit for 2,5 s after the work was already done. A span now
+    announces itself as running, with the same span_id the finished event carries (owner, 2026-09-15)."""
+    published = []
+    monkeypatch.setattr(emit, "_publish", published.append)
+    span = emit.start("a2a_call", "ask_recipe_expert", session_id="s1", agent="orchestrator")
+    assert [(event["kind"], event["name"], event["status"]) for event in published] == [
+        ("a2a_call", "ask_recipe_expert", "running")]
+    assert published[0]["duration_ms"] == 0
+
+    emit.finish(span, status="ok")
+    assert [event["status"] for event in published] == ["running", "ok"]
+    assert published[0]["span_id"] == published[1]["span_id"]
+
+
 def test_llm_cost_is_tokens_times_the_price_table():
     # USD per million tokens (input/output): claude-sonnet-5 2.00/10.00, claude-haiku-4-5-20251001 1.00/5.00
     assert emit.cost_usd("claude-sonnet-5", 1200, 300) == pytest.approx(0.0054)
