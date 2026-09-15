@@ -154,6 +154,8 @@ def register(ctx) -> None:
                           prompt_hash=classifier.prompt_hash("memory_guard.md"))
                 if decision is None and (message := progress.progress_message(tool_name)):
                     _show_progress(message)
+                if decision is None:
+                    decision = tool_policy.check_repeat(ledger, session_id, tool_name, args)
                 if decision is None and tool_name == "clarify":
                     # The ledger wrote the account; the model keeps paraphrasing it, so the code puts it in front of
                     # the question that shows its result (probes A-C, didactic clarity stuck at 2).

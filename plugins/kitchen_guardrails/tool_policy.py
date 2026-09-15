@@ -32,6 +32,8 @@ ALLOWED = {
 BLOCKED_MESSAGE = "This tool is not allowed for this agent."
 CLICK_REQUIRED_MESSAGE = ("Nothing was sent: this request carries owner_confirmation but Dona Maria has not chosen "
                           "Confirmar in a clarify prompt for it. Ask her with clarify first.")
+REPEATED_QUESTION_MESSAGE = ("Nothing was asked: Dona Maria already answered Cancelar to this very question. Asking it "
+                             "again is not a new chance — act on the no, or ask her something different.")
 # She answered, and the answer was no: repeating the question is what turns a decision into a loop (full run 01/1).
 REFUSED_MESSAGE = ("Nothing was sent: Dona Maria chose Cancelar in the last clarify. That is her decision, not a "
                    "failure — never tell her the system is broken. Do not ask the same thing again: act on the no "
@@ -64,10 +66,14 @@ class ClickLedger:
     def __init__(self):
         self._clicks: dict[str, int] = {}
         self._refused: dict[str, bool] = {}
+        self._refused_questions: dict[str, set[str]] = {}  # questions she already said no to, per session
         self._lock = threading.Lock()
 
     def record_clarify(self, session_id: str, result) -> None:
         answers = [answer.strip() for answer in _answers(result)]
+        for question, answer in _questions_and_answers(result):
+            if answer.lower().startswith("cancelar"):
+                self._refused_questions.setdefault(session_id, set()).add(_normalize_question(question))
         with self._lock:
             self._clicks[session_id] = sum(1 for answer in answers if _CONFIRMAR.match(answer))
             self._refused[session_id] = bool(answers) and not self._clicks[session_id] and any(
@@ -76,6 +82,10 @@ class ClickLedger:
     def refund(self, session_id: str) -> None:
         with self._lock:
             self._clicks[session_id] = self._clicks.get(session_id, 0) + 1
+
+    def already_refused_question(self, session_id: str, question: str) -> bool:
+        with self._lock:
+            return _normalize_question(question) in self._refused_questions.get(session_id, set())
 
     def refused(self, session_id: str) -> bool:
         """Her last clarify was answered Cancelar and nothing else."""
@@ -96,3 +106,32 @@ def check_click(ledger: ClickLedger, session_id: str, tool_name: str, args: dict
     if ledger.consume(session_id):
         return None
     return {"action": "block", "message": REFUSED_MESSAGE if ledger.refused(session_id) else CLICK_REQUIRED_MESSAGE}
+
+
+def _normalize_question(question: str) -> str:
+    return " ".join((question or "").split()).casefold()
+
+
+def _questions_and_answers(result):
+    """(question, answer) pairs of a clarify result, whatever shape Hermes used for it."""
+    try:
+        data = json.loads(result) if isinstance(result, str) else result
+    except ValueError:
+        return []
+    if not isinstance(data, dict):
+        return []
+    responses = data.get("responses")
+    if isinstance(responses, list):
+        return [(item.get("question", ""), str(item.get("user_response", ""))) for item in responses if isinstance(item, dict)]
+    return [(data.get("question", ""), str(data.get("user_response", "")))]
+
+
+def check_repeat(ledger: ClickLedger, session_id: str, tool_name: str, args: dict | None) -> dict | None:
+    """A clarify that asks again, word for word, something she already refused (full run, scenario 03)."""
+    if tool_name != "clarify":
+        return None
+    questions = (args or {}).get("questions")
+    asked = [entry.get("question", "") for entry in questions if isinstance(entry, dict)] if isinstance(questions, list) else [(args or {}).get("question", "")]
+    if any(question and ledger.already_refused_question(session_id, question) for question in asked):
+        return {"action": "block", "message": REPEATED_QUESTION_MESSAGE}
+    return None
