@@ -247,4 +247,6 @@ def test_the_closing_line_carries_state_not_bare_numbers():
     # Probe of 20:34, scenario 07 (didactic clarity 1): the replies were lists of results — "Custo: R$ 2,72 por porção /
     # Lucro: R$ 6,19 / Preço promo: R$ 8,91" — with no account anywhere. The closing line invites exactly that.
     soul = " ".join((AGENTS / "orchestrator" / "SOUL.md").read_text().replace("*", "").split()).lower()
-    assert "the closing line names what is done and what is missing, never numbers" in soul
+    assert "the closing line names what is done and what is missing" in soul
+    # The rule grew a second half after scenario 05 died on a passive close; the numbers half still has to be there.
+    assert "a money number belongs where it is explained, never in a list of results" in soul
