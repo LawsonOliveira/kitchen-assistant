@@ -2,7 +2,7 @@
 and the whole body always returns a string, because Hermes delivers the unverified original when a hook raises.
 """
 
-from .messages import INFRA_BLOCK_MESSAGE, NUMBER_BLOCK_MESSAGE, SCOPE_BLOCK_MESSAGE
+from .messages import CLAIM_BLOCK_MESSAGE, INFRA_BLOCK_MESSAGE, NUMBER_BLOCK_MESSAGE, SCOPE_BLOCK_MESSAGE
 
 
 def review(text: str, grounding, classify, *, platform: str) -> str | None:
@@ -11,7 +11,10 @@ def review(text: str, grounding, classify, *, platform: str) -> str | None:
     try:
         if grounding.ungrounded(text or ""):
             return NUMBER_BLOCK_MESSAGE  # an invented amount is not an off-topic message; say so in her words
-        verdict = classify(text or "").verdict
+        decision = classify(text or "")
     except Exception:
         return INFRA_BLOCK_MESSAGE
-    return text if verdict == "allow" else SCOPE_BLOCK_MESSAGE
+    if decision.verdict == "allow":
+        return text
+    # The category names why: a promise the menu cannot make is answered as such, everything else as out of scope.
+    return CLAIM_BLOCK_MESSAGE if "claim" in (decision.category or "").lower() else SCOPE_BLOCK_MESSAGE

@@ -18,7 +18,7 @@ description: Write iFood menu titles, descriptions and launch promotion texts fo
 
 ## Forbidden
 - **Health or nutrition claims:** "saudável", "fit", "light", "sem glúten", "low carb", "rico em proteína",
-  "emagrece", calorie counts — unless the owner confirmed and the claim is verifiable; by default never.
+  "emagrece", "nutritiva", "nutritivo", calorie counts — unless the owner confirmed and the claim is verifiable; by default never.
 - **Unconfirmed attributes:** "orgânico", "artesanal", "caseiro de fazenda", "sem conservantes", "premium",
   "o melhor", brands or origins not stated by the owner.
 - **Competitor disparagement or comparisons:** "melhor que o restaurante X", "mais barato que o iFood X".
