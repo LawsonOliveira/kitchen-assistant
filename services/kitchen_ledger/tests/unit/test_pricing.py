@@ -148,3 +148,13 @@ def test_the_promotion_chain_shows_the_discount():
 
     assert promotion_chain_display(Decimal("9.90"), Decimal("0.15"), Decimal("8.42"), Decimal("4.86")) == (
         "R$ 9,90 − 15% = R$ 8,42, lucro R$ 4,86 por porção")
+
+
+def test_the_price_of_a_package_carries_its_own_account():
+    # Full run 20260915-095503: scenarios 02, 04 and 06 scored didactic clarity 2.0-2.7 while 01 and 03 scored 3.3.
+    # Their questions are package-price confirmations ("pacote de 420 g por R$ 18,99?"), where no chain existed, so the
+    # guard had nothing to put in front of them.
+    from kitchen_ledger.pricing import price_chain_display
+
+    assert price_chain_display(Decimal("18.99"), Decimal("420"), "g") == "R$ 18,99 ÷ 420 g = R$ 45,21/kg"
+    assert price_chain_display(Decimal("3.49"), Decimal("200"), "ml") == "R$ 3,49 ÷ 200 ml = R$ 17,45/L"
