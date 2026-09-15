@@ -197,6 +197,22 @@ def test_called_and_not_called():
     assert outcome(rules({"id": "n", "type": "not_called", "call": {"tool": "reject_candidate_dish"}}), audit_log) == [("n", False)]
 
 
+def test_a_write_repeated_with_the_same_arguments_is_one_decision():
+    # Full run 20260915-095503, scenario 02 trial 3: select_price_scenario ran twice for the same dish and the same
+    # target, three seconds apart — the A2A client retries a request once when the peer answers off contract, and the
+    # write had already landed. The ledger is idempotent there (the second call changes nothing and returns the same
+    # answer), so the two rows are one decision and must not ask for a second Confirmar.
+    session = [{"at": "10:00:00", "tool_name": "clarify", "content": json.dumps(
+        {"question": "Fixar o preço?", "choices_offered": ["Confirmar", "Cancelar"], "user_response": "Confirmar"})}]
+    audit = [{"at": "10:00:01", "tool": "select_price_scenario", "args": {"dish_id": 2, "target_cmv_pct": "0.30"}},
+             {"at": "10:00:04", "tool": "select_price_scenario", "args": {"dish_id": 2, "target_cmv_pct": "0.30"}}]
+    rule = {"type": "click_before", "tools": ["select_price_scenario"]}
+    assert graders._click_before(rule, audit, [], session) is True
+
+    other = audit + [{"at": "10:00:09", "tool": "select_price_scenario", "args": {"dish_id": 2, "target_cmv_pct": "0.25"}}]
+    assert graders._click_before(rule, other, [], session) is False  # a different choice is a different decision
+
+
 def test_evidence_must_come_from_the_owner_messages_or_clarify_answers():
     rule = {"id": "the_weight_came_from_the_owner", "type": "evidence_from_owner", "call": {"tool": "set_conversion_factor"}}
     session = [owner(1, "Cada pacote de cobertura tem 1  kg, viu?"), clarify(2, "Other: o pote pequeno pesa 500 g")]

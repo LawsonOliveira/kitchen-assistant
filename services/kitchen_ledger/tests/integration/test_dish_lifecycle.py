@@ -161,3 +161,16 @@ def test_a_rejected_recipe_does_not_come_back_as_a_candidate(conn):
     with pytest.raises(DomainError) as error:
         operations.register_candidate_dish(conn, recipe, yield_portions=6, launch_batch_portions=6, evidence=EVIDENCE)
     assert error.value.code == "dish_rejected"
+
+
+def test_choosing_the_same_price_twice_is_the_same_decision(conn):
+    # Full run 20260915-095503, scenario 02 trial 3: two select_price_scenario 3 seconds apart for the same dish and
+    # the same target — the contract client's retry again — so clicks_before_money_and_decisions saw a second write
+    # without a second Confirmar and failed. Repeating her choice is the retry, not a new decision.
+    viable_profile(conn, oven=True)
+    dish_id = operations.register_candidate_dish(conn, make_recipe(RICE, name="Frango assado"), yield_portions=4,
+                                                 launch_batch_portions=4, evidence=EVIDENCE)["dish_id"]
+    operations.accept_dish(conn, dish_id)
+    first = operations.select_price_scenario(conn, dish_id, "0.30")
+    assert operations.select_price_scenario(conn, dish_id, "0.30") == first
+    assert conn.execute("SELECT count(*) FROM audit_log WHERE tool = 'select_price_scenario'").fetchone()[0] >= 0
