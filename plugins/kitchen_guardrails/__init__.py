@@ -201,16 +201,12 @@ def register(ctx) -> None:
             return None
         reviewed = output_guard.review(response_text, groundings.setdefault(session_id, SessionGrounding()),
                                        classify_with("output_policy.md"), platform=platform)
+        if reviewed == response_text:  # a blocked reply is our own message; only her own answer gets the question
+            reviewed = pending.with_next_question(open_state, session_id, reviewed)
         _emit("guard_output", "output_guard", status="ok" if reviewed == response_text else "blocked", session_id=session_id,
               prompt_hash=classifier.prompt_hash("output_policy.md"))
         return reviewed
 
-    def pre_verify(session_id="", final_response="", attempt=0, **_):
-        """While the journey has something open and her reply asks nothing, the turn goes back to her once (C88)."""
-        message = pending.continue_message(open_state, session_id, final_response, attempt)
-        return {"action": "continue", "message": message} if message else None
-
-    ctx.register_hook("pre_verify", pre_verify)
     ctx.register_hook("pre_tool_call", pre_tool_call)
     ctx.register_hook("pre_llm_call", pre_llm_call)
     ctx.register_hook("subagent_start", subagent_start)

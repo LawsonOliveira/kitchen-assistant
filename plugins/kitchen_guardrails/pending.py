@@ -11,6 +11,8 @@ from .grounding import _walk
 
 ACCEPT = "o prato registrado ainda não foi aceito"
 PRICE = "o prato aceito ainda não tem preço"
+QUESTION = {ACCEPT: "Falta aceitar o prato no cardápio — quer que eu faça isso agora?",
+            PRICE: "Falta escolher o preço de venda — quer ver as opções agora?"}
 
 
 class Pending:
@@ -43,12 +45,15 @@ class Pending:
         return ACCEPT if state == "candidate" else PRICE if state == "accepted" else None
 
 
-def continue_message(state: Pending, session_id: str, final_response: str, attempt: int) -> str | None:
-    """The turn goes back to her once, when she closed without a question and something is still open."""
-    if attempt or "?" in (final_response or ""):
-        return None
+def with_next_question(state: Pending, session_id: str, reply: str) -> str:
+    """Her reply plus the next question, when she closed without one and the journey has something open.
+
+    Hermes calls pre_verify only when the agent edited files, so the turn cannot be sent back in a conversation; this
+    runs in transform_llm_output, where the output verifier already lives.
+    """
+    if "?" in (reply or ""):
+        return reply
     missing = state.open_for(session_id)
     if not missing:
-        return None
-    return (f"Sua resposta terminou sem pergunta e {missing}. Feche com a próxima pergunta para Dona Maria — "
-            "ela não tem o que responder e a conversa morre aí.")
+        return reply
+    return f"{(reply or '').rstrip()}\n\n{QUESTION[missing]}"
