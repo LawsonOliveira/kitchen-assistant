@@ -122,3 +122,29 @@ def test_packaging_adds_its_own_critical_alert():
 @pytest.mark.parametrize("cmv", [Decimal("2.7159625"), Decimal("2.50")])
 def test_no_alert_within_target_or_after_a_cost_decrease(cmv):
     assert price_alerts(cmv, Decimal("7.90"), Decimal("0.35"), FEE) == []
+
+
+# --- the account Dona Maria reads (probes A and B) ------------------------------------------------------------
+
+def test_the_cost_chain_is_a_display_string_she_can_redo():
+    # Probes A and B scored didactic clarity 2 across every pricing flow: Dona Sálvia only ever showed results
+    # ("O custo por porção é R$ 2,60"), never the operation. Every amount she may write has to come from a tool
+    # display string (D12), so the arithmetic itself becomes one.
+    from kitchen_ledger.pricing import cost_chain_display, min_price_chain_display, profit_chain_display, promotion_chain_display
+
+    assert cost_chain_display(Decimal("25.96"), 10, Decimal("2.596")) == "R$ 25,96 ÷ 10 porções = R$ 2,60 por porção"
+    assert min_price_chain_display(Decimal("2.596"), FEE) == "R$ 2,60 ÷ 0,90 = R$ 2,89, porque o iFood fica com 10%"
+
+
+def test_the_profit_chain_shows_the_fee_and_the_subtraction():
+    from kitchen_ledger.pricing import profit_chain_display
+
+    assert profit_chain_display(Decimal("8.90"), Decimal("8.01"), Decimal("2.60"), FEE) == (
+        "R$ 8,90 − 10% = R$ 8,01; R$ 8,01 − R$ 2,60 = R$ 5,41 de lucro por porção")
+
+
+def test_the_promotion_chain_shows_the_discount():
+    from kitchen_ledger.pricing import promotion_chain_display
+
+    assert promotion_chain_display(Decimal("9.90"), Decimal("0.15"), Decimal("8.42"), Decimal("4.86")) == (
+        "R$ 9,90 − 15% = R$ 8,42, lucro R$ 4,86 por porção")
