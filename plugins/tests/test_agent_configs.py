@@ -36,6 +36,17 @@ def test_every_file_a_skill_points_to_can_be_opened_from_the_skill(skill):
     assert [path for path in referenced if not (skill.parent / path).exists()] == []
 
 
+def test_the_chain_comes_before_the_price_options_not_inside_them():
+    # Final run 20260914-215130, scenario 01 trial 1 (didactic clarity 2 of 5, every other criterion 5): the only money
+    # Dona Maria ever saw were results — "R$ 5,90 (lucro R$ 3,52/porção)" in the options, "Preço: R$ 6,90 | custo R$ 1,79
+    # por porção" in the launch menu. No division, no 10%, nothing she could redo. The rubric scores 5 only when the
+    # steps appear in order (unit cost -> dish -> per portion -> price) with one worked example.
+    soul = (AGENTS / "orchestrator" / "SOUL.md").read_text()
+    rule = next(line for line in soul.splitlines() if "before the options" in line)
+    assert "÷ 0,90" in rule and "por porção" in rule  # the chain ends at the minimum price, in her words
+    assert "never only inside the options" in rule
+
+
 def test_a_parametric_requirement_is_a_kitchen_fact_not_a_confirmation():
     # Final run 20260914-215130, scenario 01 trial 1: she sent 'pressure_cooker', 'stove_burners>=1' and
     # 'max_batch_time_minutes>=45' to confirm_requirement, whose payload takes only gas_or_energy:/other: text, and once
