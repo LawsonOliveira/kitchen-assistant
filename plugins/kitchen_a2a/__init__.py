@@ -10,6 +10,8 @@ import logging
 import os
 import uuid
 
+from . import rejected
+
 log = logging.getLogger(__name__)
 
 TOOLSET = "kitchen_a2a"
@@ -96,14 +98,24 @@ def _research(args: dict, session_id: str = "", **_) -> str:
                  CONTRACTS_DIR / "research" / f"{task_type}.response.json")
 
 
+REJECTED = rejected.RejectedDishes()
+
+
 def _ask(expert: str):
     def handler(args: dict, session_id: str = "", **_) -> str:
         from .validation import CONTRACTS_DIR
 
         request = {"task": args.get("task"), "trace": _trace(session_id, f"ask_{expert}"), "owner_confirmation": args.get("owner_confirmation"),
                    "owner_statement": args.get("owner_statement"), "payload": args.get("payload") or {}}
-        return _call(expert, request, CONTRACTS_DIR / "experts" / f"{expert}.request.json",
-                     CONTRACTS_DIR / "experts" / f"{expert}.response.json")
+        if expert == "recipe_expert":
+            # A dish she refused never goes back to the research call, whatever the model remembers (full run, 09).
+            REJECTED.exclude_in(session_id, request)
+            REJECTED.remember_rejection(session_id, request)
+        reply = _call(expert, request, CONTRACTS_DIR / "experts" / f"{expert}.request.json",
+                      CONTRACTS_DIR / "experts" / f"{expert}.response.json")
+        if expert == "recipe_expert":
+            REJECTED.remember_candidate(session_id, request, reply)
+        return reply
     return handler
 
 
