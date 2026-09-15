@@ -13,14 +13,23 @@ def test_a_registered_dish_that_is_not_accepted_yet_is_pending():
     assert state.open_for("s1") is None
 
 
-def test_a_reply_without_a_question_is_sent_back_only_while_something_is_open():
+def test_the_next_question_is_appended_when_she_closes_with_something_open():
+    # Hermes only calls pre_verify when the agent edited files (agent/turn_stop_gates.py), so the turn can never be
+    # sent back in a conversation. The reply itself gets the question, in the hook the other guards already use.
     state = pending.Pending()
     state.read_tool_result("s1", {"result": {"dish": {"dish_id": 3, "status": "candidate"}}})
-    reply = "Pronto, Dona Maria! Já pode seguir pra próxima etapa quando quiser. 🌿"
-    message = pending.continue_message(state, "s1", reply, attempt=0)
-    assert message and "pergunta" in message and "o prato registrado ainda não foi aceito" in message
+    reply = "Pronto, dona Maria! Os dois pratos já estão anotados certinhos. Vá descansar. 🌿"
+    closed = pending.with_next_question(state, "s1", reply)
+    assert closed.startswith(reply) and closed.rstrip().endswith("?")
+    assert "aceitar" in closed.lower()
 
     asked = "Falta aceitar o prato — quer que eu aceite agora?"
-    assert pending.continue_message(state, "s1", asked, attempt=0) is None  # she asked something
-    assert pending.continue_message(state, "s1", reply, attempt=1) is None  # never twice in the same turn
-    assert pending.continue_message(pending.Pending(), "s1", reply, attempt=0) is None  # nothing open
+    assert pending.with_next_question(state, "s1", asked) == asked  # she already asked something
+    assert pending.with_next_question(pending.Pending(), "s1", reply) == reply  # nothing open
+
+
+def test_the_question_names_what_is_open():
+    state = pending.Pending()
+    state.read_tool_result("s1", {"result": {"dish": {"dish_id": 3, "status": "accepted"}}})
+    closed = pending.with_next_question(state, "s1", "Prontinho, tá tudo certo.")
+    assert "preço" in closed.lower() and closed.rstrip().endswith("?")
