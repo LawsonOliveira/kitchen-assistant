@@ -9,7 +9,7 @@ import json
 import logging
 
 log = logging.getLogger(__name__)
-CLICK_REQUIRED = {"register_purchase", "adjust_budget", "select_price_scenario", "import_pantry_apply"}
+CLICK_REQUIRED = {"register_purchase", "adjust_budget", "select_price_scenario", "import_pantry_apply", "accept", "confirm_measure"}
 
 
 def _evidence(request: dict) -> str:
@@ -38,7 +38,43 @@ def _calls(request: dict) -> list[tuple[str, dict]] | None:
         "import_pantry_preview": lambda: [("import_pantry", {"file_path": p["file_path"], "apply": False})],
         "import_pantry_apply": lambda: [("import_pantry", {"import_id": p["import_id"], "apply": True})],
     }.get(task)
+    if tool is None:
+        return _recipe_calls(task, p, _evidence(request))
+    return [(f"mcp__costs__{name}", args) for name, args in tool()]
+
+
+def _recipe_calls(task: str, p: dict, evidence: str) -> list[tuple[str, dict]] | None:
+    """recipe_expert's own single-tool tasks; suggest_dishes and normalize_recipe stay with the model (they research)."""
+    tool = {
+        "record_kitchen_fact": lambda: [("update_kitchen_profile", {"key": p["key"], "numeric_value": p.get("numeric_value"),
+                                                                    "status": p["status"], "evidence": evidence})],
+        "reject_candidate": lambda: [("reject_candidate_dish", {"dish_id": p["dish_id"], "reason": p["reason"], "evidence": evidence})],
+        "set_launch_batch": lambda: [("set_launch_batch_portions", {"dish_id": p["dish_id"],
+                                                                    "launch_batch_portions": p["launch_batch_portions"], "evidence": evidence})],
+        "confirm_requirement": lambda: [("confirm_dish_requirement", {"dish_id": p["dish_id"], "requirement": p["requirement"],
+                                                                      "status": p["status"], "evidence": evidence})],
+        "confirm_measure": lambda: [("confirm_measure", {"ingredient_name": p["ingredient_name"], "measure": p["measure"],
+                                                         "evidence": evidence})],
+        "accept": lambda: [("check_viability", {"dish_id": p["dish_id"]}), ("accept_dish", {"dish_id": p["dish_id"], "evidence": evidence})],
+    }.get(task)
     return [(f"mcp__costs__{name}", args) for name, args in tool()] if tool else None
+
+
+REPLY_KEY = {"record_kitchen_fact": "kitchen_fact", "reject_candidate": "dish", "set_launch_batch": "dish",
+             "confirm_requirement": "requirement", "confirm_measure": "measure", "accept": "dish"}
+
+
+def _reply_result(task: str, result: dict) -> dict:
+    """The result as contracts/experts/recipe_expert.response.json describes it: costs-mcp names a couple of these
+    fields differently, and the peer rejects the reply when they travel raw."""
+    if task == "record_kitchen_fact":
+        return {"kitchen_fact": {"key": result["requirement_key"], "status": result["status"]}}
+    if task == "set_launch_batch":
+        match = result["pantry_match"]  # set_launch_batch_portions refuses any status but candidate
+        return {"dish": {"dish_id": result["dish_id"], "status": "candidate", "pantry_coverage_pct": match["pantry_coverage_pct"],
+                         "missing_ingredients": [item["ingredient"] for item in match["missing"]]}}
+    key = REPLY_KEY.get(task)
+    return {key: result} if key else result
 
 
 def answer(request, call_tool) -> dict | None:
@@ -54,7 +90,11 @@ def answer(request, call_tool) -> dict | None:
         result = call_tool(tool, args)
         if not isinstance(result, dict) or "error" in result:
             return None
-    return {"result": result, "questions_for_owner": [], "cost_usd_spent": 0}
+    try:
+        shaped = _reply_result(request.get("task"), result)
+    except (KeyError, TypeError):
+        return None  # an unexpected payload is the model's problem, not a reply the peer will reject
+    return {"result": shaped, "questions_for_owner": [], "cost_usd_spent": 0}
 
 
 def _text(content) -> str:
