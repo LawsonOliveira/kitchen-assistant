@@ -12,7 +12,7 @@ import os
 from concurrent.futures import ThreadPoolExecutor
 from decimal import Decimal
 
-from . import account, classifier, cost_cap, input_guard, memory_guard, output_guard, progress, tool_policy
+from . import account, classifier, cost_cap, input_guard, memory_guard, output_guard, pending, progress, tool_policy
 from .grounding import SessionGrounding
 from .messages import COST_CAP_MESSAGE, INFRA_BLOCK_MESSAGE
 
@@ -76,6 +76,7 @@ def register(ctx) -> None:
     costs = cost_cap.SessionCosts(Decimal(os.environ["KITCHEN_TURN_COST_CAP_USD"]), agent=role)
     cost_cap.ACTIVE = costs
     ledger, groundings = tool_policy.ClickLedger(), {}
+    open_state = pending.Pending()
     guard_pool = ThreadPoolExecutor(max_workers=4, thread_name_prefix="kitchen-input-guard")
     import_dir = os.environ.get("KITCHEN_IMPORT_DIR", "/opt/data/cache/documents")
 
@@ -182,6 +183,7 @@ def register(ctx) -> None:
         try:
             if tool_name in tool_policy.ASK_TOOLS or tool_name.startswith("mcp__ledger__"):
                 groundings.setdefault(session_id, SessionGrounding()).add_from_tool_result(result)
+                open_state.read_tool_result(session_id, result)
                 if tool_name in tool_policy.ASK_TOOLS:
                     data = _first_json_object(result if isinstance(result, str) else json.dumps(result))
                     error = data.get("error") if isinstance(data.get("error"), dict) else {}
@@ -203,6 +205,12 @@ def register(ctx) -> None:
               prompt_hash=classifier.prompt_hash("output_policy.md"))
         return reviewed
 
+    def pre_verify(session_id="", final_response="", attempt=0, **_):
+        """While the journey has something open and her reply asks nothing, the turn goes back to her once (C88)."""
+        message = pending.continue_message(open_state, session_id, final_response, attempt)
+        return {"action": "continue", "message": message} if message else None
+
+    ctx.register_hook("pre_verify", pre_verify)
     ctx.register_hook("pre_tool_call", pre_tool_call)
     ctx.register_hook("pre_llm_call", pre_llm_call)
     ctx.register_hook("subagent_start", subagent_start)
