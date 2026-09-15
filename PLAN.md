@@ -2486,6 +2486,25 @@ evidence, what was changed, and where. Open questions that were "default applied
   `ask_cost_expert` p50 0.3 s, the orchestrator's own model calls p50 2.9 s. The one slow path left is
   `ask_marketing_expert` (p90 35 s), which still researches the web — a candidate for the next fast path.
 
+- **C86 — The complete run's first 17 trials, and the five corrections they bought.** Run `20260915-095503-final`
+  stopped at the owner's request after 17 of 27 trials: scenario 01 passed 3/3 (its first clean pass^3), 04 passed 3/3,
+  and the rest showed four distinct faults, each fixed test-first and each of the kind D47 describes.
+  (a) Scenario 03 (2 of 3 failed "nothing was bought"): she cancelled the purchase and said the creme de leite was
+  already at home, and `register_purchase` was the only tool that adds stock — R$ 3,49 left a budget she never spent.
+  `correct_pantry_stock` now records what her pantry holds, creating the ingredient when the spreadsheet never listed
+  it, with no purchase and no budget movement; the task is in cost_expert's contract and both SOULs name it.
+  (b) Scenario 02 (1 of 3 failed `clicks_before_money_and_decisions`): `select_price_scenario` ran twice for the same
+  dish and target three seconds apart — the contract client's retry again. The ledger is idempotent there, so the
+  grader now reads a repeated identical write with no clarify in between as one decision.
+  (c) Scenario 05 (all three failed, eight messages each): she registered the second dish and closed with "já pode
+  seguir pra próxima etapa quando quiser 🌿". Dona Maria had nothing to answer and the conversation ended with nothing
+  accepted. The closing line now ends with the next question.
+  (d) Scenarios 02, 04 and 06 scored didactic clarity 2.0-2.7 while 01 and 03 scored 3.3: their money moments are
+  package-price confirmations, where no account existed. `record_price_quote` and `correct_price` now return
+  `price_chain_display` ("R$ 18,99 ÷ 420 g = R$ 45,21/kg"), which the guard injects like any other chain.
+  The owner's decision on how to finish: keep scenario 01's three trials, discard the trials of 02-06, and resume the
+  same run directory so the report covers 27 trials of the corrected system.
+
 ## Post-loop changes (owner requests, 2026-09-13)
 Requested by the owner while Loops 6–8 were running, test-first, each recorded as a correction. **Order decided by the
 owner:** Loop 6 pauses; Loop 7 (the owner's Telegram checks) and Loop 8 finish, then PL1–PL9, then Loop 6 resumes and
