@@ -108,6 +108,22 @@ def test_no_scenario_takes_a_price_quote_confirmation_for_the_price_scenario_cho
         assert "choice_position" not in simulated_owner.clarify_answer(answers, question, ["Confirmar", "Cancelar"]), path.name
 
 
+def test_no_scenario_cancels_the_click_that_accepts_a_dish():
+    # Full run 20260914-210515, scenario 01 trial 1: "Posso aceitar o Frango ensopado (10 porções, custo R$ 0,00 pra
+    # comprar)?" matched the rule that cancels purchases, because "comprar" carries "compra"; the dish was never
+    # accepted and the trial ended without a price.
+    import yaml
+    from pathlib import Path
+
+    question = "Posso aceitar o Frango ensopado (10 porções, custo R$ 0,00 pra comprar) e seguir pra precificação?"
+    for path in sorted((Path(__file__).resolve().parents[1] / "scenarios").glob("*.yaml")):
+        scenario = yaml.safe_load(path.read_text())
+        if "accept_dish" not in path.read_text():  # scenario 09 only explores and cancels everything on purpose
+            continue
+        answer = simulated_owner.clarify_answer(scenario["clarify_answers"], question, ["Confirmar", "Cancelar"])
+        assert answer.get("choice") != "Cancelar", path.name
+
+
 def test_the_persona_never_describes_her_pantry_beyond_the_facts():
     # Live trial: the persona said "sal e óleo eu tenho sim, salsinha no quintal", facts the scenario never gave.
     assert "pantry" in simulated_owner.system_prompt(SCENARIO)
