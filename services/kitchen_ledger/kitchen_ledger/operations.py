@@ -249,6 +249,16 @@ def register_candidate_dish(conn, recipe: dict, yield_portions: int, launch_batc
         raise DomainError("invalid_recipe", "recipe does not match contracts/recipe.schema.json", errors=[e.message for e in errors[:10]])
     if not all(isinstance(value, int) and value > 0 for value in (yield_portions, launch_batch_portions)):
         raise DomainError("invalid_portions", "yield_portions and launch_batch_portions must be positive integers")
+    # The A2A client retries a request once when the peer answers off contract, and the write may already have landed
+    # (probe A, scenario 09): the same recipe is the dish it already is, and one she rejected never comes back.
+    existing = conn.execute("SELECT id, status FROM dishes WHERE lower(name) = lower(%s) ORDER BY id DESC LIMIT 1",
+                            (recipe["name"],)).fetchone()
+    if existing is not None:
+        if existing[1] == "rejected":
+            raise DomainError("dish_rejected", f"Dona Maria rejected {recipe['name']!r}; suggest another dish instead of registering it again",
+                              dish_id=existing[0], name=recipe["name"])
+        return {"dish_id": existing[0], "viability": _viability(conn, existing[0]),
+                "pantry_match": _pantry_match(conn, _dish(conn, existing[0]))}
     packaging_id = _packaging(conn, packaging_ingredient_name)["id"] if packaging_ingredient_name else None
     with conn.transaction():
         dish_id = db.insert_dish(conn, recipe, yield_portions, launch_batch_portions, packaging_id, evidence)
