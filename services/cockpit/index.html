@@ -14,7 +14,7 @@
             --node: #262a31; --active: #ff922b; --ok: #51cf66; --error: #ff6b6b; --blocked: #fcc419; --edge: #495057; }
   }
   * { box-sizing: border-box; }
-  body { margin: 0; padding: 12px; max-width: 560px; background: var(--bg); color: var(--ink);
+  body { margin: 0; padding: 8px; max-width: 216px; background: var(--bg); color: var(--ink);
          font: 14px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
   header { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 12px; }
   h1 { font-size: 18px; margin: 0 12px 0 0; }
@@ -24,7 +24,17 @@
   .badge.ok::before { background: var(--ok); } .badge.error::before { background: var(--error); }
   /* Portrait by design: the cockpit shares the screen with the Hermes CLI, so it never spreads sideways. */
   .grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
-  body.wide { max-width: none; }
+  body.wide { max-width: none; padding: 16px; font-size: 14px; }
+  /* 200px wide: the boxes carry a name and nothing else, and the table keeps only what fits. */
+  body:not(.wide) { font-size: 12px; }
+  body:not(.wide) h1 { font-size: 14px; }
+  body:not(.wide) .node text { font-size: 7px; } body:not(.wide) .node .sub { font-size: 6px; }
+  body:not(.wide) th:nth-child(2), body:not(.wide) td:nth-child(2),
+  body:not(.wide) th:nth-child(3), body:not(.wide) td:nth-child(3),
+  body:not(.wide) th:nth-child(7), body:not(.wide) td:nth-child(7),
+  body:not(.wide) th:nth-child(8), body:not(.wide) td:nth-child(8),
+  body:not(.wide) th:nth-child(9), body:not(.wide) td:nth-child(9) { display: none; }
+  body:not(.wide) .turn { gap: 8px; font-size: 11px; }
   body.wide .grid { grid-template-columns: minmax(0, 3fr) minmax(0, 1fr); }
   #layout-toggle { font: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--line);
                    border-radius: 999px; padding: 3px 10px; cursor: pointer; }
@@ -68,7 +78,7 @@
 <div class="grid">
   <section class="panel">
     <h2>Pipeline do turno</h2>
-    <svg id="pipeline" viewBox="0 0 340 530" role="img" aria-label="Pipeline: guarda de entrada, Dona Sálvia, especialistas, pesquisador, MCP, guarda de saída">
+    <svg id="pipeline" viewBox="0 0 180 310" role="img" aria-label="Pipeline: guarda de entrada, Dona Sálvia, especialistas, pesquisador, MCP, guarda de saída">
       <defs>
         <marker id="arrow" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
           <path d="M0,0 L10,5 L0,10 z" fill="var(--edge)"></path>
@@ -76,14 +86,14 @@
       </defs>
       <g id="edges"></g>
       <g id="nodes">
-        <g class="node" data-node="guard_input" data-vx="170" data-vy="34" data-hx="70" data-hy="140" data-label="guarda de entrada"></g>
-        <g class="node" data-node="orchestrator" data-vx="170" data-vy="124" data-hx="230" data-hy="140" data-label="Dona Sálvia"></g>
-        <g class="node" data-node="recipe_expert" data-vx="56" data-vy="232" data-hx="440" data-hy="50" data-label="receitas"></g>
-        <g class="node" data-node="cost_expert" data-vx="170" data-vy="232" data-hx="440" data-hy="140" data-label="custos"></g>
-        <g class="node" data-node="marketing_expert" data-vx="284" data-vy="232" data-hx="440" data-hy="230" data-label="marketing"></g>
-        <g class="node" data-node="researcher" data-vx="105" data-vy="340" data-hx="660" data-hy="70" data-label="pesquisador"></g>
-        <g class="node" data-node="mcp" data-vx="235" data-vy="340" data-hx="660" data-hy="210" data-label="kitchen-ledger"></g>
-        <g class="node" data-node="guard_output" data-vx="170" data-vy="448" data-hx="880" data-hy="140" data-label="guarda de saída"></g>
+        <g class="node" data-node="guard_input" data-vx="90" data-vy="24" data-hx="70" data-hy="140" data-label="guarda de entrada"></g>
+        <g class="node" data-node="orchestrator" data-vx="90" data-vy="84" data-hx="230" data-hy="140" data-label="Dona Sálvia"></g>
+        <g class="node" data-node="recipe_expert" data-vx="32" data-vy="150" data-hx="440" data-hy="50" data-label="receitas"></g>
+        <g class="node" data-node="cost_expert" data-vx="90" data-vy="150" data-hx="440" data-hy="140" data-label="custos"></g>
+        <g class="node" data-node="marketing_expert" data-vx="148" data-vy="150" data-hx="440" data-hy="230" data-label="marketing"></g>
+        <g class="node" data-node="researcher" data-vx="58" data-vy="216" data-hx="660" data-hy="70" data-label="pesquisador"></g>
+        <g class="node" data-node="mcp" data-vx="122" data-vy="216" data-hx="660" data-hy="210" data-label="kitchen-ledger"></g>
+        <g class="node" data-node="guard_output" data-vx="90" data-vy="282" data-hx="880" data-hy="140" data-label="guarda de saída"></g>
       </g>
     </svg>
     <div class="turn" id="turn">Aguardando o primeiro turno…</div>
@@ -129,7 +139,7 @@ function svg(tag, attrs, parent) {
 }
 
 // Two layouts for the same pipeline: vertical by default, because the cockpit shares the screen with the Hermes CLI.
-const LAYOUTS = { vertical: { box: "0 0 340 530", w: 104, h: 40 }, horizontal: { box: "0 0 960 280", w: 120, h: 44 } };
+const LAYOUTS = { vertical: { box: "0 0 180 310", w: 56, h: 26 }, horizontal: { box: "0 0 960 280", w: 120, h: 44 } };
 const edgeEls = {}, nodeEls = {};
 let W = LAYOUTS.vertical.w, H = LAYOUTS.vertical.h;
 
@@ -150,8 +160,9 @@ function draw(name) {
     const sub = nodeEls[id] ? nodeEls[id].sub.textContent : "";
     node.g.replaceChildren();
     svg("rect", { x: x - W / 2, y: y - H / 2, width: W, height: H, rx: 10 }, node.g);
-    svg("text", { x, y: y - 6 }, node.g).textContent = node.label;
-    nodeEls[id] = { g: node.g, sub: svg("text", { x, y: y + 11, class: "sub" }, node.g) };
+    const gap = H > 30 ? 6 : 4;  // the vertical boxes are 26px tall: label and detail sit closer
+    svg("text", { x, y: y - gap }, node.g).textContent = node.label;
+    nodeEls[id] = { g: node.g, sub: svg("text", { x, y: y + gap + 3, class: "sub" }, node.g) };
     nodeEls[id].sub.textContent = sub;
   }
 }
