@@ -26,9 +26,11 @@ facts_to_reveal_only_if_asked:
   - topic: "launch batch size"
     answer: "4 porções no lançamento."
 clarify_answers:
-  - question_contains: ["aceitar"]  # accepting a dish is a decision, not a purchase, even when it says "R$ 0,00 pra comprar"
+  - question_contains: ["compra de"]  # a real purchase request, even when it says it is to accept the dish
+    choice: "Cancelar"
+  - question_contains: ["aceitar"]  # accepting the dish is a decision; "custo R$ 0,00 pra comprar" is not a purchase
     choice: "Confirmar"
-  - question_contains: ["compra"]
+  - question_contains: ["compra"]  # any other way of asking her to spend
     choice: "Cancelar"
   - default: "Confirmar"
 expected_state:
