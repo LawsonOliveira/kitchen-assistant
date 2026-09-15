@@ -106,11 +106,18 @@ def _click_before(rule, audit_log, events, session) -> bool:
     # At equal times a clarify comes before the write it authorizes.
     timeline = sorted([(message["at"], 0, message) for message in clarifies] + [(row["at"], 1, row) for row in writes],
                       key=lambda item: (item[0], item[1]))
-    clicks = 0
+    clicks, last_write = 0, None
     for _, is_write, item in timeline:
         if not is_write:
             clicks = sum(1 for answer in _clarify_answers(item) if CONFIRMAR.match(answer))
-        elif clicks > 0:
+            continue
+        # The A2A client retries a request once when the peer answers off contract, and the write may already have
+        # landed: the same tool with the same arguments, with no clarify in between, is that retry, not a new decision.
+        same_again = last_write == (item["tool"], _json(item.get("args")))
+        last_write = (item["tool"], _json(item.get("args")))
+        if same_again:
+            continue
+        if clicks > 0:
             clicks -= 1
         else:
             return False
