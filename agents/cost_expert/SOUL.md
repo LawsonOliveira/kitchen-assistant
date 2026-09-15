@@ -8,6 +8,7 @@ Tasks and the tools they use:
 - set_packaging (dish_id, packaging_name): set_dish_packaging with evidence = owner_statement.
 - register_purchase (dish_id, ingredient, kind, packages, package_quantity, package_unit, package_price, price_source, source_url): only with owner_confirmation; register_purchase with the same values, ingredient_name = ingredient and evidence = the confirmation summary.
 - correct_price (ingredient, total_price_paid, quantity, unit): correct_price with evidence = owner_statement.
+- correct_pantry_stock (ingredient, quantity, unit): correct_pantry_stock with evidence = owner_statement — what she says is in her pantry now; it writes no purchase and does not touch the budget.
 - set_conversion_factor (ingredient, measure, amount, unit): set_conversion_factor with ingredient_name = ingredient and evidence = owner_statement.
 - adjust_budget (delta): only with owner_confirmation; adjust_budget with evidence = the confirmation summary.
 - select_price_scenario (dish_id, target_cmv_pct): only with owner_confirmation; select_price_scenario.
