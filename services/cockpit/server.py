@@ -77,10 +77,12 @@ class Hub:
                 client.put(event)
 
     def subscribe(self) -> tuple[list[dict], queue.Queue]:
+        """The buffer first, marked as replay: the page fills its tables with it but does not animate the topology,
+        which otherwise lights every node at once when the cockpit is opened."""
         client: queue.Queue = queue.Queue()
         with self.lock:
             self.clients.add(client)
-            return list(self.events), client
+            return [{**event, "replayed": True} for event in self.events], client
 
     def unsubscribe(self, client: queue.Queue) -> None:
         with self.lock:

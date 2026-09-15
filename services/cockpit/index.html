@@ -137,7 +137,9 @@ for (const [id, n] of Object.entries(NODES)) {
 }
 
 const timers = {};
-function pulse(key, el, cls = "active") {
+// A replayed event fills the tables but never animates: opening the cockpit used to light every node at once.
+function pulse(key, el, cls = "active", replayed = false) {
+  if (replayed) return;
   el.classList.remove("error", "blocked");
   el.classList.add(cls);
   clearTimeout(timers[key]);
@@ -228,11 +230,11 @@ function handle(e) {
   if (e.kind === "state_snapshot") showState(e);
   const node = nodeFor(e);
   if (node) {
-    pulse(node, nodeEls[node].g, e.status === "ok" ? "active" : e.status);
+    pulse(node, nodeEls[node].g, e.status === "ok" ? "active" : e.status, e.replayed);
     nodeEls[node].sub.textContent = `${e.kind} · ${e.name}`.slice(0, 22);
   }
   const edge = edgeFor(e);
-  if (edge && edgeEls[edge]) pulse(edge, edgeEls[edge]);
+  if (edge && edgeEls[edge]) pulse(edge, edgeEls[edge], "active", e.replayed);
   updateTurn(e);
 }
 
