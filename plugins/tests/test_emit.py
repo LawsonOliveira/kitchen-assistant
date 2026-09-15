@@ -172,6 +172,8 @@ def test_every_hook_event_matches_the_event_contract(monkeypatch, capsys):
         assert [error.message for error in VALIDATOR.iter_errors(event)] == [], event
     by_kind = {}
     for event in events:
+        if event["status"] == "running":  # the opening half of a span; the finished half carries the numbers
+            continue
         by_kind.setdefault(event["kind"], []).append(event)
     assert {kind: len(items) for kind, items in by_kind.items()} == {
         "a2a_serve": 1, "llm_call": 1, "tool_call": 2, "a2a_call": 1, "subagent": 1, "guard_input": 1}
@@ -242,7 +244,8 @@ def test_langfuse_gets_the_trace_id_model_prompt_hash_tokens_and_cost(monkeypatc
     hooks["post_api_request"](session_id="owner-1", api_request_id="r1", api_call_count=0, model="claude-sonnet-5",
                               api_duration=0.8, usage={"input_tokens": 1200, "output_tokens": 300}, finish_reason="stop")
 
-    (event,) = printed_events(capsys)
+    # the opening half of the span is published too; the numbers travel on the finished one
+    (event,) = [item for item in printed_events(capsys) if item["status"] != "running"]
     starts = [kwargs for name, kwargs in langfuse.calls if name == "start"]
     updates = {key: value for name, kwargs in langfuse.calls if name == "update" for key, value in kwargs.items()}
     assert len(starts) == 1 and starts[0]["as_type"] == "generation"

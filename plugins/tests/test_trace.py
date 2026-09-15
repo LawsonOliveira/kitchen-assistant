@@ -117,7 +117,7 @@ def test_orchestrator_requests_carry_the_turn_trace_and_the_calling_span(monkeyp
     hooks["post_tool_call"](tool_name="ask_cost_expert", args=args, result="{}", task_id="t", session_id="owner-1",
                             tool_call_id="c1", duration_ms=30, status="ok")
 
-    (call,) = [event for event in printed_events(capsys) if event["kind"] == "a2a_call"]
+    (call,) = [event for event in printed_events(capsys) if event["kind"] == "a2a_call" and event["status"] != "running"]
     assert sent["trace"]["trace_id"] == trace.current("owner-1")["trace_id"] == call["trace_id"]
     assert sent["trace"]["parent_span_id"] == call["span_id"] and LANGFUSE_SPAN_ID.match(call["span_id"])
 
