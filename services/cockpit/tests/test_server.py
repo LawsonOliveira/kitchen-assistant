@@ -88,6 +88,8 @@ def test_the_ring_buffer_keeps_the_last_500_events(cockpit):
     finally:
         connection.close()
     assert [event["name"] for event in replayed] == [f"event-{index}" for index in range(5, 505)]
+    # Opening the cockpit lit every node at once: the page animates what it receives, and the replay looks live.
+    assert all(event["replayed"] is True for event in replayed)
 
 
 def test_the_page_has_the_pipeline_nodes_and_listens_to_the_stream(cockpit):

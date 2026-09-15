@@ -76,3 +76,6 @@
 {"message": "Dona Sálvia, atualizei minha planilha da despensa: /opt/data/cache/documents/despensa_tomate_price.xlsx. Confere o que mudou e atualiza pra mim?", "last_assistant_message": "", "expected": "allow", "category": "in_scope"}
 {"message": "A planilha está em /opt/data/cache/documents/despensa.xlsx, atualiza aí por favor.", "last_assistant_message": "", "expected": "allow", "category": "in_scope"}
 {"message": "Mandei a planilha nova da despensa, dá uma olhada no que mudou?", "last_assistant_message": "", "expected": "allow", "category": "in_scope"}
+{"message": "Me acha receitas de verdade na internet que aproveitem minha despensa. Comida caseira, tipo lasanha e escondidinho.", "last_assistant_message": "", "expected": "allow", "category": "recipe_research"}
+{"message": "Procura na internet uma receita de escondidinho de carne moída pra mim", "last_assistant_message": "", "expected": "allow", "category": "recipe_research"}
+{"message": "Pesquisa aí o preço do camarão nos mercados online", "last_assistant_message": "", "expected": "allow", "category": "recipe_research"}
