@@ -7,8 +7,9 @@ from kitchen_ledger.operations import DomainError
 RICE = [ingredient("Arroz branco tipo 1", 100, "g")]
 
 
-def candidate(conn, requirements=(), prep_time_minutes=30):
-    recipe = make_recipe(RICE, requirements=requirements, prep_time_minutes=prep_time_minutes)
+def candidate(conn, requirements=(), prep_time_minutes=30, name="Prato teste"):
+    # Each dish needs its own name: the same recipe registered twice is the dish it already is (retry idempotency).
+    recipe = make_recipe(RICE, requirements=requirements, prep_time_minutes=prep_time_minutes, name=name)
     return operations.register_candidate_dish(conn, recipe, 4, 4, EVIDENCE)["dish_id"]
 
 
@@ -47,8 +48,8 @@ def test_unavailable_equipment_is_missing(conn):
 
 def test_free_text_requirement_is_confirmed_per_dish(conn):
     viable_profile(conn)
-    first = candidate(conn, ["gas_or_energy:botijão"])
-    second = candidate(conn, ["gas_or_energy:botijão"])
+    first = candidate(conn, ["gas_or_energy:botijão"], name="Frango na panela")
+    second = candidate(conn, ["gas_or_energy:botijão"], name="Frango assado")
     assert operations.check_viability(conn, first)["unknown"] == ["gas_or_energy:botijão"]
 
     operations.confirm_dish_requirement(conn, first, "gas_or_energy:botijão", "available", "tenho botijão")
