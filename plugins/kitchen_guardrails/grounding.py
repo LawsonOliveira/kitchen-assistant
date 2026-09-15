@@ -22,11 +22,14 @@ class SessionGrounding:
 
     def __init__(self):
         self.amounts = {_amount(BUDGET_DISPLAY)}
+        self.chains: list[str] = []  # the accounts the ledger wrote ("R$ 25,96 ÷ 10 porções = R$ 2,60 por porção")
 
     def add_from_tool_result(self, result) -> None:
         for key, value in _walk(result):
             if "display" in key and isinstance(value, str):  # *_display fields and scenario display_price
                 self.amounts |= {_amount(display) for display in extract_brl(value)}
+                if key.endswith("_chain_display") and value not in self.chains:
+                    self.chains.append(value)
 
     def add_owner_message(self, text: str) -> None:
         """Amounts Dona Maria typed herself are hers, not invented by the model (she may be asked to confirm them)."""

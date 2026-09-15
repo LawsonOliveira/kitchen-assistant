@@ -12,7 +12,7 @@ import os
 from concurrent.futures import ThreadPoolExecutor
 from decimal import Decimal
 
-from . import classifier, cost_cap, input_guard, memory_guard, output_guard, progress, tool_policy
+from . import account, classifier, cost_cap, input_guard, memory_guard, output_guard, progress, tool_policy
 from .grounding import SessionGrounding
 from .messages import COST_CAP_MESSAGE, INFRA_BLOCK_MESSAGE
 
@@ -154,6 +154,12 @@ def register(ctx) -> None:
                           prompt_hash=classifier.prompt_hash("memory_guard.md"))
                 if decision is None and (message := progress.progress_message(tool_name)):
                     _show_progress(message)
+                if decision is None and tool_name == "clarify":
+                    # The ledger wrote the account; the model keeps paraphrasing it, so the code puts it in front of
+                    # the question that shows its result (probes A-C, didactic clarity stuck at 2).
+                    explained = account.clarify_with_account(args or {}, groundings.setdefault(session_id, SessionGrounding()).chains)
+                    if explained is not None:
+                        return {"action": "modify", "args": explained}
             if decision is not None:
                 _emit("tool_call", tool_name, status="blocked", session_id=session_id, preview=decision["message"][:200])
             return decision
