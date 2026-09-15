@@ -124,6 +124,27 @@ def test_no_scenario_cancels_the_click_that_accepts_a_dish():
         assert answer.get("choice") != "Cancelar", path.name
 
 
+def test_a_scenario_that_buys_nothing_cancels_a_purchase_even_when_it_mentions_the_dish():
+    # Probe B, scenario 03: "Registrar a compra de 1 caixinha de creme de leite × R$ 3,49 = R$ 3,49, pra poder aceitar
+    # o prato e fixar o preço de R$ 11,90?" was answered Confirmar, because the rule that confirms an acceptance had
+    # been put above the rule that cancels purchases. The creme de leite was bought and "nothing was bought" failed.
+    import yaml
+    from pathlib import Path
+
+    purchase = ("Registrar a compra de 1 caixinha de creme de leite × R$ 3,49 = R$ 3,49, pra poder aceitar o prato "
+                "e fixar o preço de R$ 11,90?")
+    accept = "Agora posso aceitar o strogonoff de frango como prato definitivo do cardápio?"
+    for path in sorted((Path(__file__).resolve().parents[1] / "scenarios").glob("*.yaml")):
+        scenario = yaml.safe_load(path.read_text())
+        if not any("nothing was bought" in check["check"] or "nothing accepted or bought" in check["check"]
+                   for check in scenario.get("expected_state", [])):
+            continue
+        answers = scenario["clarify_answers"]
+        assert simulated_owner.clarify_answer(answers, purchase, ["Confirmar", "Cancelar"])["choice"] == "Cancelar", path.name
+        if "accept_dish" in path.read_text():  # scenario 09 explores only and cancels everything on purpose
+            assert simulated_owner.clarify_answer(answers, accept, ["Confirmar", "Cancelar"])["choice"] == "Confirmar", path.name
+
+
 def test_the_persona_never_describes_her_pantry_beyond_the_facts():
     # Live trial: the persona said "sal e óleo eu tenho sim, salsinha no quintal", facts the scenario never gave.
     assert "pantry" in simulated_owner.system_prompt(SCENARIO)
