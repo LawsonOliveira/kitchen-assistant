@@ -164,9 +164,10 @@ function draw(name) {
     const sub = nodeEls[id] ? nodeEls[id].sub.textContent : "";
     node.g.replaceChildren();
     svg("rect", { x: x - W / 2, y: y - H / 2, width: W, height: H, rx: 10 }, node.g);
-    const gap = H > 30 ? 6 : 4;  // the vertical boxes are 26px tall: label and detail sit closer
-    svg("text", { x, y: y - gap }, node.g).textContent = node.label;
-    nodeEls[id] = { g: node.g, sub: svg("text", { x, y: y + gap + 3, class: "sub" }, node.g) };
+    // Wide boxes hold both lines; the 26px vertical ones centre the name and hang the detail under the box.
+    const narrow = H <= 30;
+    svg("text", { x, y: narrow ? y : y - 6 }, node.g).textContent = node.label;
+    nodeEls[id] = { g: node.g, sub: svg("text", { x, y: narrow ? y + H / 2 + 7 : y + 11, class: "sub" }, node.g) };
     nodeEls[id].sub.textContent = sub;
   }
 }
