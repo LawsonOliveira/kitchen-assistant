@@ -36,6 +36,17 @@ def test_every_file_a_skill_points_to_can_be_opened_from_the_skill(skill):
     assert [path for path in referenced if not (skill.parent / path).exists()] == []
 
 
+def test_a_parametric_requirement_is_a_kitchen_fact_not_a_confirmation():
+    # Final run 20260914-215130, scenario 01 trial 1: she sent 'pressure_cooker', 'stove_burners>=1' and
+    # 'max_batch_time_minutes>=45' to confirm_requirement, whose payload takes only gas_or_energy:/other: text, and once
+    # omitted numeric_value — four requests rejected by the contract, four model turns spent on nothing.
+    rule = next(line for line in (AGENTS / "orchestrator" / "SOUL.md").read_text().splitlines()
+                if "confirm_requirement" in line)
+    assert "only" in rule and "gas_or_energy:" in rule and "other:" in rule
+    assert "stove_burners>=1" in rule and "stove_burners" in rule  # the requirement text is not the key
+    assert "numeric_value" in rule and "null" in rule  # always sent, null for equipment and techniques
+
+
 def test_a_measure_is_asked_of_the_owner_before_it_is_researched():
     # Full run 20260913-192309, scenario 06 (all three trials): Dona Sálvia asked her to confirm a web estimate of 105 g
     # or 150 g for the chocolate bar she buys, priced the dish from it, and her own answer (1 kg) came later or never.
