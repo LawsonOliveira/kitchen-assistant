@@ -40,7 +40,7 @@
     body:not(.wide) th:nth-child(9), body:not(.wide) td:nth-child(9) { display: none; }
   }
   body:not(.wide) .turn { gap: 8px; font-size: 11px; }
-  #layout-toggle { font: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--line);
+  #layout-toggle, #popout { font: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--line);
                    border-radius: 999px; padding: 3px 10px; cursor: pointer; }
   .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 12px; min-width: 0; }
   .panel h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 0 0 8px; }
@@ -76,6 +76,7 @@
   <span id="badge-langfuse" class="badge">Langfuse</span>
   <span id="badge-guardrails" class="badge">Guardrails</span>
   <button id="layout-toggle" type="button" title="alterna entre a pilha vertical e a fita horizontal">⇄ deitar</button>
+  <button id="popout" type="button" title="abre o cockpit numa janela sem abas, que pode ficar mais estreita que o mínimo do navegador">⧉ janela estreita</button>
   <a id="langfuse-link" href="#" target="_blank" rel="noopener">abrir Langfuse</a>
 </header>
 
@@ -294,6 +295,9 @@ function handle(e) {
 }
 
 document.getElementById("langfuse-link").href = `${location.protocol}//${location.hostname}:3000`;
+// A tabbed window has a floor (~500px in Firefox); a popup has none, so the cockpit can sit in a strip.
+document.getElementById("popout").onclick = () =>
+  window.open(location.href, "cockpit-strip", "popup=yes,width=250,height=920");
 document.getElementById("layout-toggle").onclick = () => applyLayout(layoutName === "vertical" ? "horizontal" : "vertical");
 applyLayout(layoutName);
 const stream = new EventSource("/stream");
