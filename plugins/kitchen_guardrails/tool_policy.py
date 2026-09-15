@@ -32,6 +32,10 @@ ALLOWED = {
 BLOCKED_MESSAGE = "This tool is not allowed for this agent."
 CLICK_REQUIRED_MESSAGE = ("Nothing was sent: this request carries owner_confirmation but Dona Maria has not chosen "
                           "Confirmar in a clarify prompt for it. Ask her with clarify first.")
+# She answered, and the answer was no: repeating the question is what turns a decision into a loop (full run 01/1).
+REFUSED_MESSAGE = ("Nothing was sent: Dona Maria chose Cancelar in the last clarify. That is her decision, not a "
+                   "failure — never tell her the system is broken. Do not ask the same thing again: act on the no "
+                   "(another dish, the ingredient out of the recipe) or ask her what she wants to do instead.")
 _CONFIRMAR = re.compile(r"^Confirmar(?: \(Recommended\))?$")
 
 
@@ -59,15 +63,24 @@ class ClickLedger:
 
     def __init__(self):
         self._clicks: dict[str, int] = {}
+        self._refused: dict[str, bool] = {}
         self._lock = threading.Lock()
 
     def record_clarify(self, session_id: str, result) -> None:
+        answers = [answer.strip() for answer in _answers(result)]
         with self._lock:
-            self._clicks[session_id] = sum(1 for answer in _answers(result) if _CONFIRMAR.match(answer.strip()))
+            self._clicks[session_id] = sum(1 for answer in answers if _CONFIRMAR.match(answer))
+            self._refused[session_id] = bool(answers) and not self._clicks[session_id] and any(
+                answer.lower().startswith("cancelar") for answer in answers)
 
     def refund(self, session_id: str) -> None:
         with self._lock:
             self._clicks[session_id] = self._clicks.get(session_id, 0) + 1
+
+    def refused(self, session_id: str) -> bool:
+        """Her last clarify was answered Cancelar and nothing else."""
+        with self._lock:
+            return self._refused.get(session_id, False)
 
     def consume(self, session_id: str) -> bool:
         with self._lock:
@@ -80,4 +93,6 @@ class ClickLedger:
 def check_click(ledger: ClickLedger, session_id: str, tool_name: str, args: dict | None) -> dict | None:
     if tool_name not in ASK_TOOLS or not (args or {}).get("owner_confirmation"):
         return None
-    return None if ledger.consume(session_id) else {"action": "block", "message": CLICK_REQUIRED_MESSAGE}
+    if ledger.consume(session_id):
+        return None
+    return {"action": "block", "message": REFUSED_MESSAGE if ledger.refused(session_id) else CLICK_REQUIRED_MESSAGE}
