@@ -36,15 +36,14 @@ def test_every_file_a_skill_points_to_can_be_opened_from_the_skill(skill):
     assert [path for path in referenced if not (skill.parent / path).exists()] == []
 
 
-def test_the_chain_comes_before_the_price_options_not_inside_them():
-    # Final run 20260914-215130, scenario 01 trial 1 (didactic clarity 2 of 5, every other criterion 5): the only money
-    # Dona Maria ever saw were results — "R$ 5,90 (lucro R$ 3,52/porção)" in the options, "Preço: R$ 6,90 | custo R$ 1,79
-    # por porção" in the launch menu. No division, no 10%, nothing she could redo. The rubric scores 5 only when the
-    # steps appear in order (unit cost -> dish -> per portion -> price) with one worked example.
+def test_the_price_question_carries_the_arithmetic_that_led_to_it():
+    # Probe A: didactic clarity 1 in scenario 07 and 2 in 01 and 04, the three flows where the money is born inside a
+    # clarify. Dona Sálvia jumps from the tool result straight to the question, so a rule about "the reply before the
+    # options" has nowhere to happen: she writes no reply there. The question itself is the message she reads.
     soul = (AGENTS / "orchestrator" / "SOUL.md").read_text()
-    rule = next(line for line in soul.splitlines() if "before the options" in line)
-    assert "÷ 0,90" in rule and "por porção" in rule  # the chain ends at the minimum price, in her words
-    assert "never only inside the options" in rule
+    rule = next(line for line in soul.splitlines() if "question that shows a price" in line)
+    assert "÷" in rule and "0,90" in rule  # the worked chain, not the result alone
+    assert "15%" in rule  # a promotion is asked the same way (scenario 07)
 
 
 def test_a_parametric_requirement_is_a_kitchen_fact_not_a_confirmation():
