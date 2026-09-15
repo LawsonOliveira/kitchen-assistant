@@ -2458,6 +2458,21 @@ evidence, what was changed, and where. Open questions that were "default applied
   her decision, never a failure, and to act on the no instead of repeating the question; her contract says the same in
   her words. The run was stopped at the first trial and restarted.
 
+- **C85 — The account in front of the question, verified.** Before spending five hours on the complete run, the owner
+  asked for the fastest scenario that exercises the injection: 07 (marketing promotion) covers the price scenarios and
+  the promotion, and runs in six minutes. Run `20260915-075404-probe07`: it passed with didactic clarity **3**, against
+  1 in probe A and 2 in B and C, and Dona Maria read "R$ 10,86 ÷ 4 porções = R$ 2,72 por porção. Posso aceitar o arroz
+  com frango…" and "R$ 9,90 − 10% = R$ 8,91; R$ 8,91 − R$ 2,72 = R$ 6,19 de lucro por porção. Fixar o preço…". One
+  defect showed up with it: she also wrote the minimum in her own words, so the same division appeared twice in one
+  question; the guard now compares the operation ("R$ 2,72 ÷ 0,90") instead of the whole sentence.
+  The five fastest scenarios then ran together (`20260915-081110-fast5`): **5 of 5 passed**, means didactic clarity
+  3.80, clarity of numbers 4.40, owner decides 5.00, tone 4.80 — the first round to clear the owner's bar (run mean
+  ≥ 3.5 per criterion, lowered from 4.0 that morning; per-scenario floor 3.0) in every criterion. Scenario 08 scored 5
+  in all four. Latency went back to the level of probes A and B (scenario 05 from 10 to 7 minutes, 06 from 28 to 22
+  messages), because the injection happens in `pre_tool_call` and costs no model call: `ask_recipe_expert` p50 0.3 s,
+  `ask_cost_expert` p50 0.3 s, the orchestrator's own model calls p50 2.9 s. The one slow path left is
+  `ask_marketing_expert` (p90 35 s), which still researches the web — a candidate for the next fast path.
+
 ## Post-loop changes (owner requests, 2026-09-13)
 Requested by the owner while Loops 6–8 were running, test-first, each recorded as a correction. **Order decided by the
 owner:** Loop 6 pauses; Loop 7 (the owner's Telegram checks) and Loop 8 finish, then PL1–PL9, then Loop 6 resumes and
