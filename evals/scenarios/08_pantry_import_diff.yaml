@@ -27,8 +27,10 @@ expected_state:
           AND diff->'changed'->0->>'name' = 'Tomate'
           AND diff->'changed'->0->'fields' = '{\"total_price_paid\": [\"16.00\", \"20.00\"]}'::jsonb
           FROM pantry_imports WHERE status = 'applied'"
-  - check: "Tomate's current price is the spreadsheet's new price"
-    sql: "SELECT count(*) = 1 FROM current_ingredient_prices p JOIN ingredients i ON i.id = p.ingredient_id WHERE i.name = 'Tomate' AND p.total_price_paid = 20.00 AND p.quantity_purchased_base = 2000 AND p.source = 'spreadsheet'"
+  # Probe B: the import was applied and the diff was right, but the owner then said "paguei R$ 20,00 nos 2 kg" and her
+  # words were registered too, so the source was hers, not the spreadsheet. The price Dona Maria pays is the same.
+  - check: "Tomate's current price is the new one, from the spreadsheet or from her own words"
+    sql: "SELECT count(*) = 1 FROM current_ingredient_prices p JOIN ingredients i ON i.id = p.ingredient_id WHERE i.name = 'Tomate' AND p.total_price_paid = 20.00 AND p.quantity_purchased_base = 2000 AND p.source IN ('spreadsheet', 'owner_confirmed')"
 trajectory_rules:
   - id: "preview_before_apply"
     type: precedes
