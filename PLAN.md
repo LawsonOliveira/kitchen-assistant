@@ -2410,6 +2410,20 @@ evidence, what was changed, and where. Open questions that were "default applied
   run asked for the account "before the options", which never happens because Dona Sálvia writes no reply there — the
   account now goes inside the question itself, price and promotion alike.
 
+- **C81 — Probe B (`20260915-004554-probeB`): five passed, four failed, and didactic clarity fell to 2.33.** Three of
+  the four failures were ours, not hers: the output policy blocked a whole reply because the menu copy called the dish
+  "nutritiva" — a claim the skill's banned list never named — and Dona Maria read "Só consigo te ajudar com cozinha e
+  cardápio" right after fixing her price, ending the journey (the guard now answers a claim in its own words and the
+  word is banned in the skill and the policy); scenario 03 bought creme de leite because the rule added after probe A
+  ("aceitar" → Confirmar) sat above the rule that cancels purchases, so both scenarios now order three rules —
+  "compra de" cancels, "aceitar" confirms, any other "compra" cancels; and scenario 08's check demanded
+  `source = 'spreadsheet'` when the owner had confirmed the same R$ 20,00 in her own words, so it now checks the price
+  she pays. The real finding is the fourth: **two rounds of prompt changes could not move didactic clarity**, because
+  every amount Dona Sálvia shows must come from a tool display string (D12) and the arithmetic was not one — she
+  wrote results joined by prose ("O custo por porção é R$ 2,60; o mínimo é R$ 2,89 por causa da taxa de 10%"). The
+  ledger now produces the account as data: `cost_chain_display`, `min_price_chain_display`, `profit_chain_display` per
+  scenario and `promotion_chain_display`, and her contract says to copy them word for word.
+
 ## Post-loop changes (owner requests, 2026-09-13)
 Requested by the owner while Loops 6–8 were running, test-first, each recorded as a correction. **Order decided by the
 owner:** Loop 6 pauses; Loop 7 (the owner's Telegram checks) and Loop 8 finish, then PL1–PL9, then Loop 6 resumes and
