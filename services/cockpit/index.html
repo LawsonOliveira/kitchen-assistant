@@ -14,7 +14,7 @@
             --node: #262a31; --active: #ff922b; --ok: #51cf66; --error: #ff6b6b; --blocked: #fcc419; --edge: #495057; }
   }
   * { box-sizing: border-box; }
-  body { margin: 0; padding: 8px; max-width: 216px; background: var(--bg); color: var(--ink);
+  body { margin: 0; padding: 8px; background: var(--bg); color: var(--ink);
          font: 14px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
   header { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 12px; }
   h1 { font-size: 18px; margin: 0 12px 0 0; }
@@ -26,14 +26,19 @@
   .grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
   body.wide { max-width: none; padding: 16px; font-size: 14px; }
   /* 200px wide: the boxes carry a name and nothing else, and the table keeps only what fits. */
+  /* The window has a floor (Firefox will not go under ~500px), so the page uses whatever width it gets: the pipeline
+     stays a 200px stack and the table shows more columns as room appears. */
   body:not(.wide) { font-size: 12px; }
+  body:not(.wide) #pipeline { max-width: 200px; margin: 0 auto; }
   body:not(.wide) h1 { font-size: 14px; }
   body:not(.wide) .node text { font-size: 7px; } body:not(.wide) .node .sub { font-size: 6px; }
-  body:not(.wide) th:nth-child(2), body:not(.wide) td:nth-child(2),
   body:not(.wide) th:nth-child(3), body:not(.wide) td:nth-child(3),
   body:not(.wide) th:nth-child(7), body:not(.wide) td:nth-child(7),
-  body:not(.wide) th:nth-child(8), body:not(.wide) td:nth-child(8),
-  body:not(.wide) th:nth-child(9), body:not(.wide) td:nth-child(9) { display: none; }
+  body:not(.wide) th:nth-child(8), body:not(.wide) td:nth-child(8) { display: none; }
+  @media (max-width: 360px) {
+    body:not(.wide) th:nth-child(2), body:not(.wide) td:nth-child(2),
+    body:not(.wide) th:nth-child(9), body:not(.wide) td:nth-child(9) { display: none; }
+  }
   body:not(.wide) .turn { gap: 8px; font-size: 11px; }
   #layout-toggle { font: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--line);
                    border-radius: 999px; padding: 3px 10px; cursor: pointer; }
