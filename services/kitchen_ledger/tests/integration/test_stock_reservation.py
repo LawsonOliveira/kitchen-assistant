@@ -54,3 +54,26 @@ def test_an_accepted_dish_counts_its_own_reservation_as_available(conn):
     operations.accept_dish(conn, dish)
     assert operations.check_pantry_match(conn, dish)["missing"] == []
     assert operations.check_budget_fit(conn, dish)["missing_items"] == []
+
+
+def test_stock_she_already_has_is_a_correction_not_a_purchase(conn):
+    # Full run 20260915-095503, scenario 03 trials 1 and 2: Dona Maria cancelled the purchase and said the creme de
+    # leite was already at home. The only tool that adds stock was register_purchase, so Dona Sálvia "bought" it —
+    # R$ 3,49 off a budget she never spent, and "nothing was bought" failed. Her pantry being out of date is a
+    # correction, like a price she corrects, and it must not touch the budget.
+    before = conn.execute("SELECT remaining FROM budget_status").fetchone()[0]
+    result = operations.correct_pantry_stock(conn, ingredient_name="Creme de leite", quantity="200", unit="ml",
+                                             evidence="já tenho uma caixinha em casa")
+    assert result["stock_display"] == "200 ml"
+    assert conn.execute("SELECT count(*) FROM purchases").fetchone()[0] == 0
+    assert conn.execute("SELECT remaining FROM budget_status").fetchone()[0] == before
+
+
+def test_a_stock_correction_replaces_what_the_spreadsheet_said(conn):
+    operations.correct_pantry_stock(conn, ingredient_name="Arroz branco tipo 1", quantity="1", unit="kg",
+                                    evidence="só sobrou um quilo")
+    operations.correct_pantry_stock(conn, ingredient_name="Arroz branco tipo 1", quantity="2", unit="kg",
+                                    evidence="achei mais um pacote")
+    stock = conn.execute("SELECT s.quantity_base FROM pantry_stock s JOIN ingredients i ON i.id = s.ingredient_id"
+                         " WHERE i.name = 'Arroz branco tipo 1'").fetchone()[0]
+    assert stock == 2000
