@@ -104,6 +104,14 @@ def _pct(rate: Decimal) -> str:
     return f"{(rate * 100).quantize(Decimal(1), rounding=ROUND_HALF_UP)}%"
 
 
+def price_chain_display(total_price_paid: Decimal, quantity_purchased_base: Decimal, base_unit: str) -> str:
+    """What a package costs per kilo, litre or unit, with the division she can redo (probes: package prices had none)."""
+    quantity = quantity_purchased_base
+    shown = quantity.quantize(Decimal(1)) if quantity == quantity.to_integral_value() else quantity.normalize()
+    return (f"{format_brl(total_price_paid)} ÷ {shown} {base_unit} = "
+            f"{format_unit_cost(total_price_paid, quantity_purchased_base, base_unit)}")
+
+
 def cost_chain_display(recipe_cmv_value: Decimal, yield_portions: int, per_portion: Decimal) -> str:
     """The account of the cost per portion, as Dona Maria would redo it (probes A and B)."""
     return f"{format_brl(recipe_cmv_value)} ÷ {yield_portions} porções = {format_brl(per_portion)} por porção"

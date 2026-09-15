@@ -22,8 +22,8 @@ from kitchen_ledger.measures import MissingConversionError, UnconfirmedMeasureEr
 from kitchen_ledger.pantry_import import IngredientRecord, PantryImportError, diff, load_records, plain
 from kitchen_ledger.pricing import (
     cmv_per_portion, cost_chain_display, format_brl, format_brl_min, format_unit_cost, min_price,
-    min_price_chain_display, min_price_with_packaging, price_alerts, price_scenarios, profit_chain_display,
-    promotion_chain_display, recipe_cmv, unit_cost,
+    min_price_chain_display, min_price_with_packaging, price_alerts, price_chain_display, price_scenarios,
+    profit_chain_display, promotion_chain_display, recipe_cmv, unit_cost,
 )
 from kitchen_ledger.units import NonPositiveQuantityError, UnknownUnitError, parse_unit, to_base
 
@@ -380,7 +380,8 @@ def record_price_quote(conn, ingredient_name: str, kind: str, package_quantity, 
     # The package travels back so Dona Sálvia can confirm exactly this quote (Loop 3 scenario 02).
     return {"ingredient": ingredient_name, "price_source": source, "package_quantity": plain(_decimal(package_quantity, "package_quantity")),
             "package_unit": package_unit, "package_price": f"{price:.2f}", "package_price_display": format_brl(price),
-            "unit_cost_display": format_unit_cost(price, quantity_base, base_unit)}
+            "unit_cost_display": format_unit_cost(price, quantity_base, base_unit),
+            "price_chain_display": price_chain_display(price, quantity_base, base_unit)}
 
 
 def register_purchase(conn, ingredient_name: str, kind: str, packages: int, package_quantity, package_unit: str,
@@ -676,6 +677,7 @@ def correct_price(conn, ingredient_name: str, total_price_paid, quantity, unit: 
         db.supersede_price(conn, row["id"])
         db.insert_price(conn, row["id"], price, quantity_base, f"{plain(_decimal(quantity, 'quantity'))} {unit}", "owner_confirmed", None, evidence)
     return {"ingredient": ingredient_name, "unit_cost_display": format_unit_cost(price, quantity_base, base_unit),
+            "price_chain_display": price_chain_display(price, quantity_base, base_unit),
             "alerts": _alerts_for_accepted_dishes(conn)}
 
 
