@@ -101,22 +101,32 @@ def test_the_middleware_answers_on_the_first_model_call_only(monkeypatch):
 
 # --- recipe_expert (PLAN.md C77): the same idea, with the reply shape each task's contract asks for ----------------
 
-@pytest.mark.parametrize("task, payload, statement, tool, args, result, reply", [
+# The "result" column is what costs-mcp really returns (services/costs_mcp/costs_mcp/operations.py); the "reply" column
+# is what contracts/experts/recipe_expert.response.json accepts. A trial on 2026-09-14 spent seven minutes looping
+# because update_kitchen_profile answers with requirement_key and the contract asks for key.
+PANTRY_MATCH = {"have": [{"ingredient": "Arroz"}], "missing": [{"ingredient": "Tomate", "short_display": "200 g"}],
+                "unmatched": [], "conversions_needed": [], "pantry_coverage_pct": 80}
+
+RECIPE_TASKS = [
     ("record_kitchen_fact", {"key": "oven", "status": "available", "numeric_value": None}, "Tenho forno a gás",
      "mcp__costs__update_kitchen_profile", {"key": "oven", "numeric_value": None, "status": "available", "evidence": "Tenho forno a gás"},
-     {"key": "oven", "status": "available"}, {"kitchen_fact": {"key": "oven", "status": "available"}}),
+     {"requirement_key": "oven", "status": "available"}, {"kitchen_fact": {"key": "oven", "status": "available"}}),
     ("reject_candidate", {"dish_id": 3, "reason": "fica molhado"}, "fica molhado pra marmita",
      "mcp__costs__reject_candidate_dish", {"dish_id": 3, "reason": "fica molhado", "evidence": "fica molhado pra marmita"},
      {"dish_id": 3, "status": "rejected"}, {"dish": {"dish_id": 3, "status": "rejected"}}),
     ("set_launch_batch", {"dish_id": 3, "launch_batch_portions": 10}, "quero 10 porções",
      "mcp__costs__set_launch_batch_portions", {"dish_id": 3, "launch_batch_portions": 10, "evidence": "quero 10 porções"},
-     {"dish_id": 3, "status": "candidate", "launch_batch_portions": 10},
-     {"dish": {"dish_id": 3, "status": "candidate", "launch_batch_portions": 10}}),
-    ("confirm_requirement", {"dish_id": 3, "requirement": "oven", "status": "available"}, "tenho forno",
-     "mcp__costs__confirm_dish_requirement", {"dish_id": 3, "requirement": "oven", "status": "available", "evidence": "tenho forno"},
-     {"dish_id": 3, "requirement": "oven", "status": "available"},
-     {"requirement": {"dish_id": 3, "requirement": "oven", "status": "available"}}),
-])
+     {"dish_id": 3, "launch_batch_portions": 10, "pantry_match": PANTRY_MATCH},
+     {"dish": {"dish_id": 3, "status": "candidate", "pantry_coverage_pct": 80, "missing_ingredients": ["Tomate"]}}),
+    ("confirm_requirement", {"dish_id": 3, "requirement": "other:panela grande", "status": "available"}, "tenho panela grande",
+     "mcp__costs__confirm_dish_requirement",
+     {"dish_id": 3, "requirement": "other:panela grande", "status": "available", "evidence": "tenho panela grande"},
+     {"dish_id": 3, "requirement": "other:panela grande", "status": "available"},
+     {"requirement": {"dish_id": 3, "requirement": "other:panela grande", "status": "available"}}),
+]
+
+
+@pytest.mark.parametrize("task, payload, statement, tool, args, result, reply", RECIPE_TASKS)
 def test_recipe_expert_single_tool_tasks_skip_the_model(task, payload, statement, tool, args, result, reply):
     # Latency pass: ask_recipe_expert was p90 194 s with 3.7 model calls per request, while these are one MCP call.
     tools = FakeTools({tool: result})
@@ -125,15 +135,36 @@ def test_recipe_expert_single_tool_tasks_skip_the_model(task, payload, statement
     assert tools.calls == [(tool, args)]
 
 
+MEASURE = {"ingredient": "Cobertura", "measure": "package", "amount_display": "1 kg", "source": "owner_confirmed",
+           "source_url": "https://exemplo.com/cobertura"}
+
+
 def test_confirm_measure_needs_her_click_and_accept_checks_viability_first():
-    tools = FakeTools({"mcp__costs__confirm_measure": {"ingredient": "Cobertura", "measure": "unit"},
+    tools = FakeTools({"mcp__costs__confirm_measure": MEASURE,
                        "mcp__costs__check_viability": {"viable": True}, "mcp__costs__accept_dish": {"dish_id": 3, "status": "accepted"}})
-    assert fast_path.answer(request("confirm_measure", {"ingredient_name": "Cobertura", "measure": "unit"}), tools) is None
+    assert fast_path.answer(request("confirm_measure", {"ingredient_name": "Cobertura", "measure": "package"}), tools) is None
     confirmation = {"choice": "Confirmar", "summary": "1 barra = 1 kg"}
-    assert fast_path.answer(request("confirm_measure", {"ingredient_name": "Cobertura", "measure": "unit"}, confirmation), tools)["result"] == {
-        "measure": {"ingredient": "Cobertura", "measure": "unit"}}
+    assert fast_path.answer(request("confirm_measure", {"ingredient_name": "Cobertura", "measure": "package"}, confirmation), tools)["result"] == {
+        "measure": MEASURE}
     assert fast_path.answer(request("accept", {"dish_id": 3}, confirmation), tools)["result"] == {"dish": {"dish_id": 3, "status": "accepted"}}
     assert [tool for tool, _ in tools.calls][-2:] == ["mcp__costs__check_viability", "mcp__costs__accept_dish"]
+
+
+def test_every_fast_path_reply_matches_the_recipe_expert_contract():
+    # The peer validates the reply; a shape the contract rejects costs a retry, a contract_violation and a model loop.
+    from kitchen_a2a import validation
+
+    schema = validation.CONTRACTS_DIR / "experts" / "recipe_expert.response.json"
+    confirmation = {"choice": "Confirmar", "summary": "pode aceitar"}
+    replies = [fast_path.answer(request(task, payload, None, statement), FakeTools({tool: result}))
+               for task, payload, statement, tool, args, result in [row[:6] for row in RECIPE_TASKS]]
+    replies.append(fast_path.answer(request("confirm_measure", {"ingredient_name": "Cobertura", "measure": "package"}, confirmation),
+                                    FakeTools({"mcp__costs__confirm_measure": MEASURE})))
+    replies.append(fast_path.answer(request("accept", {"dish_id": 3}, confirmation),
+                                    FakeTools({"mcp__costs__check_viability": {"viable": True},
+                                               "mcp__costs__accept_dish": {"dish_id": 3, "status": "accepted"}})))
+    for reply in replies:
+        validation.validate_data(schema, reply)
 
 
 def test_the_fast_path_is_wired_for_both_experts():
