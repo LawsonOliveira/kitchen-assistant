@@ -254,20 +254,29 @@ def register_candidate_dish(conn, recipe: dict, yield_portions: int, launch_batc
     # (probe A, scenario 09): the same recipe is the dish it already is, and one she rejected never comes back.
     existing = conn.execute("SELECT id, status FROM dishes WHERE lower(name) = lower(%s) ORDER BY id DESC LIMIT 1",
                             (recipe["name"],)).fetchone()
+    packaging_id = _packaging(conn, packaging_ingredient_name)["id"] if packaging_ingredient_name else None
     if existing is not None:
         if existing[1] == "rejected":
             raise DomainError("dish_rejected", f"Dona Maria rejected {recipe['name']!r}; suggest another dish instead of registering it again",
                               dish_id=existing[0], name=recipe["name"])
-        return {"dish_id": existing[0], "viability": _viability(conn, existing[0]),
-                "pantry_match": _pantry_match(conn, _dish(conn, existing[0]))}
-    packaging_id = _packaging(conn, packaging_ingredient_name)["id"] if packaging_ingredient_name else None
+        dish_id = existing[0]
+        if db.get_dish(conn, dish_id)["recipe"] != recipe:  # she revised it; a retry would send the very same recipe
+            with conn.transaction():
+                db.update_dish_recipe(conn, dish_id, recipe, yield_portions, launch_batch_portions, packaging_id, evidence)
+                _insert_requirements(conn, dish_id, recipe)
+        return {"dish_id": dish_id, "viability": _viability(conn, dish_id),
+                "pantry_match": _pantry_match(conn, _dish(conn, dish_id))}
     with conn.transaction():
         dish_id = db.insert_dish(conn, recipe, yield_portions, launch_batch_portions, packaging_id, evidence)
-        for requirement in recipe["requirements"]:
-            db.insert_dish_requirement(conn, dish_id, requirement, "recipe")
-        # Derived so it never depends on the LLM remembering to emit it (D25).
-        db.insert_dish_requirement(conn, dish_id, f"max_batch_time_minutes>={recipe['prep_time_minutes']}", "derived")
+        _insert_requirements(conn, dish_id, recipe)
     return {"dish_id": dish_id, "viability": _viability(conn, dish_id), "pantry_match": _pantry_match(conn, _dish(conn, dish_id))}
+
+
+def _insert_requirements(conn, dish_id: int, recipe: dict) -> None:
+    for requirement in recipe["requirements"]:
+        db.insert_dish_requirement(conn, dish_id, requirement, "recipe")
+    # Derived so it never depends on the LLM remembering to emit it (D25).
+    db.insert_dish_requirement(conn, dish_id, f"max_batch_time_minutes>={recipe['prep_time_minutes']}", "derived")
 
 
 def reject_candidate_dish(conn, dish_id: int, reason: str, evidence: str) -> dict:

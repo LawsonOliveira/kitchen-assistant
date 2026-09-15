@@ -194,6 +194,17 @@ def insert_dish(conn, recipe: dict, yield_portions: int, launch_batch_portions: 
     ).fetchone()[0]
 
 
+def update_dish_recipe(conn, dish_id: int, recipe: dict, yield_portions: int, launch_batch_portions: int,
+                       packaging_ingredient_id: int | None, evidence: str) -> None:
+    """A candidate she revised (an ingredient in or out): the same dish, with the recipe she agreed to."""
+    conn.execute(
+        "UPDATE dishes SET recipe = %s, source_url = %s, yield_portions = %s, launch_batch_portions = %s,"
+        " packaging_ingredient_id = %s, evidence = %s WHERE id = %s",
+        (Jsonb(recipe), recipe["source_url"], yield_portions, launch_batch_portions, packaging_ingredient_id, evidence, dish_id),
+    )
+    conn.execute("DELETE FROM dish_requirements WHERE dish_id = %s", (dish_id,))
+
+
 def get_dish(conn, dish_id: int) -> dict | None:
     return _one(conn, "SELECT * FROM dishes WHERE id = %s", (dish_id,))
 

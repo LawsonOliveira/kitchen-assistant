@@ -138,7 +138,7 @@ def test_the_same_name_with_a_changed_recipe_is_the_same_dish_revised(conn):
     assert again["dish_id"] == first
     assert conn.execute("SELECT count(*) FROM dishes WHERE lower(name) = 'omelete de frango'").fetchone()[0] == 1
     stored = conn.execute("SELECT recipe FROM dishes WHERE id = %s", (first,)).fetchone()[0]
-    assert [line["ingredient"] for line in stored["ingredients"]] == ["Arroz branco tipo 1", "Cebolinha"]
+    assert [line["name"] for line in stored["ingredients"]] == ["Arroz branco tipo 1", "Cebolinha"]
 
 
 def test_registering_the_same_recipe_twice_returns_the_dish_it_already_has(conn):
