@@ -31,8 +31,8 @@ test-integration:
 test-contracts:
 	$(COMPOSE) run --rm --no-deps orchestrator $(AGENT_PYTHON) -m pytest /opt/kitchen/contracts/tests -q -p no:cacheprovider
 
-test-plugins:
-	$(COMPOSE) run --rm --no-deps orchestrator $(AGENT_PYTHON) -m pytest /opt/kitchen/plugins/tests -q -p no:cacheprovider
+test-plugins:  # the agents' configs and SOULs are read by the tests, and the image carries only plugins/ and contracts/
+	$(COMPOSE) run --rm --no-deps -v $(PWD)/agents:/opt/kitchen/agents:ro orchestrator $(AGENT_PYTHON) -m pytest /opt/kitchen/plugins/tests -q -p no:cacheprovider
 
 smoke-a2a:
 	bash scripts/smoke_a2a.sh
