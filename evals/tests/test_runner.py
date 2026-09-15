@@ -136,6 +136,17 @@ def test_a_trial_records_which_guard_blocked_a_turn():
                                            {"kind": "guard_output", "at": "23:50:00", "trace_id": "t2"}]
 
 
+def test_the_run_can_be_asked_not_to_publish():
+    # The owner asks to see the numbers before a run becomes a Langfuse dataset run (2026-09-15), and `make evals`
+    # publishes at the end of the same process. With --no-publish the report says so and nothing is sent.
+    calls = []
+    assert runner.publication("20260915-095503-final", [], publish=False, publisher=lambda *args: calls.append(args)) == (
+        "not published: --no-publish")
+    assert calls == []
+    runner.publication("run", [{"id": "01"}], publish=True, publisher=lambda name, trials: calls.append((name, trials)) or "published run")
+    assert calls == [("run", [{"id": "01"}])]
+
+
 def test_the_report_requires_a_judge_mean_of_three_and_a_half_in_every_criterion():
     # Owner's bar, lowered from 4.0 on 2026-09-15 after three probe rounds: the run averages at least 3.5 in each
     # rubric criterion, and no scenario averages below 3.0 in any of them.
