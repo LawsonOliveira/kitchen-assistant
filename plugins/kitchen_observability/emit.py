@@ -56,17 +56,23 @@ def cost_usd(model, tokens_in, tokens_out) -> float | None:
     return float((Decimal(tokens_in) * input_rate + Decimal(tokens_out) * output_rate) / Decimal(1_000_000))
 
 
-def start(kind: str, name: str, **fields) -> dict:
+def start(kind: str, name: str, announce: bool = True, **fields) -> dict:
     """Open a span now: its Langfuse observation measures the real duration and its id becomes the event span_id."""
     session_id = fields.get("session_id", "")
     scope = trace.current(session_id) or {}
     trace_id = fields.get("trace_id") or scope.get("trace_id") or trace.new_trace_id()
     parent = fields["parent_span_id"] if "parent_span_id" in fields else trace.parent_span_id(session_id)
     observation = _open_observation(kind, name, trace_id, parent, scope.get("owner_session_id"), fields)
-    return {"kind": kind, "name": name, "trace_id": trace_id, "parent_span_id": parent,
+    span = {"kind": kind, "name": name, "trace_id": trace_id, "parent_span_id": parent,
             "span_id": getattr(observation, "id", None) or trace.new_span_id(), "observation": observation,
             "started_at": datetime.now(timezone.utc).isoformat(timespec="milliseconds"), "monotonic": time.monotonic(),
             "fields": fields}
+    # The cockpit used to learn of the work only when it was over: the node lit after the fact and stayed dark while
+    # the agent was busy. The span says it is running now, and the finished event closes it by span_id. A one-shot
+    # event (a guard verdict, a health check) has no work in between and announces nothing.
+    if announce:
+        _publish(_event(span, {**fields, "status": "running"}, 0))
+    return span
 
 
 def finish(span: dict, **fields) -> dict:
@@ -80,7 +86,7 @@ def finish(span: dict, **fields) -> dict:
 
 def emit(kind: str, name: str, **fields) -> dict:
     """One finished event: a guard verdict, a health check, or a hook whose start was never seen."""
-    return finish(start(kind, name, **fields))
+    return finish(start(kind, name, announce=False, **fields))
 
 
 def flush(timeout_s: float = 2.0) -> None:

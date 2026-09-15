@@ -136,13 +136,23 @@ for (const [id, n] of Object.entries(NODES)) {
   nodeEls[id] = { g: n.g, sub: svg("text", { x: n.x, y: n.y + 11, class: "sub" }, n.g) };
 }
 
-const timers = {};
+const timers = {}, running = {};
 // A replayed event fills the tables but never animates: opening the cockpit used to light every node at once.
-function pulse(key, el, cls = "active", replayed = false) {
-  if (replayed) return;
+// An event with status "running" keeps the node lit until its finished half arrives (same span_id).
+function pulse(key, el, cls = "active", e = {}) {
+  if (e.replayed) return;
   el.classList.remove("error", "blocked");
   el.classList.add(cls);
   clearTimeout(timers[key]);
+  if (e.status === "running") {
+    (running[key] = running[key] || new Set()).add(e.span_id);
+    return;
+  }
+  const open = running[key];
+  if (open) {
+    open.delete(e.span_id);
+    if (open.size) return;  // another call is still working on this node
+  }
   timers[key] = setTimeout(() => el.classList.remove(cls), PULSE_MS);
 }
 
@@ -221,7 +231,7 @@ function addRow(e) {
 }
 
 function handle(e) {
-  addRow(e);
+  if (e.status !== "running") addRow(e);  // the opening half only lights the topology; the row carries the result
   if (e.kind === "health") {
     if (e.name === "langfuse") setBadge("badge-langfuse", e.status, e.preview);
     else if (e.name.includes("guard")) setBadge("badge-guardrails", e.status, e.preview);
@@ -230,11 +240,11 @@ function handle(e) {
   if (e.kind === "state_snapshot") showState(e);
   const node = nodeFor(e);
   if (node) {
-    pulse(node, nodeEls[node].g, e.status === "ok" ? "active" : e.status, e.replayed);
+    pulse(node, nodeEls[node].g, e.status === "ok" || e.status === "running" ? "active" : e.status, e);
     nodeEls[node].sub.textContent = `${e.kind} · ${e.name}`.slice(0, 22);
   }
   const edge = edgeFor(e);
-  if (edge && edgeEls[edge]) pulse(edge, edgeEls[edge], "active", e.replayed);
+  if (edge && edgeEls[edge]) pulse(edge, edgeEls[edge], "active", e);
   updateTurn(e);
 }
 
