@@ -16,10 +16,15 @@ def _result_amount(chain: str) -> str:
     return next(iter(amounts), "")
 
 
+def _operation(chain: str) -> str:
+    """The arithmetic itself ("R$ 2,72 ÷ 0,90"), which is what repeats when she words the account her own way."""
+    return " ".join(chain.split("=", 1)[0].split())
+
+
 def with_account(question: str, chains: list[str]) -> str | None:
     """The question with the accounts that explain it, or None when there is nothing to add."""
     useful = [chain for chain in chains
-              if chain not in question and (amount := _result_amount(chain)) and amount in question]
+              if _operation(chain) not in question and (amount := _result_amount(chain)) and amount in question]
     if not useful:
         return None
     return ". ".join(useful[:MAX_ACCOUNTS]) + ". " + question
