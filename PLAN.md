@@ -2441,6 +2441,14 @@ evidence, what was changed, and where. Open questions that were "default applied
   different words. No trial failed for it and the fix would need fuzzy matching of questions, so it waits for evidence
   from the full run rather than landing untested before it.
 
+- **C83 — Idempotency met a revision, and the first trial of the final run paid for it.** Run `20260915-061131-final`,
+  scenario 01 trial 1: Dona Maria asked to drop the fermento and keep the cebolinha, Dona Sálvia registered the
+  corrected recipe, and the name-based idempotency from C77/C80 returned the old dish — so she told Dona Maria "o
+  sistema não deixa repetir esse nome" and spent four turns inventing names. Nothing was accepted or priced and five
+  checks failed. The rule needed the other half: a retry sends the *same* recipe, a revision sends a different one, and
+  the revision now replaces the candidate's recipe, portions and requirements in place. The run was stopped at the
+  first trial, fixed test-first and restarted from the beginning.
+
 ## Post-loop changes (owner requests, 2026-09-13)
 Requested by the owner while Loops 6–8 were running, test-first, each recorded as a correction. **Order decided by the
 owner:** Loop 6 pauses; Loop 7 (the owner's Telegram checks) and Loop 8 finish, then PL1–PL9, then Loop 6 resumes and
