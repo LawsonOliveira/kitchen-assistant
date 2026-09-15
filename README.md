@@ -447,39 +447,49 @@ seis linhas de conversa rápida em `evals/guardrail_dataset.jsonl`; com o classi
 
 ### Latest eval run
 
-`20260913-192309` (14/09/2026, relatório completo em `evals/results/20260913-192309.md`).
+`20260915-095503-final` (15/09/2026, relatório completo em `evals/results/20260915-095503-final.md`).
 
 | Camada | Resultado | Limite |
 |---|---|---|
-| Núcleo de custos (unitário e integração) | passou | 100% |
+| Núcleo do ledger (unitário e integração) | passou | 100% |
 | Extração de requisitos | passou | 100% |
-| Guard de entrada | 0 falso positivo, precisão 1,0, recall 1,0 (75 mensagens) | ≤ 5% |
-| Cenários multi-turno (pass^3) | **33%** (3 de 9) | ≥ 80% |
+| Guard de entrada | 0 falso positivo, precisão 1,0, recall 1,0 (78 mensagens) | ≤ 5% |
+| Cenários multi-turno (pass^3) | **100%** (9 de 9) | ≥ 80% |
 | Red-team | 7 de 7, **vazamento 0%** | 0% |
+| Juiz — clareza dos números | 3,56 | ≥ 3,5 na rodada, ≥ 3,0 por cenário |
+| Juiz — clareza didática | **3,04** | ≥ 3,5 na rodada, ≥ 3,0 por cenário |
+| Juiz — quem decide | 4,70 | ≥ 3,5 na rodada, ≥ 3,0 por cenário |
+| Juiz — tom | 4,48 | ≥ 3,5 na rodada, ≥ 3,0 por cenário |
 
-| Cenário | Tentativas | Por que falhou |
+| Cenário | Tentativas | Critério mais fraco |
 |---|---|---|
-| 01 caminho feliz | ✗ ✓ ✗ | a dona simulada comprou itens que faltavam; o cenário exige prato só da despensa |
-| 02 forno não mencionado | ✓ ✓ ✓ | — |
-| 03 preço corrigido pela dona | ✓ ✓ ✓ | — |
-| 04 orçamento estourado | ✓ ✓ ✗ | mais de um aumento de orçamento registrado |
-| 05 estoque de tomate compartilhado | ✓ ✓ ✓ | — |
-| 06 peso da cobertura de chocolate | ✗ ✗ ✗ | a medida que a dona informou não foi gravada |
-| 07 promoção simulada | ✗ ✗ ✓ | prato de referência, texto do cardápio e simulação antes do registro |
-| 08 planilha atualizada | ✗ ✗ ✗ | a comparação não trazia valor formatado, e o verificador de saída bloqueou a resposta |
-| 09 ela muda de ideia | ✓ ✓ ✗ | a rejeição do primeiro prato não ficou registrada com o motivo dela |
+| 01 caminho feliz | ✓ ✓ ✓ | didática 3,33 |
+| 02 forno não mencionado | ✓ ✓ ✓ | didática 3,00 |
+| 03 preço corrigido pela dona | ✓ ✓ ✓ | didática 3,33 |
+| 04 orçamento estourado | ✓ ✓ ✓ | didática 3,00 |
+| 05 estoque de tomate compartilhado | ✓ ✓ ✓ | didática 3,33 |
+| 06 peso da cobertura de chocolate | ✓ ✓ ✓ | **didática 2,67** |
+| 07 promoção simulada | ✓ ✓ ✓ | didática 3,00 |
+| 08 planilha atualizada | ✓ ✓ ✓ | números 3,00 |
+| 09 ela muda de ideia | ✓ ✓ ✓ | **didática 2,67** |
 
 Cada tentativa virou um item do *dataset run* no Langfuse, com trace e 162 notas do juiz.
 
-**Leitura desta rodada.** O que protege a dona está sólido: nenhum vazamento nos 7 ataques, nenhum falso positivo no
-guard, todas as contas de dinheiro verdes e nenhum preço inventado aceito. O que falha é o *caminho completo* de alguns
-fluxos, e o juiz aponta sempre o mesmo ponto fraco: clareza didática 1 ou 2 em quase toda conversa, com respostas longas
-e perguntas repetidas.
+**Leitura desta rodada.** As 27 tentativas passaram, os 7 ataques continuam sem vazar e o guard segue sem falso
+positivo: o que protege a dona e o que calcula o dinheiro dela estão sólidos. O único limite não atingido é a **clareza
+didática, 3,04 contra 3,5**, com dois cenários abaixo do piso de 3,0 — o 06 (peso de uma medida caseira) e o 09 (ela
+explora e muda de ideia). São justamente os dois fluxos sem momento de preço: a conta que o ledger escreve e o guard
+coloca na frente da pergunta não tem onde entrar, e a explicação volta a depender do modelo.
 
-**Corrigido depois desta rodada** (cada um com teste antes): a comparação da planilha agora traz uma linha pronta com o
-dinheiro formatado (cenário 08); a dona do cenário 01 diz que não quer gastar nada; e as falhas do arnês de teste que
-interromperam a rodada (fim de conversa, resposta sem texto, checagem sem linha, `/quit` preso). Os cenários 04, 06, 07 e
-09 estão em análise. A próxima rodada completa substitui esta seção.
+**O que esta rodada mudou no sistema.** Sete defeitos viraram código durante a medição, cada um com teste antes e
+registrado no PLAN.md: registrar a mesma receita duas vezes devolve o prato existente e uma receita alterada vira
+revisão; `compute_dish_cost` recusa prato com requisito em aberto; um **Cancelar** é anunciado ao modelo como decisão
+dela; a mesma pergunta não é feita de novo depois de um não; a conta de cada número (custo, preço mínimo, lucro,
+promoção e preço de embalagem) vem pronta do ledger e o guard a injeta na pergunta; o que a dona já tem em casa vira
+correção de estoque, não compra; e a resposta que fecharia sem pergunta, com prato pendente, recebe a próxima pergunta.
+
+**Próximo passo para a didática:** levar a conta também aos momentos sem preço — a medida caseira do cenário 06
+("1 barra = 1 kg, então 200 g = 1/5 da barra") e o estado da exploração no 09.
 
 ## Simplificações
 
