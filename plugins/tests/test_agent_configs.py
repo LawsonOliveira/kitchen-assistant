@@ -77,8 +77,12 @@ def test_the_price_question_carries_the_arithmetic_that_led_to_it():
     # options" has nowhere to happen: she writes no reply there. The question itself is the message she reads.
     soul = (AGENTS / "orchestrator" / "SOUL.md").read_text()
     rule = next(line for line in soul.splitlines() if "question that shows a price" in line)
-    assert "÷" in rule and "0,90" in rule  # the worked chain, not the result alone
-    assert "15%" in rule  # a promotion is asked the same way (scenario 07)
+    # Probe B: the rule already asked for the chain and she still wrote results joined by prose, because every amount
+    # she shows must come from a display string and the arithmetic was not one. The ledger now returns the account
+    # itself, so the contract names the fields to copy instead of describing a sentence to compose.
+    for field in ("cost_chain_display", "min_price_chain_display", "profit_chain_display", "promotion_chain_display"):
+        assert field in rule, field
+    assert "copy" in rule or "copie" in rule
 
 
 def test_a_parametric_requirement_is_a_kitchen_fact_not_a_confirmation():
