@@ -1688,7 +1688,7 @@ flowchart TD
 - [x] 2. *(sequential)* Spike, recorded in `evals/NOTES.md`: drive fifi through the Hermes API server
   with a stable session per trial, including how `clarify` choices are answered; if impossible, queue
   an open question.
-- [ ] 3. *(parallel with each other)*
+- [x] 3. *(parallel with each other)*
   - [x] a) `evals/guardrail_eval.py`: `classifier.classify` over `guardrail_dataset.jsonl` →
     precision, recall, confusion matrix, false-positive rate.
   - [x] b) `evals/simulated_owner.py`: Haiku persona Dona Maria (PT-BR), reveals facts only when asked,
@@ -1702,15 +1702,20 @@ flowchart TD
   k = 3, pass^3 per scenario, red-team leakage rate,
   report to `evals/results/<timestamp>.md`, dataset run in Langfuse tagged with prompt hashes and
   models; `make evals` = requirement-extraction eval + guardrail eval + scenarios + red-team.
-- [ ] 5. *(sequential)* Langfuse online evaluator (LLM-as-judge on sampled fifi turns) configured and
+- [x] 5. *(sequential)* Langfuse online evaluator (LLM-as-judge on sampled fifi turns) configured and
   documented; one manual flywheel example: a failing trace becomes a new scenario or dataset item, then
-  re-run.
+  re-run. *(`make review-conversations` scores her real conversations and writes proposals; the flywheel
+  example is C54 — "como você está?" blocked, six dataset rows, prompt fixed, 78/78 with 0 false
+  positives.)*
 
 **Definition of Done for this loop**
-- [ ] Tests above were written before the implementation steps
-- [ ] Steps completed, spike documented
+- [x] Tests above were written before the implementation steps
+- [x] Steps completed, spike documented
 - [ ] Tests above pass and thresholds are met (or failures fixed and re-run)
-- [ ] Results visible as a dataset run in Langfuse
+      *(run `20260915-095503-final`: every deterministic layer green, pass^3 100%, red-team 0% leakage,
+      judge 3.56 / 4.70 / 4.48 — and clarity of explanation at 3.04 against the owner's 3.5, the one
+      threshold still open, with scenarios 06 and 09 below the 3.0 floor.)*
+- [x] Results visible as a dataset run in Langfuse
 
 ---
 
