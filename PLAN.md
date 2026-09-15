@@ -2515,6 +2515,16 @@ evidence, what was changed, and where. Open questions that were "default applied
   still reaches her and the guard never decides for her. The owner asked to apply it at once and continue the run from
   scenario 03's second trial.
 
+- **C88 — The closing question, and the Hermes hook that never fires.** Scenario 05 trial 3 failed three times in a
+  row — 10, 8 and 12 messages — always the same shape: both dishes registered, none accepted, and a reply with nothing
+  to answer ("já pode seguir pra próxima etapa quando quiser 🌿", "Vá descansar"). The contract rule written after the
+  first failure held two turns out of three, so the rule moved to code. The first attempt used Hermes' `pre_verify`
+  hook to send the turn back; the rerun failed again and the reason is in `agent/turn_stop_gates.py`: the gate runs
+  only `if _edited` — turns where the agent mutated files. Dona Sálvia never edits a file, so the hook is unreachable
+  in a conversation (one more Hermes limitation for the README). The rule now lives in `transform_llm_output`, beside
+  the output verifier: while the ledger shows a dish unaccepted or unpriced and her reply asks nothing, the next
+  question is appended to what she wrote. A reply the guard already replaced keeps its own message.
+
 ## Post-loop changes (owner requests, 2026-09-13)
 Requested by the owner while Loops 6–8 were running, test-first, each recorded as a correction. **Order decided by the
 owner:** Loop 6 pauses; Loop 7 (the owner's Telegram checks) and Loop 8 finish, then PL1–PL9, then Loop 6 resumes and
