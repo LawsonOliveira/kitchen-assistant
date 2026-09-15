@@ -2449,6 +2449,15 @@ evidence, what was changed, and where. Open questions that were "default applied
   the revision now replaces the candidate's recipe, portions and requirements in place. The run was stopped at the
   first trial, fixed test-first and restarted from the beginning.
 
+- **C84 — A refusal read as a broken system.** Run `20260915-071004-final`, scenario 01 trial 1: the candidate needed
+  pimenta-do-reino, which Dona Maria does not have and said in her first message she would not buy. She clicked
+  Cancelar; the click guard answered "Nothing was sent: ... has not chosen Confirmar ... Ask her with clarify first";
+  Dona Sálvia asked again, got Cancelar again, and told her "o sistema continua devolvendo Cancelar na hora de
+  confirmar, mesmo sem a senhora tocar em nada". The journey died there — five checks failed. Two halves, both
+  test-first: the guard now separates "not answered yet" from "answered Cancelar" and its message says the refusal is
+  her decision, never a failure, and to act on the no instead of repeating the question; her contract says the same in
+  her words. The run was stopped at the first trial and restarted.
+
 ## Post-loop changes (owner requests, 2026-09-13)
 Requested by the owner while Loops 6–8 were running, test-first, each recorded as a correction. **Order decided by the
 owner:** Loop 6 pauses; Loop 7 (the owner's Telegram checks) and Loop 8 finish, then PL1–PL9, then Loop 6 resumes and
