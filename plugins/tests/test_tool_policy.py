@@ -49,6 +49,21 @@ def clarify_single(answer):
     return json.dumps({"question": "Confirma a compra?", "choices_offered": ["Confirmar", "Cancelar"], "user_response": answer})
 
 
+def test_a_refusal_is_answered_as_her_decision_not_as_a_failure():
+    # Full run 20260915-071004, scenario 01 trial 1: the dish needed pimenta-do-reino, Dona Maria cancelled the purchase
+    # she was never going to make, and Dona Sálvia read the block as a fault — "o sistema continua devolvendo Cancelar
+    # na hora de confirmar, mesmo sem a senhora tocar em nada" — then asked again, and the journey died in that loop.
+    ledger = tool_policy.ClickLedger()
+    ledger.record_clarify("s1", clarify_single("Cancelar"))
+    request = {"owner_confirmation": {"choice": "Confirmar", "summary": "Comprar pimenta-do-reino"}}
+    blocked = tool_policy.check_click(ledger, "s1", "ask_cost_expert", request)
+    assert blocked["message"] == tool_policy.REFUSED_MESSAGE
+    assert "Cancelar" in blocked["message"] and "not a failure" in blocked["message"]
+
+    ledger.record_clarify("s1", clarify_single("Confirmar"))  # she says yes to something else later
+    assert tool_policy.check_click(ledger, "s1", "ask_cost_expert", request) is None
+
+
 def test_a_confirmation_needs_a_fresh_confirmar_click():
     ledger = tool_policy.ClickLedger()
     assert not ledger.consume("s1")

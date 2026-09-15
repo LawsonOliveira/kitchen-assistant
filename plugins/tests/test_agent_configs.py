@@ -71,6 +71,14 @@ def test_an_expert_never_sends_more_questions_than_its_contract_accepts():
         assert f"at most {cap}" in rule, expert
 
 
+def test_cancelar_is_her_answer_and_never_a_technical_problem():
+    # Full run 20260915-071004, scenario 01 trial 1: she cancelled a purchase she had said from the start she would not
+    # make, and Dona Sálvia told her the system was broken and asked again, twice.
+    rule = next(line for line in (AGENTS / "orchestrator" / "SOUL.md").read_text().splitlines()
+                if "Cancelar" in line and "problem" in line.lower())
+    assert "never" in rule and "again" in rule
+
+
 def test_the_price_question_carries_the_arithmetic_that_led_to_it():
     # Probe A: didactic clarity 1 in scenario 07 and 2 in 01 and 04, the three flows where the money is born inside a
     # clarify. Dona Sálvia jumps from the tool result straight to the question, so a rule about "the reply before the
