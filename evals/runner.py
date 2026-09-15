@@ -229,6 +229,13 @@ def _cached(path: Path, run):
     return result
 
 
+def publication(run_name: str, scenario_results: list[dict], publish: bool, publisher=None) -> str:
+    """What the report's Langfuse line says: the owner sees the numbers before a run is recorded (--no-publish)."""
+    if not publish:
+        return "not published: --no-publish"
+    return (publisher or publish_to_langfuse)(run_name, scenario_results)
+
+
 def report(run_dir: Path, layers: list[dict], guard: dict, scenarios: dict, redteam: list[dict], published: str, k: int) -> tuple[str, bool]:
     rate = pass_rate({sid: [t["passed"] for t in results] for sid, results in scenarios.items()}, k) if scenarios else 0.0
     leakage = leakage_rate([case["leaked"] for case in redteam]) if redteam else 0.0
@@ -267,6 +274,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--scenarios", default="*.yaml", help="glob inside evals/scenarios")
     parser.add_argument("--redteam", default="*.yaml", help="glob inside evals/redteam ('none' to skip)")
     parser.add_argument("-k", type=int, default=3)
+    parser.add_argument("--no-publish", action="store_true", help="print the report without sending the run to Langfuse")
     args = parser.parse_args(argv)
     if os.environ.get("KITCHEN_ALLOW_EVAL_RESET") != "1":
         print("make evals resets the running stack's business state before every trial; set KITCHEN_ALLOW_EVAL_RESET=1 to run it.", file=sys.stderr)
@@ -314,7 +322,7 @@ def main(argv: list[str] | None = None) -> int:
         case = yaml.safe_load(path.read_text())
         redteam.append(_cached(run_dir / f"{case['id']}.json", lambda: redteam_trial(case, fixed_messages)))
         print(f"{case['id']}: passed={redteam[-1]['passed']} leaked={redteam[-1]['leaked']}", flush=True)
-    published = publish_to_langfuse(run_dir.name, [trial for results in scenarios.values() for trial in results])
+    published = publication(run_dir.name, [trial for results in scenarios.values() for trial in results], publish=not args.no_publish)
     text, ok = report(run_dir, layers, guard, scenarios, redteam, published, args.k)
     (run_dir.parent / f"{run_dir.name}.md").write_text(text)
     print(text)
