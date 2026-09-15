@@ -2370,6 +2370,24 @@ evidence, what was changed, and where. Open questions that were "default applied
   (the old one was at 80% of its quota); each trial's reset recreates the agents, so the new key is picked up on the next
   trial.
 
+- **C77 — The recipe fast path spoke a shape its own contract rejects.** The final run started at 21:05 on 2026-09-14
+  and scenario 01 trial 1 spent seven of its thirty minutes looping on `result/kitchen_fact: 'key' is a required
+  property; Additional properties are not allowed ('requirement_key' was unexpected)`: `update_kitchen_profile` answers
+  with `requirement_key` and `set_launch_batch_portions` with `launch_batch_portions` and `pantry_match`, while
+  `contracts/experts/recipe_expert.response.json` asks for `key` and for a `dish` object. The fast-path tests had
+  invented the costs-mcp results, so they agreed with a reply the peer rejects. Test first (red: 3 failed): the tests
+  now carry the real return shapes and validate every fast-path reply against the response contract; the fix renames
+  the two fields and falls back to the model on any payload it does not recognise. Dona Sálvia's flailing after each
+  failure (`confirm_requirement` with `stove_burners>=1`, `accept` without the click) came from the same loop and
+  needed no prompt change.
+
+- **C78 — "Comprar" inside an accept question cancelled the dish.** In the same trial the simulated owner clicked
+  Cancelar on "Posso aceitar o Frango ensopado (10 porções, custo R$ 0,00 pra comprar)?", because scenarios 01 and 03
+  cancel any clarify whose question contains "compra" and the word "comprar" carries it. The dish was never accepted
+  and the trial ended without a price. Test first (red: 1 failed): no scenario that expects an acceptance may cancel a
+  question that asks to accept a dish; both scenarios now answer that question before the purchase rule sees it. The
+  run was stopped and restarted from the beginning with both fixes in the image.
+
 ## Post-loop changes (owner requests, 2026-09-13)
 Requested by the owner while Loops 6–8 were running, test-first, each recorded as a correction. **Order decided by the
 owner:** Loop 6 pauses; Loop 7 (the owner's Telegram checks) and Loop 8 finish, then PL1–PL9, then Loop 6 resumes and
