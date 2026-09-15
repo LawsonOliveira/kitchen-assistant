@@ -1,5 +1,5 @@
 """Trace propagation (PLAN.md D32, Loop 5): one trace per owner turn, carried in every A2A request, adopted by the
-serving agent and its web children, and passed to costs-mcp in the tool arguments."""
+serving agent and its web children, and passed to kitchen-ledger in the tool arguments."""
 
 import importlib.util
 import json
@@ -91,7 +91,7 @@ def test_mcp_tool_args_receive_the_trace_id_through_pre_tool_call_modify(monkeyp
     hooks = register(monkeypatch, "cost_expert")
     request = {"task": "match_and_cost", "trace": INCOMING_TRACE, "payload": {"dish_id": 3}}
     hooks["pre_llm_call"](session_id="expert-1", user_message=json.dumps(request), platform="a2a")
-    directive = hooks["pre_tool_call"](tool_name="mcp__costs__compute_dish_cost", args={"dish_id": 3}, task_id="t",
+    directive = hooks["pre_tool_call"](tool_name="mcp__ledger__compute_dish_cost", args={"dish_id": 3}, task_id="t",
                                        session_id="expert-1", tool_call_id="c1")
     assert directive == {"action": "modify", "args": {"trace_id": TRACE_ID}}
     assert hooks["pre_tool_call"](tool_name="research", args={"task_type": "ingredient_price"}, task_id="t",

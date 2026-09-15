@@ -172,7 +172,7 @@ def register(ctx) -> None:
 
     def transform_tool_result(tool_name="", args=None, result=None, session_id="", **_):
         try:
-            if tool_name in tool_policy.ASK_TOOLS or tool_name.startswith("mcp__costs__"):
+            if tool_name in tool_policy.ASK_TOOLS or tool_name.startswith("mcp__ledger__"):
                 groundings.setdefault(session_id, SessionGrounding()).add_from_tool_result(result)
                 if tool_name in tool_policy.ASK_TOOLS:
                     data = _first_json_object(result if isinstance(result, str) else json.dumps(result))

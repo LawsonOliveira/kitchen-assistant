@@ -2,7 +2,7 @@
 
 Canned inputs use the shapes the runner builds: audit_log rows {at, agent, tool, args, result, error_code} and orchestrator's
 session messages {at, role, content, tool_name, tool_args} (an assistant tool call has tool_name and tool_args; a tool
-result has role "tool"); `at` orders costs-mcp writes against orchestrator's clarify answers.
+result has role "tool"); `at` orders kitchen-ledger writes against orchestrator's clarify answers.
 """
 
 import json

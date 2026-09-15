@@ -2,7 +2,7 @@ from decimal import Decimal
 
 import pytest
 
-from costs_mcp.units import IncompatibleUnitsError, NonPositiveQuantityError, UnknownUnitError, parse_unit, to_base
+from kitchen_ledger.units import IncompatibleUnitsError, NonPositiveQuantityError, UnknownUnitError, parse_unit, to_base
 
 
 @pytest.mark.parametrize(

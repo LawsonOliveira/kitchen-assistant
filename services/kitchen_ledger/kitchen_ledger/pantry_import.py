@@ -12,9 +12,9 @@ from pathlib import Path
 import openpyxl
 import psycopg
 
-from costs_mcp import db
-from costs_mcp.pricing import format_brl
-from costs_mcp.units import UnknownUnitError, parse_unit
+from kitchen_ledger import db
+from kitchen_ledger.pricing import format_brl
+from kitchen_ledger.units import UnknownUnitError, parse_unit
 
 SHEETS = {
     "Despensa": ("Ingrediente", "Quantidade em estoque", "Unidade"),

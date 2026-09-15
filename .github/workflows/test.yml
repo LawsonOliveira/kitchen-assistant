@@ -11,7 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
-      - name: costs-mcp unit, cockpit and eval grader tests
+      - name: kitchen-ledger unit, cockpit and eval grader tests
         run: make test
 
   agents-image:
@@ -32,7 +32,7 @@ jobs:
       - uses: astral-sh/setup-uv@v6
       - name: placeholder .env
         run: awk -F= '/^[A-Z0-9_]+=$/ { print $1 "=ci-placeholder-" NR; next } { print }' .env.example > .env
-      - name: Postgres and costs-mcp (it seeds the spreadsheet on start)
-        run: docker compose up -d --build --wait postgres costs-mcp
-      - name: costs-mcp integration tests against the seeded database
+      - name: Postgres and kitchen-ledger (it seeds the spreadsheet on start)
+        run: docker compose up -d --build --wait postgres kitchen-ledger
+      - name: kitchen-ledger integration tests against the seeded database
         run: make test-integration

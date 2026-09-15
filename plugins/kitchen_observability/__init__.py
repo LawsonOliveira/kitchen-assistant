@@ -2,7 +2,7 @@
 
 Hooks open a span when something starts (a model request, a tool call, a served A2A request, a delegated child) and
 finish it when it ends; finishing prints the event, POSTs it to the cockpit and ends its Langfuse observation. Every
-hook only observes — it returns None, except the trace_id added to costs-mcp tool arguments — and never raises.
+hook only observes — it returns None, except the trace_id added to kitchen-ledger tool arguments — and never raises.
 """
 
 import functools

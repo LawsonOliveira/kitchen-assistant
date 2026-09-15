@@ -1,6 +1,6 @@
 """Deterministic fast path for cost_expert (PLAN.md PL9, lever 1).
 
-A task that is one costs-mcp call (match_and_cost: two reads) is answered without a model loop: the reply carries the
+A task that is one kitchen-ledger call (match_and_cost: two reads) is answered without a model loop: the reply carries the
 tool's result, exactly what the relay would put there. Tasks that need judgment or research, a click-required task
 without its click, and any tool error go to the model as before; an error means nothing was written.
 """
@@ -40,7 +40,7 @@ def _calls(request: dict) -> list[tuple[str, dict]] | None:
     }.get(task)
     if tool is None:
         return _recipe_calls(task, p, _evidence(request))
-    return [(f"mcp__costs__{name}", args) for name, args in tool()]
+    return [(f"mcp__ledger__{name}", args) for name, args in tool()]
 
 
 def _recipe_calls(task: str, p: dict, evidence: str) -> list[tuple[str, dict]] | None:
@@ -57,7 +57,7 @@ def _recipe_calls(task: str, p: dict, evidence: str) -> list[tuple[str, dict]] |
                                                          "evidence": evidence})],
         "accept": lambda: [("check_viability", {"dish_id": p["dish_id"]}), ("accept_dish", {"dish_id": p["dish_id"], "evidence": evidence})],
     }.get(task)
-    return [(f"mcp__costs__{name}", args) for name, args in tool()] if tool else None
+    return [(f"mcp__ledger__{name}", args) for name, args in tool()] if tool else None
 
 
 REPLY_KEY = {"record_kitchen_fact": "kitchen_fact", "reject_candidate": "dish", "set_launch_batch": "dish",
@@ -65,7 +65,7 @@ REPLY_KEY = {"record_kitchen_fact": "kitchen_fact", "reject_candidate": "dish", 
 
 
 def _reply_result(task: str, result: dict) -> dict:
-    """The result as contracts/experts/recipe_expert.response.json describes it: costs-mcp names a couple of these
+    """The result as contracts/experts/recipe_expert.response.json describes it: kitchen-ledger names a couple of these
     fields differently, and the peer rejects the reply when they travel raw."""
     if task == "record_kitchen_fact":
         return {"kitchen_fact": {"key": result["requirement_key"], "status": result["status"]}}
@@ -116,7 +116,7 @@ def _a2a_request(llm_request) -> dict | None:
 
 
 def _tool_caller(session_id: str, task_id: str):
-    """costs-mcp through Hermes' own dispatch, so allowlist, trace, relay and telemetry hooks all still run."""
+    """kitchen-ledger through Hermes' own dispatch, so allowlist, trace, relay and telemetry hooks all still run."""
     import model_tools
 
     from .relay import _tool_payload

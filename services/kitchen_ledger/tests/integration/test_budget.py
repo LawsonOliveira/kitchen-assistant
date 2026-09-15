@@ -1,8 +1,8 @@
 import pytest
 from conftest import EVIDENCE
 
-from costs_mcp import operations
-from costs_mcp.operations import DomainError
+from kitchen_ledger import operations
+from kitchen_ledger.operations import DomainError
 
 
 def buy_packaging(conn, package_price, packages=1):

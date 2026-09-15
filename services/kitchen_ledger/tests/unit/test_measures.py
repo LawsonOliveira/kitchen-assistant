@@ -2,7 +2,7 @@ from decimal import Decimal
 
 import pytest
 
-from costs_mcp.measures import MissingConversionError, UnconfirmedMeasureError, resolve_measure
+from kitchen_ledger.measures import MissingConversionError, UnconfirmedMeasureError, resolve_measure
 
 
 def row(amount, unit, source="seed", source_url=None):

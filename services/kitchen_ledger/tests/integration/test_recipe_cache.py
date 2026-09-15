@@ -3,8 +3,8 @@
 import pytest
 from conftest import ingredient, make_recipe
 
-from costs_mcp import operations
-from costs_mcp.operations import DomainError
+from kitchen_ledger import operations
+from kitchen_ledger.operations import DomainError
 
 
 def web_recipe(name, url, **extra):

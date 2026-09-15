@@ -31,13 +31,13 @@ correção e pergunta aberta, está em [PLAN.md](PLAN.md).
 ## Como rodar
 
 **Requisitos:** Docker com Compose, `make`, [uv](https://docs.astral.sh/uv/) no host. A pilha completa (cinco agentes,
-Postgres, costs-mcp, cockpit e Langfuse v4) pede **≈16 GiB de RAM**; com 8 GiB ela sobe, mas usando swap.
+Postgres, kitchen-ledger, cockpit e Langfuse v4) pede **≈16 GiB de RAM**; com 8 GiB ela sobe, mas usando swap.
 
 1. `cp .env.example .env` e preencha:
    - `CLAUDE_CODE_OAUTH_TOKEN`: acesso aos modelos pelas credenciais do Claude Code (`claude setup-token`).
      Não há chave da Anthropic Console.
    - `TAVILY_API_KEY`: busca web.
-   - `A2A_TOKEN_*` e `COSTS_MCP_TOKEN_*`: um token aleatório por agente.
+   - `A2A_TOKEN_*` e `LEDGER_TOKEN_*`: um token aleatório por agente.
    - `POSTGRES_PASSWORD`, `API_SERVER_KEY`, `KITCHEN_COCKPIT_TOKEN`.
    - Segredos do Langfuse (`LANGFUSE_*`). O próprio `.env.example` mostra como gerar cada um.
    - Opcional: `TELEGRAM_BOT_TOKEN` (do @BotFather) e `TELEGRAM_ALLOWED_USERS` (seu id numérico, do @userinfobot).
@@ -75,7 +75,7 @@ flowchart LR
     cost -- research --> researcher
     marketing -- research --> researcher
     researcher -- Tavily --> web((web))
-    orchestrator -- leitura --> mcp[(costs-mcp<br/>Python, Decimal)]
+    orchestrator -- leitura --> mcp[(kitchen-ledger<br/>Python, Decimal)]
     recipe -- escrita do seu domínio --> mcp
     cost -- escrita do seu domínio --> mcp
     marketing -- escrita do seu domínio --> mcp
@@ -92,7 +92,7 @@ sequenceDiagram
     participant F as orchestrator
     participant G as kitchen_guardrails
     participant C as cost_expert
-    participant X as costs-mcp
+    participant X as kitchen-ledger
     M->>F: "Quero a do meio, R$ 9,90"
     F->>G: input guard (Haiku)
     G-->>F: allow
@@ -114,7 +114,7 @@ sequenceDiagram
 | Configuração versionada de cada agente (`config.yaml`, `SOUL.md`, skills, skin) | `agents/<agente>/` |
 | Plugins Hermes (A2A tipado, guardrails, observabilidade) | `plugins/kitchen_*` |
 | Contratos JSON Schema (receita, pesquisa, especialistas, eventos) | `contracts/` |
-| Servidor MCP de custos, com migrations SQL | `services/costs_mcp/` |
+| Servidor MCP de custos, com migrations SQL | `services/kitchen_ledger/` |
 | Cockpit (stdlib + HTML/JS) | `services/cockpit/` |
 | Cenários, red-team, datasets, runner de eval | `evals/` |
 
@@ -154,7 +154,7 @@ muda:
   eval.
 
 ### Ferramentas / MCP
-- **costs-mcp** é um servidor MCP em Python (Streamable HTTP, `Decimal`, Postgres) com toda a lógica de dinheiro e
+- **kitchen-ledger** é um servidor MCP em Python (Streamable HTTP, `Decimal`, Postgres) com toda a lógica de dinheiro e
   quantidade: unidades, custo unitário, CMV, cenários, orçamento, estoque, viabilidade, compras, importação de planilha.
 - Cada agente tem um token próprio, e o servidor recusa ferramentas fora do domínio dele (por exemplo, marketing não
   registra compra). Cada chamada fica no `audit_log`, com o `trace_id`.
@@ -213,7 +213,7 @@ Cada item: a decisão, a alternativa rejeitada e o porquê. O detalhe está em *
   instruções neutraliza injeção indireta de forma determinística; a proveniência garante receitas *reais*.
 - **D6 — Ferramentas A2A tipadas com validação de contrato.** Rejeitado: expor o toolset `a2a` cru. Por quê: validação
   determinística, o modelo não descobre pares arbitrários, e cada chamada gera um evento limpo.
-- **D7 — Toda a lógica de dinheiro e quantidade no costs-mcp.** Rejeitado: aritmética pelo LLM, MCP stdio por
+- **D7 — Toda a lógica de dinheiro e quantidade no kitchen-ledger.** Rejeitado: aritmética pelo LLM, MCP stdio por
   processo, ferramenta de plugin. Por quê: conta feita por LLM "mente em silêncio"; um servidor separado é testável
   sem o Hermes.
 - **D8 — Postgres dedicado para o estado de negócio (dona), SQL puro, migrations numeradas, psycopg 3.** Rejeitado:
@@ -380,7 +380,7 @@ Verificadas na imagem fixada `nousresearch/hermes-agent:v2026.9.11`. Cada uma vi
 ## Observabilidade
 
 - **Um trace por turno da dona no Langfuse**, atravessando orchestrator → especialistas → researcher → filhos → ferramentas
-  `mcp__costs__*`. O `trace_id` é o mesmo do `audit_log`, e o custo e os tokens de cada chamada vêm da tabela de preços.
+  `mcp__ledger__*`. O `trace_id` é o mesmo do `audit_log`, e o custo e os tokens de cada chamada vêm da tabela de preços.
 - **Cockpit** em http://localhost:8080:
   - o caminho animado entre guard de entrada, orchestrator, especialistas, researcher, MCP e guard de saída;
   - linha do tempo com duração, tokens e custo;
@@ -396,7 +396,7 @@ Verificadas na imagem fixada `nousresearch/hermes-agent:v2026.9.11`. Cada uma vi
 
 | Camada | Como | Limite |
 |---|---|---|
-| Núcleo de custos | `pytest` unitário e de integração do costs-mcp | 100% |
+| Núcleo de custos | `pytest` unitário e de integração do kitchen-ledger | 100% |
 | Extração de requisitos | páginas fixas repetidas pelo `researcher-eval` | recall 100% equipamentos, ≥ 90% técnicas |
 | Guard de entrada | 75 mensagens rotuladas em `evals/guardrail_dataset.jsonl` | falsos positivos ≤ 5% |
 | Cenários multi-turno | 9 cenários × 3 tentativas: a Dona Maria simulada conversa na CLI; graders de estado final e trajetória decidem; juiz Sonnet só alerta | pass^3 ≥ 80% |

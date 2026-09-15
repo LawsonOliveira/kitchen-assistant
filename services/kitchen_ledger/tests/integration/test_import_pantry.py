@@ -4,8 +4,8 @@ import openpyxl
 import pytest
 from conftest import REAL_WORKBOOK, current_price
 
-from costs_mcp import operations
-from costs_mcp.operations import DomainError
+from kitchen_ledger import operations
+from kitchen_ledger.operations import DomainError
 
 
 def modified_workbook(path, tomato_price=None, drop_sheet=None):

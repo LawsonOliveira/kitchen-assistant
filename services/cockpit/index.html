@@ -77,7 +77,7 @@
         <g class="node" data-node="cost_expert" data-x="440" data-y="140" data-label="custos"></g>
         <g class="node" data-node="marketing_expert" data-x="440" data-y="230" data-label="marketing"></g>
         <g class="node" data-node="researcher" data-x="660" data-y="70" data-label="pesquisador"></g>
-        <g class="node" data-node="mcp" data-x="660" data-y="210" data-label="costs-mcp"></g>
+        <g class="node" data-node="mcp" data-x="660" data-y="210" data-label="kitchen-ledger"></g>
         <g class="node" data-node="guard_output" data-x="880" data-y="140" data-label="guarda de saída"></g>
       </g>
     </svg>
@@ -86,7 +86,7 @@
 
   <section class="panel" id="state">
     <h2>Estado do negócio</h2>
-    <div class="muted">Sem snapshot ainda: aparece depois da primeira escrita no costs-mcp.</div>
+    <div class="muted">Sem snapshot ainda: aparece depois da primeira escrita no kitchen-ledger.</div>
   </section>
 </div>
 
@@ -154,7 +154,7 @@ function nodeFor(e) {
 function edgeFor(e) {
   if (e.kind === "a2a_call" && e.agent === "orchestrator") return `orchestrator>${e.name.replace(/^ask_/, "")}`;
   if (e.kind === "a2a_call" && e.name === "research") return `${e.agent}>researcher`;
-  if (e.kind === "tool_call" && e.name.startsWith("mcp__costs__")) return `${e.agent}>mcp`;
+  if (e.kind === "tool_call" && e.name.startsWith("mcp__ledger__")) return `${e.agent}>mcp`;
   if (e.kind === "guard_input") return "guard_input>orchestrator";
   if (e.kind === "guard_output") return "orchestrator>guard_output";
   return null;

@@ -1,5 +1,5 @@
 """Where a turn's time goes (PLAN.md C76). Reads the events the stack already emits (kitchen_observability, D32) plus
-costs-mcp's audit_log, and prints one line per call type with p50/p90, how often independent expert calls really overlap,
+kitchen-ledger's audit_log, and prints one line per call type with p50/p90, how often independent expert calls really overlap,
 and the recipe cache's hit rate.
 
     make latency-report SINCE="2026-09-14T10:00:00+00:00"

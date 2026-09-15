@@ -19,14 +19,14 @@ chat:  # refuses to open the CLI when the guardrail self-test fails (Loop 4 step
 	$(COMPOSE) exec -u hermes -w /workspace -it orchestrator hermes --cli
 
 test:
-	cd services/costs_mcp && $(UV) run pytest tests/unit -q
+	cd services/kitchen_ledger && $(UV) run pytest tests/unit -q
 	cd services/cockpit && $(UV) run pytest tests -q
 	cd evals && $(UV) run pytest -q
 
 # Reads the live app database seeded by `make up`.
 test-integration:
 	$(COMPOSE) up -d --wait postgres
-	cd services/costs_mcp && $(UV) run pytest tests/integration -q
+	cd services/kitchen_ledger && $(UV) run pytest tests/integration -q
 
 test-contracts:
 	$(COMPOSE) run --rm --no-deps orchestrator $(AGENT_PYTHON) -m pytest /opt/kitchen/contracts/tests -q -p no:cacheprovider

@@ -1,4 +1,4 @@
-"""costs-mcp telemetry (PLAN.md Loop 5 step 4): an mcp_call event for every tool call and a state_snapshot after every
+"""kitchen-ledger telemetry (PLAN.md Loop 5 step 4): an mcp_call event for every tool call and a state_snapshot after every
 successful write, POSTed to the cockpit on a best-effort basis — never delaying or failing the tool."""
 
 import http.server
@@ -11,7 +11,7 @@ from pathlib import Path
 import pytest
 from jsonschema import Draft202012Validator
 
-from costs_mcp import operations, server, telemetry
+from kitchen_ledger import operations, server, telemetry
 
 REPO = Path(__file__).resolve().parents[4]
 VALIDATOR = Draft202012Validator(json.loads((REPO / "contracts" / "events.schema.json").read_text()))

@@ -8,7 +8,7 @@
 #                          that offers exactly that many choices) wins.
 # expected_state           [{check, sql}] — each `sql` returns one boolean and must return true after the
 #                          conversation; it runs inside a read-only transaction on the app Postgres.
-# trajectory_rules         [{id, type, ...}] over audit_log (costs-mcp tool calls) and orchestrator's session:
+# trajectory_rules         [{id, type, ...}] over audit_log (kitchen-ledger tool calls) and orchestrator's session:
 #   precedes               every successful call matching `then` happens after a successful call matching
 #                          `first`; `same_args` lists argument names both calls must share; `require_then: true`
 #                          also requires at least one `then` call.

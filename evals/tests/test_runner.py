@@ -68,7 +68,7 @@ def fake_docker(tmp_path, ingredients: str):
 
 def test_eval_reset_stops_the_agents_before_truncating_and_fails_loud_without_the_seed(tmp_path):
     # First runner smoke run: an expert turn left over from an interrupted trial inserted "limão" right after the
-    # TRUNCATE, costs-mcp skipped its seed (it only seeds an empty database) and the trial ran on an empty pantry.
+    # TRUNCATE, kitchen-ledger skipped its seed (it only seeds an empty database) and the trial ran on an empty pantry.
     log, environ = fake_docker(tmp_path, ingredients="0")
     completed = subprocess.run(["make", "-s", "-C", str(REPO), "eval-reset"], env=environ, capture_output=True, text=True)
     calls = log.read_text().splitlines()

@@ -11,7 +11,7 @@ SKILLS = ["skill_view", "skills_list"]
 
 
 def mcp(tools):
-    return [f"mcp__costs__{tool}" for tool in tools]
+    return [f"mcp__ledger__{tool}" for tool in tools]
 
 
 MATRIX = {

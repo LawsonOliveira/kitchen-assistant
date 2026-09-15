@@ -1,4 +1,4 @@
-"""Experts relay costs-mcp money results verbatim (PLAN.md correction C25, extended in Loop 3).
+"""Experts relay kitchen-ledger money results verbatim (PLAN.md correction C25, extended in Loop 3).
 
 A live run showed the model retyping compute_dish_cost's JSON into its A2A reply and changing a margin
 (62,6% became 65,1%). Money values must come from the tool, so the reply's `result` is replaced with the
@@ -12,13 +12,13 @@ import threading
 from .costs import spent_usd
 from .validation import ContractError, parse_json_object
 
-# role -> costs-mcp tools whose results carry money display strings
+# role -> kitchen-ledger tools whose results carry money display strings
 RELAYED_TOOLS = {
     "cost_expert": {
-        "mcp__costs__compute_dish_cost", "mcp__costs__check_budget_fit", "mcp__costs__record_price_quote",
-        "mcp__costs__register_purchase", "mcp__costs__adjust_budget", "mcp__costs__correct_price",
-        "mcp__costs__select_price_scenario", "mcp__costs__simulate_promotion", "mcp__costs__import_pantry"},
-    "marketing_expert": {"mcp__costs__register_promotion"},
+        "mcp__ledger__compute_dish_cost", "mcp__ledger__check_budget_fit", "mcp__ledger__record_price_quote",
+        "mcp__ledger__register_purchase", "mcp__ledger__adjust_budget", "mcp__ledger__correct_price",
+        "mcp__ledger__select_price_scenario", "mcp__ledger__simulate_promotion", "mcp__ledger__import_pantry"},
+    "marketing_expert": {"mcp__ledger__register_promotion"},
 }
 _lock = threading.Lock()
 _latest: dict[str, dict] = {}
@@ -37,7 +37,7 @@ def pre_llm_call(session_id: str = "", platform: str = "", **_):
 
 
 def _tool_payload(result) -> dict | None:
-    """The costs-mcp JSON inside Hermes' MCP envelope {"result": "<json text>"}, possibly wrapped as untrusted data."""
+    """The kitchen-ledger JSON inside Hermes' MCP envelope {"result": "<json text>"}, possibly wrapped as untrusted data."""
     text = result if isinstance(result, str) else json.dumps(result)
     try:
         envelope = json.JSONDecoder().raw_decode(text[text.index("{"):])[0]

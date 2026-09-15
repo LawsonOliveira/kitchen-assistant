@@ -15,7 +15,7 @@ ASK_TOOLS = {"ask_recipe_expert", "ask_cost_expert", "ask_marketing_expert"}
 
 
 def _mcp(*tools: str) -> set[str]:
-    return {f"mcp__costs__{tool}" for tool in tools}
+    return {f"mcp__ledger__{tool}" for tool in tools}
 
 
 ALLOWED = {

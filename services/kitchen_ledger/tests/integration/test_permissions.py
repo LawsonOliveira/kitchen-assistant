@@ -2,7 +2,7 @@ from conftest import EVIDENCE
 from starlette.responses import PlainTextResponse
 from starlette.testclient import TestClient
 
-from costs_mcp import server
+from kitchen_ledger import server
 
 PURCHASE_ARGS = {
     "ingredient_name": "Marmita 500 ml", "kind": "packaging", "packages": 1, "package_quantity": "50",

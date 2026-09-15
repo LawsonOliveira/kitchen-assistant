@@ -1,4 +1,4 @@
-"""Loop 6 eval runner (PLAN.md D36): `make evals` = costs core + requirement extraction + input guard + multi-turn
+"""Loop 6 eval runner (PLAN.md D36): `make evals` = ledger core + requirement extraction + input guard + multi-turn
 scenarios (pass^3) + red-team, reported against the global DoD thresholds and published to Langfuse as a dataset run.
 
 The rule helpers at the top are unit-tested; main() drives the live stack (it erases business state, so it refuses to
@@ -289,9 +289,9 @@ def main(argv: list[str] | None = None) -> int:
     floor_mib = int(os.environ.get("KITCHEN_EVAL_MEMORY_FLOOR_MIB", "450"))
     threading.Thread(target=watch_memory, args=(lambda: memory_available_mib(Path("/proc/meminfo").read_text()), abort, floor_mib),
                      daemon=True).start()
-    layers = [_cached(run_dir / "layer-costs-unit.json", lambda: _command("costs core (unit)", ["uv", "run", "pytest", "tests/unit", "-q"], REPO / "services" / "costs_mcp")),
+    layers = [_cached(run_dir / "layer-ledger-unit.json", lambda: _command("ledger core (unit)", ["uv", "run", "pytest", "tests/unit", "-q"], REPO / "services" / "kitchen_ledger")),
               # The integration suite reads the seeded database (37 ingredients, budget R$ 80,00), so it starts from a reset.
-              _cached(run_dir / "layer-costs-integration.json", lambda: (trials.reset(), _command("costs core (integration)", ["make", "-s", "test-integration"]))[1]),
+              _cached(run_dir / "layer-ledger-integration.json", lambda: (trials.reset(), _command("ledger core (integration)", ["make", "-s", "test-integration"]))[1]),
               _cached(run_dir / "layer-requirements.json", _requirements_layer)]
 
     def run_guard():

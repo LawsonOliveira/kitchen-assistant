@@ -1,6 +1,6 @@
-"""costs-mcp — deterministic pantry, CMV and pricing tools over MCP Streamable HTTP (PLAN.md D7).
+"""kitchen-ledger — deterministic pantry, CMV and pricing tools over MCP Streamable HTTP (PLAN.md D7).
 
-Every request carries `Authorization: Bearer <agent token>` (COSTS_MCP_AGENT_TOKENS). The token decides the
+Every request carries `Authorization: Bearer <agent token>` (LEDGER_AGENT_TOKENS). The token decides the
 agent, TOOL_PERMISSIONS decides what that agent may call (enforced here, not in prompts — D14), and every
 call is written to audit_log.
 """
@@ -17,10 +17,10 @@ from mcp.server.mcpserver import Context, MCPServer
 from mcp.server.transport_security import TransportSecuritySettings
 from starlette.responses import JSONResponse
 
-from costs_mcp import db, operations, telemetry
-from costs_mcp.pantry_import import seed_from_workbook
+from kitchen_ledger import db, operations, telemetry
+from kitchen_ledger.pantry_import import seed_from_workbook
 
-log = logging.getLogger("costs_mcp")
+log = logging.getLogger("kitchen_ledger")
 
 READ_TOOLS = {"get_pantry", "get_state_summary", "check_pantry_match", "get_launch_menu"}
 TOOL_PERMISSIONS = {
@@ -115,10 +115,10 @@ def parse_agent_tokens(raw: str) -> dict[str, str]:
     for item in filter(None, (part.strip() for part in raw.split(","))):
         agent, _, token = item.partition(":")
         if not agent or not token or token in tokens:
-            raise ValueError("COSTS_MCP_AGENT_TOKENS must be agent:token pairs with non-empty, distinct tokens")
+            raise ValueError("LEDGER_AGENT_TOKENS must be agent:token pairs with non-empty, distinct tokens")
         tokens[token] = agent
     if not tokens:
-        raise ValueError("COSTS_MCP_AGENT_TOKENS is empty")
+        raise ValueError("LEDGER_AGENT_TOKENS is empty")
     return tokens
 
 
@@ -149,12 +149,12 @@ class BearerAuth:
 def main() -> None:
     # force=True: importing mcp installs a root handler first, which would swallow the level/logger prefix.
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s %(message)s", force=True)
-    _agent_by_token.update(parse_agent_tokens(os.environ["COSTS_MCP_AGENT_TOKENS"]))
+    _agent_by_token.update(parse_agent_tokens(os.environ["LEDGER_AGENT_TOKENS"]))
     with db.connect(_dsn()) as conn:
         db.apply_migrations(conn)
         loaded = seed_from_workbook(conn, Path(os.environ.get("KITCHEN_SPREADSHEET", "/data/despensa_dona_maria.xlsx")))
     log.info("seed loaded %d ingredients", loaded)
-    security = TransportSecuritySettings(allowed_hosts=["costs-mcp:8000", "localhost:8000", "127.0.0.1:8000"])
+    security = TransportSecuritySettings(allowed_hosts=["kitchen-ledger:8000", "localhost:8000", "127.0.0.1:8000"])
     app = mcp.streamable_http_app(host="0.0.0.0", transport_security=security)
     uvicorn.run(BearerAuth(app, _agent_by_token), host="0.0.0.0", port=8000)
 

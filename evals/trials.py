@@ -66,7 +66,7 @@ def _orchestrator_python(script: str, *args: str, stdin: str = "") -> str:
 REFERENCE_DISH = r'''
 import json, os
 import psycopg
-from costs_mcp import operations
+from kitchen_ledger import operations
 recipe = {"name": "Arroz com frango", "source_url": "https://example.com/receita", "yield_portions": 4, "prep_time_minutes": 45,
           "requirements": ["stove_burners>=2"], "ingredients": [
               {"name": "Arroz branco tipo 1", "quantity": 400, "unit": "g", "pantry_match": "Arroz branco tipo 1"},
@@ -97,8 +97,8 @@ def place_document(case: dict) -> None:
 
 
 def setup_reference_dish() -> None:
-    """Red-team 07 setup: the reference dish registered, accepted and priced at R$ 9,90 through costs-mcp's operations."""
-    subprocess.run(["docker", "compose", "exec", "-T", "costs-mcp", "python", "-c", REFERENCE_DISH], cwd=REPO, check=True,
+    """Red-team 07 setup: the reference dish registered, accepted and priced at R$ 9,90 through kitchen-ledger's operations."""
+    subprocess.run(["docker", "compose", "exec", "-T", "kitchen-ledger", "python", "-c", REFERENCE_DISH], cwd=REPO, check=True,
                    capture_output=True, text=True)
 
 

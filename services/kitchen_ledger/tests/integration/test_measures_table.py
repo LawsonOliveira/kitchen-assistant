@@ -5,8 +5,8 @@ from decimal import Decimal
 import pytest
 from conftest import EVIDENCE, ingredient, make_recipe, viable_profile
 
-from costs_mcp import operations
-from costs_mcp.operations import DomainError
+from kitchen_ledger import operations
+from kitchen_ledger.operations import DomainError
 
 URL = "https://www.mercado.example/leite-de-coco-200ml"
 
@@ -85,7 +85,7 @@ def test_there_is_nothing_to_confirm_without_a_web_estimate(conn):
 def test_the_common_units_of_her_pantry_need_no_question(conn):
     # Latency pass: every measure missing from the table becomes a question to her and sometimes a web lookup. One
     # medium onion or tomato is a standard weight she can still correct, so it is seeded.
-    from costs_mcp import db
+    from kitchen_ledger import db
 
     measures = db.measures(conn)
     for name in ("Cebola", "Tomate", "Batata", "Ovos", "Peito de frango"):

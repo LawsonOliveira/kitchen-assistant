@@ -13,16 +13,16 @@
   `contracts/tests`. Rejected: `jsonschema` (a virtualenv and a dependency for a flat schema).
 - The page is one HTML file with vanilla JS: SVG pipeline `guard_input → orchestrator → experts → researcher → MCP →
   guard_output` (the layout lives in the `data-node` elements), the active node pulses for 2.5 s after each event and
-  the edge of an A2A call, a `research` call or an `mcp__costs__*` tool call is animated; turn summary (events, model
+  the edge of an A2A call, a `research` call or an `mcp__ledger__*` tool call is animated; turn summary (events, model
   calls, tokens, US$, duration) for orchestrator's latest trace; timeline with duration, tokens and cost (last 200 rows);
   badges for the event stream, Langfuse and guardrail health events.
 - **State panel from `state_snapshot.preview`.** The event contract has no payload field and caps `preview` at 200
-  characters, so costs-mcp writes one line — `Saldo R$ 55,00 | #1 Arroz com frango: accepted R$ 9,90 | …` — and the
+  characters, so kitchen-ledger writes one line — `Saldo R$ 55,00 | #1 Arroz com frango: accepted R$ 9,90 | …` — and the
   panel splits it on ` | `. With many dishes the line is cut at 200 characters. Alternative if that becomes a problem:
   an optional `state` object in the event contract (a contract change, test-first).
 - **Langfuse badge.** A thread probes `KITCHEN_LANGFUSE_URL/api/public/health` every 15 s and publishes a `health`
   event (`trace_id: "cockpit-health"`, agent `cockpit`) only when the status changes.
-- costs-mcp calls made without a trace id are published with `trace_id: "untraced"` (the contract requires one).
+- kitchen-ledger calls made without a trace id are published with `trace_id: "untraced"` (the contract requires one).
 
 ## Langfuse v4 in docker-compose.yml
 
@@ -49,7 +49,7 @@ init keys and `LANGFUSE_BASE_URL=http://langfuse-web:3000`; nothing depends on L
 ## Memory (open question 3)
 
 - Langfuse recommends 4 cores and 16 GiB for the compose deployment. The Docker VM here has ~7.5 GiB; on 2026-09-13,
-  with the app stack running (postgres, costs-mcp, five agents), `free -g` showed 4 GiB used, 1 GiB available and
+  with the app stack running (postgres, kitchen-ledger, five agents), `free -g` showed 4 GiB used, 1 GiB available and
   swap in use.
 - Limits set (`mem_limit`): langfuse-web 1 GiB, langfuse-worker 768 MiB, clickhouse 1.5 GiB (ClickHouse sizes its
   server memory limit from the cgroup limit), langfuse-postgres 256 MiB, redis 128 MiB, minio 256 MiB, cockpit

@@ -61,7 +61,7 @@ becomes an invalid guard model (a model outside `allowed_models` raises `PluginL
 `clarify` and `memory` are inline agent tools (`agent/inline_tool_executors.py`): the tool executor runs
 `pre_tool_call` and emits the terminal `post_tool_call` for them, but they never pass through
 `model_tools.handle_function_call`, so `transform_tool_result` does not fire. The click ledger therefore records
-clarify answers in `post_tool_call`; the memory guard stays in `pre_tool_call`. Registry tools (`ask_*`, costs MCP)
+clarify answers in `post_tool_call`; the memory guard stays in `pre_tool_call`. Registry tools (`ask_*`, ledger MCP)
 keep using `transform_tool_result`.
 
 ## 7. Loop 4 manual checks (2026-09-13, guardrails on, real guard model)

@@ -1,5 +1,5 @@
 [project]
-name = "costs-mcp"
+name = "kitchen-ledger"
 version = "0.1.0"
 description = "Deterministic pantry, CMV and pricing MCP server for Sabor da Maria"
 requires-python = ">=3.12"

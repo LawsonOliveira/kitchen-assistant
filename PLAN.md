@@ -61,7 +61,7 @@ Brazilian Portuguese and always lets the owner decide.
 - **CMV** (Custo de Mercadoria Vendida) — cost of goods sold of a dish: ingredient cost only, **per
   portion** in this project.
 - **A2A** — Agent2Agent protocol (JSON-RPC over HTTP) used between the Hermes processes.
-- **MCP** — Model Context Protocol. `costs-mcp` is our deterministic tool server.
+- **MCP** — Model Context Protocol. `kitchen-ledger` is our deterministic tool server.
 - **`HERMES_HOME`** — directory from which a Hermes instance reads `config.yaml`, `.env`, `SOUL.md`,
   skills, skins, plugins, memory and sessions.
 - **`SOUL.md`** — persona/identity file of a Hermes instance. **Context file** (`.hermes.md`) —
@@ -69,7 +69,7 @@ Brazilian Portuguese and always lets the owner decide.
 - **`clarify`** — Hermes built-in tool that asks the user a multiple-choice question (inline buttons
   in Telegram, a choice prompt in the CLI).
 - **Click / owner confirmation** — the owner choosing **Confirmar** in a `clarify` prompt.
-- **Display string** — a money or quantity string already formatted by `costs-mcp`
+- **Display string** — a money or quantity string already formatted by `kitchen-ledger`
   (e.g. `"R$ 4,98/kg"`). The only numbers fifi may show.
 - **Grounding** — checking that every `R$` amount in fifi's answer came from a display string.
 - **Trace** — the span tree of one owner turn across all containers.
@@ -191,7 +191,7 @@ The README must list these as consciously accepted risks with their mitigations:
 
 **Architecture and runtime**
 - [ ] `make up` on a fresh clone (with `.env` filled from `.env.example`) brings every service to
-      healthy: `postgres`, `costs-mcp`, `fifi`, `recipe-expert`, `cost-expert`, `marketing-expert`,
+      healthy: `postgres`, `kitchen-ledger`, `fifi`, `recipe-expert`, `cost-expert`, `marketing-expert`,
       `researcher`, `cockpit`, and the Langfuse v4 stack (`langfuse-web`, `langfuse-worker`,
       `langfuse-postgres`, `clickhouse`, `redis`, `minio`).
 - [ ] All 5 agents run from one image (`agents/Dockerfile`: official Hermes image pinned by tag and
@@ -208,7 +208,7 @@ The README must list these as consciously accepted risks with their mitigations:
       `web_search`/`web_extract` in that task; others are discarded.
 - [ ] Callers validate every A2A response against `contracts/`; invalid → one retry → explicit error.
 
-**Business rules (`costs-mcp`)**
+**Business rules (`kitchen-ledger`)**
 - [ ] Money is `Decimal` end to end. Rounding happens only in display strings: prices and costs
       half-up to the cent; **minimum prices rounded up** to the cent.
 - [ ] `unit_cost = total_price_paid / quantity_purchased` (base unit g | ml | unit);
@@ -219,7 +219,7 @@ The README must list these as consciously accepted risks with their mitigations:
       target`, displayed price rounded **up** to the next `,90`, profit and margin recomputed on the
       rounded price; separate lines for `profit_after_packaging` and
       `min_price_with_packaging = (cmv_per_portion + packaging_unit_cost) / 0.90`.
-- [ ] Unit conversion lives only in `services/costs_mcp/costs_mcp/units.py`; cross-dimension
+- [ ] Unit conversion lives only in `services/kitchen_ledger/kitchen_ledger/units.py`; cross-dimension
       conversion without a known factor fails loud (`missing_conversion`) and becomes a question.
 - [ ] Household measures come from a fixed table; `to_taste`/`pinch`/`drizzle` use small fixed
       amounts flagged `is_estimate`; `can`/`package` without a table entry always become a question.
@@ -352,7 +352,7 @@ Rejected: exposing Hermes' raw `a2a` toolset to the models. Why: validation agai
 deterministic (fail loud after one retry), the model cannot discover or call arbitrary peers, and each
 call yields a clean cockpit event.
 
-**D7 — All money/quantity logic in `costs-mcp`: a deterministic Python MCP server, Streamable HTTP,
+**D7 — All money/quantity logic in `kitchen-ledger`: a deterministic Python MCP server, Streamable HTTP,
 one shared container.**
 Rejected: LLM arithmetic; stdio MCP spawned per Hermes process; a Hermes plugin tool. Why: LLM math
 "lies silently" — the exact bug class `CLAUDE.md` forbids; stdio would spawn separate copies for the CLI
@@ -716,9 +716,9 @@ ifood/
 │       ├── test_tool_policy.py  test_cost_cap.py  test_grounding.py         new L4 (T)
 │       └── test_emit.py  test_trace.py                                      new L5 (T)
 ├── services/
-│   ├── costs_mcp/
+│   ├── kitchen_ledger/
 │   │   ├── Dockerfile  pyproject.toml              new L0
-│   │   ├── costs_mcp/
+│   │   ├── kitchen_ledger/
 │   │   │   ├── __init__.py                         new L0
 │   │   │   ├── units.py  measures.py               new L1
 │   │   │   ├── pricing.py                          new L0 (minimal), L1
@@ -862,7 +862,7 @@ a2a_call, a2a_serve, subagent, mcp_call, state_snapshot, progress, error, health
 `{"error": {"code": "<snake_case>", "message": "...", "details": {...}}}` — never a silent default.
 
 ### MCP tool permissions and write authorization
-Enforced by `costs-mcp` from the bearer token (`COSTS_MCP_AGENT_TOKENS`); unknown token → 401;
+Enforced by `kitchen-ledger` from the bearer token (`LEDGER_AGENT_TOKENS`); unknown token → 401;
 tool not permitted → `forbidden`. The "click" column is enforced by the expert's `SOUL.md` (write only
 with `owner_confirmation`) and checked by evals — see D14.
 
@@ -883,9 +883,9 @@ with `owner_confirmation`) and checked by evals — see D14.
 | `save_menu_copy`, `register_promotion` | marketing_expert | **yes** |
 | Hermes `memory` tool (not MCP) | fifi | no — memory write guard |
 
-### Database schema (app Postgres, owned by `costs-mcp`)
+### Database schema (app Postgres, owned by `kitchen-ledger`)
 Two Postgres instances exist: this one (business state) and `langfuse-postgres` (managed by Langfuse,
-never touched by our code). Only `costs-mcp` writes here; eval graders read inside read-only
+never touched by our code). Only `kitchen-ledger` writes here; eval graders read inside read-only
 transactions. Money `NUMERIC(12,2)`; quantities in base units `NUMERIC(14,4)`; timestamps
 `TIMESTAMPTZ DEFAULT now()`; primary keys `BIGSERIAL` unless stated. **Never stored, always derived:**
 unit cost, CMV, available stock, budget remaining, price scenarios, alerts, launch menu — stored
@@ -981,16 +981,16 @@ VIEW budget_status    -- initial_amount + Σ budget_adjustments.delta − Σ pur
 pantry → researched recipe → one equipment question → CMV → one price. Langfuse comes in Loop 5.
 
 **Requirements for this loop**
-- `make up` → `postgres`, `costs-mcp`, `fifi`, 3 experts and `researcher` healthy.
+- `make up` → `postgres`, `kitchen-ledger`, `fifi`, 3 experts and `researcher` healthy.
 - A2A works on every allowed edge and rejects missing, wrong or untrusted tokens.
-- fifi answers with a CMV and one price computed by `costs-mcp` for a researched dish.
+- fifi answers with a CMV and one price computed by `kitchen-ledger` for a researched dish.
 
 **Tests** *(write these first — before the implementation steps)*
 - Unit pricing: `unit_cost(Decimal("24.90"), Decimal("5000")) == Decimal("0.00498")`;
   `min_price(Decimal("2.7159625"), Decimal("0.10"))` equals `2.7159625 / 0.9` (3.017736…) —
-  command: `make test` (`cd services/costs_mcp && uv run pytest tests/unit -q`)
+  command: `make test` (`cd services/kitchen_ledger && uv run pytest tests/unit -q`)
 - Seed (baseline parser handles only `kg`, `L`, `un`): after `make up`, `SELECT count(*) FROM
-  ingredients` = **31**, and `docker compose logs costs-mcp` shows exactly 6 ERROR skip lines naming
+  ingredients` = **31**, and `docker compose logs kitchen-ledger` shows exactly 6 ERROR skip lines naming
   Alcaparras `balde 2kg`, Chantilly `un 500g`, Leite ninho em pó `un 400g`, Azeite de oliva extra
   virgem `un 500ml`, Aceto balsâmico `un 500ml`, Adoçante líquido `un 100ml` — command:
   `make test-integration` (`tests/integration/test_seed.py`)
@@ -1002,14 +1002,14 @@ pantry → researched recipe → one equipment question → CMV → one price. L
   non-trusted peer (e.g. fifi → researcher) rejected — command: `make smoke-a2a`
 - Manual E2E (expected outcome written now): `make chat`, send "Quero um prato com frango e arroz da
   despensa", answer the equipment question; logs (`make logs | grep '"kind"'`) show fifi →
-  recipe_expert → researcher → cost_expert → costs-mcp in order; the CMV shown matches a hand
+  recipe_expert → researcher → cost_expert → kitchen-ledger in order; the CMV shown matches a hand
   computation from the spreadsheet for the returned ingredient list.
 
 ```mermaid
 flowchart TD
     S1[1 repo init] --> S2[2 write tests — red run]
     S2 --> S3a[3a contracts]
-    S2 --> S3b[3b costs_mcp minimal]
+    S2 --> S3b[3b kitchen_ledger minimal]
     S2 --> S3c[3c agent image + configs]
     S2 --> S3d[3d sabor_a2a passthrough]
     S2 --> S3e[3e observability stub]
@@ -1030,7 +1030,7 @@ flowchart TD
   (REQUIRED, D46), `TAVILY_API_KEY` (REQUIRED); caller-identity A2A tokens `A2A_TOKEN_FIFI` (fifi calling
   experts), `A2A_TOKEN_RECIPE_EXPERT`, `A2A_TOKEN_COST_EXPERT`, `A2A_TOKEN_MARKETING_EXPERT` (experts
   calling researcher) — each server's `A2A_PEER_TOKENS`/`A2A_TRUSTED_PEERS` lists only the callers
-  allowed by D3; `COSTS_MCP_AGENT_TOKENS`
+  allowed by D3; `LEDGER_AGENT_TOKENS`
   (`fifi:<tok>,recipe_expert:<tok>,cost_expert:<tok>,marketing_expert:<tok>`), `POSTGRES_PASSWORD`,
   `TELEGRAM_BOT_TOKEN` (OPTIONAL), `TELEGRAM_ALLOWED_USERS` (OPTIONAL), `LANGFUSE_INIT_*`,
   `SABOR_GUARD_TIMEOUT_SECONDS=10`, `SABOR_GUARD_API_KEY` (OPTIONAL; defaults to
@@ -1041,14 +1041,14 @@ flowchart TD
 - [x] 3. *(parallel with each other; 3b needs 3a's recipe schema)*
   - [x] a) `contracts/recipe.schema.json`, `contracts/requirements.json`,
     `contracts/events.schema.json` exactly as in *Shared definitions*.
-  - [x] b) `services/costs_mcp/` minimal: `pyproject.toml` (Python 3.12; deps `mcp`,
+  - [x] b) `services/kitchen_ledger/` minimal: `pyproject.toml` (Python 3.12; deps `mcp`,
     `psycopg[binary]`, `openpyxl`, `jsonschema`; dev `pytest`); `Dockerfile`;
     `migrations/001_init.sql` = everything marked **L0** in *Database schema*;
     `db.py: apply_migrations(conn)` (numbered `.sql`, `schema_version`);
     `pantry_import.py: seed_from_workbook(path)` handling only `kg`, `L`, `un` and logging each skipped
     row at ERROR (baseline only; Loop 1 replaces it with validation that fails startup);
     `pricing.py: unit_cost()`, `recipe_cmv()`, `min_price()`; `server.py` (FastMCP, Streamable HTTP on
-    `:8000/mcp`, bearer check against `COSTS_MCP_AGENT_TOKENS`) exposing `get_pantry() ->
+    `:8000/mcp`, bearer check against `LEDGER_AGENT_TOKENS`) exposing `get_pantry() ->
     [{name, quantity_base, base_unit, unit_cost}]` and `compute_dish_cost(recipe) ->
     {cmv_per_portion, min_price, price_30pct}`; an ingredient without `pantry_match` →
     `unmatched_ingredient`.
@@ -1062,8 +1062,8 @@ flowchart TD
     then `exec hermes "$@"`; `agents/<name>/config.yaml` per agent with `model` (D9),
     `terminal.cwd: /workspace`, `plugins.enabled` (`sabor_a2a`, `sabor_observability`),
     `agent.disabled_toolsets` with terminal and file tools, A2A server settings on experts and
-    researcher (env vars `A2A_PEER_TOKENS`, `A2A_TRUSTED_PEERS` set in compose per the D3 edges), `mcp_servers.costs`
-    (`url: http://costs-mcp:8000/mcp`, bearer header) on fifi and the 3 experts, Tavily web provider
+    researcher (env vars `A2A_PEER_TOKENS`, `A2A_TRUSTED_PEERS` set in compose per the D3 edges), `mcp_servers.ledger`
+    (`url: http://kitchen-ledger:8000/mcp`, bearer header) on fifi and the 3 experts, Tavily web provider
     on researcher only; `make hermes-shell` target.
   - [x] d) `plugins/sabor_a2a/`: `plugin.yaml`, `__init__.py: register(ctx)`; `client.py:
     send_message(peer_url, token, text, timeout_s) -> str` (stdlib `urllib`, JSON-RPC
@@ -1074,16 +1074,16 @@ flowchart TD
   - [x] e) `plugins/sabor_observability/emit.py: emit(kind, name, **fields)` → one JSON line on stdout,
     called from `pre_tool_call`/`post_tool_call`.
 - [x] 4. *(sequential)* `docker-compose.yml`: `postgres` (app DB, pinned image, healthcheck
-  `pg_isready`), `costs-mcp` (depends on postgres healthy; migrations + seed on start), `fifi`
+  `pg_isready`), `kitchen-ledger` (depends on postgres healthy; migrations + seed on start), `fifi`
   (`command: ["gateway","run"]`, must be healthy with no `TELEGRAM_BOT_TOKEN`), `recipe-expert`,
   `cost-expert`, `marketing-expert`, `researcher` (`gateway run`, A2A `:9900`, `A2A_HOST=0.0.0.0`,
   `A2A_PUBLIC_URL=http://<service>:9900`); every agent service bind-mounts `./agents/<name>:/seed:ro`
   and sets `SABOR_AGENT_ROLE=<name>`; named volumes `hermes_<agent>`, app Postgres port bound
   to `127.0.0.1:5432`; `Makefile` targets `up`, `down`, `logs`, `chat` (`docker compose exec -it fifi
   hermes` in classic CLI mode — find the flag or config and record it in `agents/NOTES.md`), `test`
-  (costs_mcp unit tests; extended with cockpit tests in L5 and eval unit tests in L6),
+  (kitchen_ledger unit tests; extended with cockpit tests in L5 and eval unit tests in L6),
   `test-integration` (`docker compose up -d postgres` then `uv run pytest tests/integration -q` in
-  `services/costs_mcp`; `conftest.py` creates and drops a separate `sabor_test` database so tests never
+  `services/kitchen_ledger`; `conftest.py` creates and drops a separate `sabor_test` database so tests never
   touch live state — only `test_seed.py` reads the live app database, read-only), `test-contracts`
   (`docker compose run --rm fifi python -m pytest /opt/sabor/contracts/tests -q`), `test-plugins`
   (`docker compose run --rm fifi python -m pytest /opt/sabor/plugins/tests -q`), `smoke-a2a`,
@@ -1110,7 +1110,7 @@ flowchart TD
 
 **Requirements for this loop**
 - Every rule under *Requirements → Business rules* and *Write authorization* (server side) is
-  implemented in `costs-mcp` and covered by unit tests (pure modules) and integration tests (Postgres).
+  implemented in `kitchen-ledger` and covered by unit tests (pure modules) and integration tests (Postgres).
 - cost_expert shows the 3 scenarios of the reference dish in a real CLI conversation.
 
 **Tests** *(write these first — before the implementation steps)*
@@ -1204,13 +1204,13 @@ flowchart TD
   `test_permissions.py`, `test_import_pantry.py`, `test_dish_lifecycle.py`, `test_budget_fit.py`, and the rewritten
   `test_seed.py`); run them red; commit `test: L1 …`.
 - [x] 2. *(parallel with each other — pure modules, no database)*
-  - [x] a) `costs_mcp/units.py`: `UnitSpec(base_unit, factor_to_base: Decimal, package_label | None)`;
+  - [x] a) `kitchen_ledger/units.py`: `UnitSpec(base_unit, factor_to_base: Decimal, package_label | None)`;
     `parse_unit(raw) -> UnitSpec` for `g`, `kg` (×1000 g), `ml`, `l`/`L` (×1000 ml), `un` (unit),
     `<container> <n><g|kg|ml|l>` (`balde 2kg`, `un 500g`, `un 500ml`, `un 100ml`);
     `to_base(quantity: Decimal, raw_unit) -> Decimal`; errors `UnknownUnitError(raw)`,
     `NonPositiveQuantityError(value)`, `IncompatibleUnitsError(from_base, to_base)`. No other module
     converts units.
-  - [x] b) `costs_mcp/measures.py`: `HOUSEHOLD_MEASURES: dict[(measure, ingredient_name | None),
+  - [x] b) `kitchen_ledger/measures.py`: `HOUSEHOLD_MEASURES: dict[(measure, ingredient_name | None),
     (Decimal, base_unit)]` with at least `(cup, Farinha de trigo) → 120 g`, `(cup, Arroz branco tipo 1)
     → 185 g`, `(cup, Açúcar) → 180 g`, `(cup, Leite integral) → 240 ml`, `(tablespoon, Manteiga) →
     15 g`, `(tablespoon, Óleo de soja) → 15 ml`, `(tablespoon, None) → 15 ml`, `(teaspoon, None) →
@@ -1219,7 +1219,7 @@ flowchart TD
     170 g`, `(can, Extrato de tomate) → 340 g`; no generic `can`/`package` entry;
     `resolve_measure(ingredient_name, measure, count, owner_factors) -> (Decimal, base_unit,
     is_estimate)`; owner factors take precedence; missing → `MissingConversionError(ingredient, measure)`.
-  - [x] c) `costs_mcp/pricing.py` (pure, `Decimal` only): `unit_cost`, `recipe_cmv(lines)`,
+  - [x] c) `kitchen_ledger/pricing.py` (pure, `Decimal` only): `unit_cost`, `recipe_cmv(lines)`,
     `cmv_per_portion(recipe_cmv, yield_portions)` (≤ 0 → error), `min_price(cmv, fee_rate)`,
     `min_price_with_packaging(cmv, packaging_unit_cost, fee_rate)`, `round_up_commercial(price)`,
     `price_scenarios(cmv_per_portion, packaging_unit_cost | None, fee_rate,
@@ -1229,14 +1229,14 @@ flowchart TD
     total_price_paid, quantity_purchased_base, base_unit)` (per kg, L or un, 2 decimals),
     `price_alerts(cmv_per_portion, selected_price, selected_target, fee_rate, packaging_unit_cost |
     None) -> list[Alert(code, severity, actual_cmv_pct, target_cmv_pct, min_price_display)]`.
-  - [x] d) `costs_mcp/pantry_import.py`: `read_workbook(path) -> (list[PantryRow], list[PriceRow])`
+  - [x] d) `kitchen_ledger/pantry_import.py`: `read_workbook(path) -> (list[PantryRow], list[PriceRow])`
     requiring the exact sheet and column names; `validate(pantry_rows, price_rows) ->
     list[IngredientRecord]` collecting all errors (missing sheet/column, name in one sheet only after
     `strip()` + NFC, incompatible base units between sheets, non-positive quantity, non-cent price,
     unknown unit) and raising them together; `diff(current, new) -> {added, removed, changed}`.
 - [x] 3. *(sequential)* `migrations/002_domain.sql` = everything marked **L1** in *Database schema*;
   `db.py`: plain SQL functions, one per query.
-- [x] 4. *(sequential)* `costs_mcp/operations.py`:
+- [x] 4. *(sequential)* `kitchen_ledger/operations.py`:
   - `get_pantry() -> [{name, kind, quantity_display, unit_cost_display, price_source}]` (replaces the
     Loop 0 raw version)
   - `get_state_summary() -> {budget_initial_display, adjustments_total_display, purchases_total_display,
@@ -1476,7 +1476,7 @@ flowchart TD
   `agent.disabled_toolsets`; fifi `agent.max_turns: 30`, `agent.run_budget_seconds: 240`; A2A client
   timeouts fifi→experts 150 s, experts→researcher 120 s; shared volume `fifi_documents` mounted
   read-write in fifi at `$HERMES_HOME/cache/documents` (where Hermes saves received files) and
-  read-only in `costs-mcp` at the same path, `SABOR_IMPORT_DIR` set to that path in both;
+  read-only in `kitchen-ledger` at the same path, `SABOR_IMPORT_DIR` set to that path in both;
   `make import-pantry FILE=…` copies the file there with `docker compose cp` and prints the
   in-container path for the owner to tell Dona Fifi.
 - [x] 5. *(sequential)* Run the post-implementation checks from **Tests**.
@@ -1605,7 +1605,7 @@ flowchart TD
   delivered over SSE; ring buffer keeps the last 500 — command: `make test` (extended to run cockpit
   tests)
 - Live (expected outcome written now): one reference-dish turn → Langfuse shows a single trace with
-  spans from fifi, cost_expert, researcher children and costs-mcp sharing one `trace_id`, equal to
+  spans from fifi, cost_expert, researcher children and kitchen-ledger sharing one `trace_id`, equal to
   `SELECT trace_id FROM audit_log ORDER BY id DESC LIMIT 1`; the cockpit animates the path and the
   budget panel updates after a purchase.
 - Resilience: `docker compose stop langfuse-web cockpit` → a full turn still answers normally; after
@@ -1626,13 +1626,13 @@ flowchart TD
     `pyproject.toml` with no runtime deps; `Dockerfile`; port 8080.
 - [x] 3. *(sequential)* `plugins/sabor_observability/trace.py`: `ContextVar` with `trace_id`/`span_id`;
   fifi starts a trace per turn in `pre_llm_call`; `sabor_a2a` puts `trace` in every request; serving
-  agents adopt it in `pre_llm_call`; `pre_tool_call` on MCP tools adds `trace_id` to args (costs-mcp
+  agents adopt it in `pre_llm_call`; `pre_tool_call` on MCP tools adds `trace_id` to args (kitchen-ledger
   accepts it on every tool and writes it to `audit_log`). `emit.py`: POST to cockpit (0.5 s timeout,
   drop + one log line on failure) and to Langfuse through the pinned Python SDK with explicit trace id,
   `session_id`, model, `prompt_hash`, tokens and cost (errors dropped + logged). Hooks:
   `pre/post_api_request`, `pre/post_tool_call`, `subagent_start/stop`, guard events. Bundled
   `observability/langfuse` stays disabled. Full content capture.
-- [x] 4. *(sequential)* `costs-mcp` emits `mcp_call` and `state_snapshot` to the cockpit (same
+- [x] 4. *(sequential)* `kitchen-ledger` emits `mcp_call` and `state_snapshot` to the cockpit (same
   best-effort rule).
 - [x] 5. *(sequential)* Run tests, live and resilience checks; note for the README that production
   would use sanitized capture and retention (LGPD).
@@ -1811,7 +1811,7 @@ evidence, what was changed, and where. Open questions that were "default applied
   auto-migrated". Added `_config_version: 42` (the pinned image's schema version) to all
   `agents/*/config.yaml`.
 - **C3 — Seed log prefix.** `test_seed` could not find the ERROR lines: importing `mcp` installs a root log
-  handler first, so `logging.basicConfig` was a no-op. `costs_mcp/server.py: main()` now calls
+  handler first, so `logging.basicConfig` was a no-op. `kitchen_ledger/server.py: main()` now calls
   `basicConfig(..., force=True)`.
 - **C4 — A2A smoke asserts on JSON-RPC, not on the Agent Card.** Hermes serves Agent Cards publicly;
   `scripts/smoke_a2a.sh` asserts the card is served and checks auth/trust on a `GetTask` POST
@@ -1841,9 +1841,9 @@ evidence, what was changed, and where. Open questions that were "default applied
   `research` calls per request and researcher's at most two searches and two extracts. researcher stays on
   `claude-haiku-4-5-20251001` unless the next live run shows its output causing re-calls; the owner allowed
   switching it to Sonnet in that case.
-- **C12 — costs-mcp reads the contracts.** Loop 1 validates recipes against `contracts/recipe.schema.json`;
+- **C12 — kitchen-ledger reads the contracts.** Loop 1 validates recipes against `contracts/recipe.schema.json`;
   `docker-compose.yml` mounts `./contracts:/contracts:ro` and sets `SABOR_CONTRACTS_DIR`.
-- **C13 — MCP tool allowlists per agent.** Loop 1 step 6: each agent's `mcp_servers.costs.tools.include`
+- **C13 — MCP tool allowlists per agent.** Loop 1 step 6: each agent's `mcp_servers.ledger.tools.include`
   mirrors `TOOL_PERMISSIONS`, so models only see the tools the server would allow.
 - **C14 — Live E2E driven non-interactively.** `make chat` needs a TTY; live checks run
   `docker compose exec fifi hermes chat -Q -q "<message>"` and continue with `--resume <session id>`.
@@ -1901,8 +1901,8 @@ evidence, what was changed, and where. Open questions that were "default applied
   `SOUL.md` sends the owner's words instead of writing JSON; recipe_expert's `SOUL.md` and the
   recipe-normalization skill set `source_url: "owner"` and never call `research` for them. A researcher child
   that returned `"owner"` would still be dropped by the provenance filter (the URL was never visited).
-- **C22 — No generated MCP resource/prompt utilities.** fifi called `read_resource` and `get_prompt` on costs-mcp
-  looking for the recipe schema (costs-mcp serves neither). Every `mcp_servers.costs.tools` block now sets
+- **C22 — No generated MCP resource/prompt utilities.** fifi called `read_resource` and `get_prompt` on kitchen-ledger
+  looking for the recipe schema (kitchen-ledger serves neither). Every `mcp_servers.ledger.tools` block now sets
   `resources: false` and `prompts: false`, so agents see only the allowlisted tools.
 - **C23 — fifi shows how each ingredient cost was found.** In the first reference-dish conversation the three
   prices were right (R$ 7,90 / 9,90 / 10,90) but fifi omitted the line "R$ 24,90 ÷ 5 kg = R$ 4,98/kg" although
@@ -1916,15 +1916,15 @@ evidence, what was changed, and where. Open questions that were "default applied
   anything (0 conversion factors, 37 spreadsheet prices). Recording the owner's answers needs
   `set_conversion_factor`, which C16 withholds until Loop 3's confirmation protocol, so the CMV hand-check for
   Loop 0 is done on the reference-dish conversation, which crosses fifi → recipe_expert → cost_expert →
-  costs-mcp with the same tools. fifi also tried `clarify`, unavailable in non-interactive `hermes chat -Q`, and
+  kitchen-ledger with the same tools. fifi also tried `clarify`, unavailable in non-interactive `hermes chat -Q`, and
   then asked in plain text as its `SOUL.md` says.
 
-- **C25 — cost_expert relays costs-mcp results verbatim.** In the second reference-dish conversation
+- **C25 — cost_expert relays kitchen-ledger results verbatim.** In the second reference-dish conversation
   `compute_dish_cost` returned margins 55,6% / 62,6% / 65,1%, but cost_expert (`claude-sonnet-5`) retyped the
   JSON into its A2A reply as 55,6% / 65,1% / 65,1% and fifi showed the wrong 30% scenario margin (prices and
-  profits were right; the costs-mcp unit test already asserted 0.6257). A prompt cannot guarantee exact
+  profits were right; the kitchen-ledger unit test already asserted 0.6257). A prompt cannot guarantee exact
   copying, so `plugins/sabor_a2a/relay.py` (cost_expert only, tests first — red: collection error) records the
-  latest `mcp__costs__compute_dish_cost` result of each request from `transform_tool_result` (decoding Hermes'
+  latest `mcp__ledger__compute_dish_cost` result of each request from `transform_tool_result` (decoding Hermes'
   `{"result": "<json>"}` envelope, with or without the untrusted-data wrapper) and `transform_llm_output`
   replaces the reply's `result` with it, keeping only the model's `questions_for_owner`. A new request in a
   reused session forgets the previous result. Loop 3 adds the other cost tools to `RELAYED_TOOLS` as they return.
@@ -1992,7 +1992,7 @@ evidence, what was changed, and where. Open questions that were "default applied
   `register_promotion`). Tests first (red: 32 failed).
 
 - **C32 — Small fixed estimates follow the ingredient's base unit.** Loop 3 scenario 02 (first attempt): the
-  web recipe used "óleo a gosto"; `to_taste` resolved to 1 g, Óleo de soja is measured in ml, so costs-mcp raised
+  web recipe used "óleo a gosto"; `to_taste` resolved to 1 g, Óleo de soja is measured in ml, so kitchen-ledger raised
   `missing_conversion` and Dona Fifi asked the owner how many grams 1 ml of oil weighs — and suggested a density
   herself — exactly the interrogation D23 rejects. Tests first (red: unit 7, integration 1): `resolve_measure`
   takes the ingredient's `base_unit`; `to_taste` (1), `pinch` (1) and `drizzle` (5) are estimates in that unit
@@ -2081,8 +2081,8 @@ evidence, what was changed, and where. Open questions that were "default applied
     `a2a_serve` span under the caller's `parent_span_id` (the latest open span of the calling tool, because tool
     handlers get no `tool_call_id`); a delegated child opens a `subagent` span; a span closes on whichever of
     `post_tool_call` / `transform_tool_result` fires first, and a blocked call only fires `post_tool_call`;
-  - costs-mcp posts `mcp_call` and `state_snapshot` to the cockpit only; in Langfuse a costs-mcp call is the calling
-    agent's `mcp__costs__*` observation, and `audit_log.trace_id` equals the Langfuse trace id (calls without one use
+  - kitchen-ledger posts `mcp_call` and `state_snapshot` to the cockpit only; in Langfuse a kitchen-ledger call is the calling
+    agent's `mcp__ledger__*` observation, and `audit_log.trace_id` equals the Langfuse trace id (calls without one use
     `trace_id: "untraced"`);
   - the cockpit's state panel reads one `state_snapshot.preview` line (`Saldo R$ 55,00 | #1 …`), since the event
     contract has no payload field; the cockpit validates events by hand against the contract's six keywords and
@@ -2097,8 +2097,8 @@ evidence, what was changed, and where. Open questions that were "default applied
   `NODE_OPTIONS=--max-old-space-size=1024` and `mem_limit: 1536m` (~850 MiB in use). This Langfuse v4 deployment runs in
   `events_only` mode, where `/api/public/traces/<id>` and `/api/public/observations` are unavailable; trace checks use
   `/api/public/v2/observations?traceId=<id>`. fifi's spans are root observations (`isRootObservation: true`).
-- **C46 — postgres and costs-mcp restart with the host.** After a host reboot the agents and Langfuse came back
-  (`restart: unless-stopped`) but the app database and costs-mcp stayed stopped, so the agents started without their
+- **C46 — postgres and kitchen-ledger restart with the host.** After a host reboot the agents and Langfuse came back
+  (`restart: unless-stopped`) but the app database and kitchen-ledger stayed stopped, so the agents started without their
   MCP server; both services now have the same restart policy (the agents were restarted once to reconnect).
 - **C47 — A guard verdict is never lost to a long label.** A live output-guard call returned the category "cost
   calculation and purchase confirmation" (42 characters); the verdict schema's `maxLength: 40` made Hermes' plugin LLM
@@ -2130,7 +2130,7 @@ evidence, what was changed, and where. Open questions that were "default applied
   pty (`evals/cli_session.py`); clarify boxes are answered with keys per `clarify_answers`, free text comes from the
   Haiku persona (`evals/simulated_owner.py`), and both the persona and the Sonnet judge run through Hermes' auxiliary
   client inside fifi (open question 2). After a trial the runner reads `audit_log`, fifi's session from `state.db`,
-  fifi's memory files and the cockpit's event buffer. Red-team 07's prose setup is executed through costs-mcp's
+  fifi's memory files and the cockpit's event buffer. Red-team 07's prose setup is executed through kitchen-ledger's
   operations (reference dish accepted at 30%), and red-team 04 recreates researcher with
   `evals/compose.web-fixtures.yml` so the malicious fixture page is what it reads. Results are cached per trial in
   `evals/results/<timestamp>/`, so `make evals ARGS="--resume …"` continues an interrupted run.
@@ -2138,7 +2138,7 @@ evidence, what was changed, and where. Open questions that were "default applied
 - **C53 — The live runner's first smoke runs.** Each finding became a fix, tests first where the code allows:
   - the costs integration layer read leftover state (38 ingredients) → the runner resets before it;
   - a trial ran on an empty pantry: a turn from an interrupted trial wrote "limão" right after the TRUNCATE and
-    costs-mcp seeds only an empty database → `make eval-reset` stops the agents first and fails loud when the seed did
+    kitchen-ledger seeds only an empty database → `make eval-reset` stops the agents first and fails loud when the seed did
     not run (red: 2 failed);
   - scenario 01's default "Confirmar" was typed as free text into a clarify with the choices 6 / 12 portions, three
     times → the simulated owner answers every clarify the scenario cannot, and free-text prompts are typed directly
@@ -2196,7 +2196,7 @@ evidence, what was changed, and where. Open questions that were "default applied
 - **C59 — PL2/PL3/PL5 renames and the stack cutover.** Tests first (red: the orchestrator persona test, and `make
   test-skin` asking for `dona-salvia`). One scripted pass over the tracked files (PLAN.md's history and the brief
   untouched): `fifi` → `orchestrator` (service, role, agent directory, tokens `A2A_TOKEN_ORCHESTRATOR` and
-  `COSTS_MCP_TOKEN_ORCHESTRATOR`, volumes, event agent, cockpit node), `Dona Fifi` → `Dona Sálvia`, plugins
+  `LEDGER_TOKEN_ORCHESTRATOR`, volumes, event agent, cockpit node), `Dona Fifi` → `Dona Sálvia`, plugins
   `kitchen_a2a`/`kitchen_guardrails`/`kitchen_observability`, `SABOR_*` → `KITCHEN_*` (her `.env` keys renamed in place),
   Postgres user and database `kitchen`, contract ids `kitchen.local`, images `kitchen-*`, compose project
   `kitchen-assistant`; the restaurant name "Sabor da Maria" stays. Dona Sálvia's skin has a DONA SALVIA logo, the
@@ -2375,7 +2375,7 @@ evidence, what was changed, and where. Open questions that were "default applied
   property; Additional properties are not allowed ('requirement_key' was unexpected)`: `update_kitchen_profile` answers
   with `requirement_key` and `set_launch_batch_portions` with `launch_batch_portions` and `pantry_match`, while
   `contracts/experts/recipe_expert.response.json` asks for `key` and for a `dish` object. The fast-path tests had
-  invented the costs-mcp results, so they agreed with a reply the peer rejects. Test first (red: 3 failed): the tests
+  invented the kitchen-ledger results, so they agreed with a reply the peer rejects. Test first (red: 3 failed): the tests
   now carry the real return shapes and validate every fast-path reply against the response contract; the fix renames
   the two fields and falls back to the model on any payload it does not recognise. Dona Sálvia's flailing after each
   failure (`confirm_requirement` with `stove_burners>=1`, `accept` without the click) came from the same loop and
@@ -2388,10 +2388,20 @@ evidence, what was changed, and where. Open questions that were "default applied
   question that asks to accept a dish; both scenarios now answer that question before the purchase rule sees it. The
   run was stopped and restarted from the beginning with both fixes in the image.
 
+- **C79 — `costs-mcp` became `kitchen-ledger`.** The owner pointed out that the name no longer says what the service is:
+  it holds the pantry, the kitchen profile, dishes and their requirements, measures and conversions, prices, purchases,
+  the budget, the launch menu and promotions, plus the audit log — money is only part of it. Renamed in one pass
+  (289 occurrences in 64 files): the compose service and image, `services/kitchen_ledger` and its package, the MCP server
+  key in every agent config (so the tools are now `mcp__ledger__*`), the `LEDGER_*` tokens in `.env` and
+  `.env.example`, the eval layers (`layer-ledger-unit`, `layer-ledger-integration`) and the prose in the SOULs, the
+  skills and the docs. `plugins/kitchen_a2a/costs.py` keeps its name: it is the per-turn cost accounting of the model
+  calls, which really is about money. Done before probe B, at the owner's decision, so every eval that counts runs on
+  the final names; probe A was discarded and restarted.
+
 ## Post-loop changes (owner requests, 2026-09-13)
 Requested by the owner while Loops 6–8 were running, test-first, each recorded as a correction. **Order decided by the
 owner:** Loop 6 pauses; Loop 7 (the owner's Telegram checks) and Loop 8 finish, then PL1–PL9, then Loop 6 resumes and
-runs the evals on the final system. Execution order inside PL: PL1 (guards), PL6 and PL8 (costs-mcp), PL9 (latency),
+runs the evals on the final system. Execution order inside PL: PL1 (guards), PL6 and PL8 (kitchen-ledger), PL9 (latency),
 PL7 (conversation review), and the renames last in one pass (PL2 code names, PL3 persona, PL5 plugin prefix, PL4 folder
 and compose project), because they touch almost every file and restart the stack. Findings below were measured on the running stack; open decisions are listed per item.
 
@@ -2403,7 +2413,7 @@ and compose project), because they touch almost every file and restart the stack
   briefly, then back to the kitchen), and in `output_policy.md` that saying it is an assistant is not a leak.
 - **PL2 — Rename `fifi` to `orchestrator` in code.** The persona name lives only in the orchestrator's `SOUL.md` (and the
   skin and owner-facing messages). Scope today: 568 occurrences of "fifi" in ~70 tracked files (compose service,
-  `agents/fifi/`, `SABOR_AGENT_ROLE`, `A2A_TOKEN_FIFI`/`COSTS_MCP_TOKEN_FIFI`, volumes `hermes_fifi` and
+  `agents/fifi/`, `SABOR_AGENT_ROLE`, `A2A_TOKEN_FIFI`/`LEDGER_TOKEN_FIFI`, volumes `hermes_fifi` and
   `fifi_documents`, event `agent` values, cockpit nodes, contracts tests, eval scenarios). **Decided (owner):** start
   clean — no volume data is migrated; the `.env` keys are renamed in place. **Scope decided (owner, 2026-09-13): "tudo
   para kitchen"** — besides `fifi` → `orchestrator`, every technical `sabor` identifier becomes `kitchen`: `SABOR_*`
@@ -2421,7 +2431,7 @@ and compose project), because they touch almost every file and restart the stack
   and `sabor_observability` also registers plain module names, so generic names could collide. Decision: the new prefix
   that goes with the new project name. **Decided (owner):** `kitchen_a2a`, `kitchen_guardrails`, `kitchen_observability`.
 - **PL6 — Measures in the database, researched when missing.** Today `HOUSEHOLD_MEASURES` and `SMALL_ESTIMATES` are
-  fixed dicts in `services/costs_mcp/costs_mcp/measures.py`; owner-given factors already live in `conversion_factors`.
+  fixed dicts in `services/kitchen_ledger/kitchen_ledger/measures.py`; owner-given factors already live in `conversion_factors`.
   Plan: a `measures` table seeded from the current dicts, with `source` (`seed` | `web_estimate` | `owner_confirmed`),
   `source_url` and `evidence`; when a recipe uses an unknown measure, recipe_expert asks researcher (a new
   `measure_lookup` task type with provenance) and records it. **Decided (owner):** the table and the research flow.
@@ -2453,7 +2463,7 @@ and compose project), because they touch almost every file and restart the stack
   no purge job yet); proposals are a report plus draft files under `evals/proposals/<date>/`, nothing applied or
   committed automatically; alerts when a conversation's p90 turn latency exceeds 60 s or a turn costs more than US$ 1.00.
 - **PL8 — RAG.** There is no embedding or vector retrieval today. Retrieval is live web search with strict extraction
-  (researcher), structured SQL through costs-mcp, Hermes' memory snapshot and on-demand skills. Candidate: a recipe
+  (researcher), structured SQL through kitchen-ledger, Hermes' memory snapshot and on-demand skills. Candidate: a recipe
   cache in Postgres (researched recipes reused across rounds and conversations; cuts research latency and cost), keyed
   by normalized title first, with `pgvector` only if semantic matching proves necessary. **Decided (owner):** yes.
 - **PL9 — Latency.** Measured from the cockpit buffer during the first eval trial: orchestrator model call p50 3.9 s
@@ -2574,7 +2584,7 @@ Queued during implementation (each: what it blocks, the question, the default if
    rejection she never made, which scenario 09 treats as "never suggest again"). Add
    `set_launch_batch_portions(dish_id, launch_batch_portions, evidence)` for candidates (recipe_expert, evidence =
    her words), exposed as recipe_expert task `set_launch_batch`?
-   **Default if unanswered:** yes — test-first in costs-mcp (candidate only; accepted dishes keep their reservation),
+   **Default if unanswered:** yes — test-first in kitchen-ledger (candidate only; accepted dishes keep their reservation),
    added to TOOL_PERMISSIONS, the recipe_expert contract and fifi's prompt, recorded as a correction.
 12. **ANSWERED** (owner, 2026-09-13: token and allowlist added to `.env`; `getMe` answers for the bot and fifi's gateway logs "Connected to Telegram (polling mode)") — **Blocked** Loop 7's Telegram manual checks (`evals/manual/loop7_telegram.md` rows 1–7) and therefore
    Loop 7's DoD "reference dish priced end to end over Telegram"; the skin, the fixture and the compose wiring are

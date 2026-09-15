@@ -1,4 +1,4 @@
-"""costs-mcp business operations (PLAN.md Loop 1).
+"""kitchen-ledger business operations (PLAN.md Loop 1).
 
 Every operation takes a psycopg connection first. Writes run inside `conn.transaction()`, so a refused operation
 writes nothing. Refusals are DomainError(code, message, details); the MCP server turns them into the error shape.
@@ -17,14 +17,14 @@ from pathlib import Path
 from jsonschema import Draft202012Validator
 from referencing import Registry, Resource
 
-from costs_mcp import db
-from costs_mcp.measures import MissingConversionError, UnconfirmedMeasureError, resolve_measure
-from costs_mcp.pantry_import import IngredientRecord, PantryImportError, diff, load_records, plain
-from costs_mcp.pricing import (
+from kitchen_ledger import db
+from kitchen_ledger.measures import MissingConversionError, UnconfirmedMeasureError, resolve_measure
+from kitchen_ledger.pantry_import import IngredientRecord, PantryImportError, diff, load_records, plain
+from kitchen_ledger.pricing import (
     cmv_per_portion, format_brl, format_brl_min, format_unit_cost, min_price, min_price_with_packaging,
     price_alerts, price_scenarios, recipe_cmv, unit_cost,
 )
-from costs_mcp.units import NonPositiveQuantityError, UnknownUnitError, parse_unit, to_base
+from kitchen_ledger.units import NonPositiveQuantityError, UnknownUnitError, parse_unit, to_base
 
 FEE_RATE = Decimal(os.environ.get("KITCHEN_PLATFORM_FEE_RATE", "0.10"))
 CONTRACTS_DIR = Path(os.environ.get("KITCHEN_CONTRACTS_DIR") or Path(__file__).resolve().parents[3] / "contracts")

@@ -1,9 +1,9 @@
-"""costs-mcp telemetry (PLAN.md Loop 5 step 4): an mcp_call event for every tool call and a state_snapshot after every
+"""kitchen-ledger telemetry (PLAN.md Loop 5 step 4): an mcp_call event for every tool call and a state_snapshot after every
 successful write, POSTed to the cockpit.
 
 Best-effort, like the agents' kitchen_observability.emit: a background thread, a 0.5 s timeout, failures dropped and
 logged once. A tool result never waits for telemetry and never fails because of it. (A small copy of the agents'
-sender instead of a shared package: costs-mcp and the agents are separate images with separate dependencies.)
+sender instead of a shared package: kitchen-ledger and the agents are separate images with separate dependencies.)
 """
 
 import json
@@ -16,13 +16,13 @@ import time
 import urllib.request
 from datetime import datetime, timezone
 
-from costs_mcp import operations
+from kitchen_ledger import operations
 
 COCKPIT_TIMEOUT_SECONDS = 0.5
 # Tools that never change state: no snapshot after them.
 READ_ONLY_TOOLS = {"get_pantry", "get_state_summary", "check_pantry_match", "get_launch_menu", "check_viability",
                    "compute_dish_cost", "check_budget_fit", "simulate_promotion"}
-log = logging.getLogger("costs_mcp.telemetry")
+log = logging.getLogger("kitchen_ledger.telemetry")
 _queue: queue.Queue = queue.Queue(maxsize=1000)
 _lock = threading.Lock()
 _state = {"failing": False, "worker": None}
@@ -37,7 +37,7 @@ def now() -> str:
 
 
 def _event(kind: str, name: str, trace_id: str | None, started_at: str, duration_ms: float, status: str, preview: str) -> dict:
-    return {"trace_id": trace_id or "untraced", "span_id": secrets.token_hex(8), "parent_span_id": None, "agent": "costs_mcp",
+    return {"trace_id": trace_id or "untraced", "span_id": secrets.token_hex(8), "parent_span_id": None, "agent": "kitchen_ledger",
             "kind": kind, "name": name, "status": status, "started_at": started_at, "duration_ms": max(0, int(duration_ms)),
             "model": None, "prompt_hash": None, "tokens_in": None, "tokens_out": None, "cost_usd": None, "preview": preview[:200]}
 

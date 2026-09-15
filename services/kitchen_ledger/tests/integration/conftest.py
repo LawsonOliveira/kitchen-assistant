@@ -40,8 +40,8 @@ def live_conn():
 @pytest.fixture
 def conn():
     """A fresh `kitchen_test` database with migrations and the real workbook seeded — never the live one."""
-    from costs_mcp import db
-    from costs_mcp.pantry_import import seed_from_workbook
+    from kitchen_ledger import db
+    from kitchen_ledger.pantry_import import seed_from_workbook
 
     admin_dsn = live_dsn()
     with psycopg.connect(admin_dsn, autocommit=True) as admin:
@@ -91,7 +91,7 @@ def reference_recipe():
 
 def viable_profile(conn, **extra_available):
     """A kitchen that satisfies the parametric keys used by the tests."""
-    from costs_mcp import operations
+    from kitchen_ledger import operations
 
     operations.update_kitchen_profile(conn, "stove_burners", "4", "available", EVIDENCE)
     operations.update_kitchen_profile(conn, "max_batch_time_minutes", "600", "available", EVIDENCE)

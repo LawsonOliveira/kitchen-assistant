@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://kitchen.local/contracts/requirements.json",
   "title": "Dish requirement — controlled vocabulary (PLAN.md, Shared definitions)",
-  "description": "Check semantics live only in costs_mcp operations.check_viability. Parametric keys mean 'the kitchen profile value must be >= N'. Free-text keys (gas_or_energy:, other:) are confirmed per dish.",
+  "description": "Check semantics live only in kitchen_ledger operations.check_viability. Parametric keys mean 'the kitchen profile value must be >= N'. Free-text keys (gas_or_energy:, other:) are confirmed per dish.",
   "type": "string",
   "anyOf": [
     { "$ref": "#/$defs/equipment" },

@@ -12,7 +12,7 @@ def test_seed_loads_every_ingredient(live_conn):
 
 def test_seed_skips_nothing():
     logs = subprocess.run(
-        ["docker", "compose", "logs", "--no-log-prefix", "costs-mcp"],
+        ["docker", "compose", "logs", "--no-log-prefix", "kitchen-ledger"],
         cwd=REPO_ROOT, capture_output=True, text=True, check=True,
     ).stdout
     assert "seed skipped" not in logs

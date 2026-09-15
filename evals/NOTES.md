@@ -49,7 +49,7 @@ trajectory was read from `audit_log` and orchestrator's session.
 | 08_pantry_import_diff | pass | preview showed only Tomate R$ 16,00 → R$ 20,00; applied after a click |
 | 09_non_linear_changes_mind | pass (4th attempt) | rejections of unregistered candidates were not recorded (C38); an outage cut the 3rd attempt; the 4th recorded the rejection, excluded it from the next round and showed no prices before constraints |
 
-Permissions: every write in `audit_log` came from the agent the MCP permission table allows (enforced by costs-mcp
+Permissions: every write in `audit_log` came from the agent the MCP permission table allows (enforced by kitchen-ledger
 tokens); every click-required write was preceded in orchestrator's session by `clarify` answered "Confirmar". One deviation
 (custom confirmation wording, scenario 02 first attempt) is addressed by C33 and open question 10 (Loop 4).
 

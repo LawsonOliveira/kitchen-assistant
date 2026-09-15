@@ -3,8 +3,8 @@ from decimal import Decimal
 import pytest
 from conftest import EVIDENCE, ingredient, make_recipe, reference_recipe, viable_profile
 
-from costs_mcp import operations
-from costs_mcp.operations import DomainError
+from kitchen_ledger import operations
+from kitchen_ledger.operations import DomainError
 
 
 def reference_dish(conn):

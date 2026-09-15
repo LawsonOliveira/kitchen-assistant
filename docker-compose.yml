@@ -8,7 +8,7 @@ x-agent: &agent
   image: kitchen-agent:local
   restart: unless-stopped
   depends_on:
-    costs-mcp:
+    kitchen-ledger:
       condition: service_healthy
 
 x-agent-env: &agent-env
@@ -79,14 +79,14 @@ services:
       timeout: 3s
       retries: 20
 
-  costs-mcp:
+  kitchen-ledger:
     restart: unless-stopped  # a host reboot restarted the agents but left these two stopped
-    build: services/costs_mcp
-    image: kitchen-costs-mcp:local
+    build: services/kitchen_ledger
+    image: kitchen-ledger:local
     environment:
       DATABASE_URL: postgresql://kitchen:${POSTGRES_PASSWORD}@postgres:5432/kitchen
-      COSTS_MCP_AGENT_TOKENS: >-
-        orchestrator:${COSTS_MCP_TOKEN_ORCHESTRATOR:?set COSTS_MCP_TOKEN_ORCHESTRATOR in .env},recipe_expert:${COSTS_MCP_TOKEN_RECIPE_EXPERT:?set COSTS_MCP_TOKEN_RECIPE_EXPERT in .env},cost_expert:${COSTS_MCP_TOKEN_COST_EXPERT:?set COSTS_MCP_TOKEN_COST_EXPERT in .env},marketing_expert:${COSTS_MCP_TOKEN_MARKETING_EXPERT:?set COSTS_MCP_TOKEN_MARKETING_EXPERT in .env}
+      LEDGER_AGENT_TOKENS: >-
+        orchestrator:${LEDGER_TOKEN_ORCHESTRATOR:?set LEDGER_TOKEN_ORCHESTRATOR in .env},recipe_expert:${LEDGER_TOKEN_RECIPE_EXPERT:?set LEDGER_TOKEN_RECIPE_EXPERT in .env},cost_expert:${LEDGER_TOKEN_COST_EXPERT:?set LEDGER_TOKEN_COST_EXPERT in .env},marketing_expert:${LEDGER_TOKEN_MARKETING_EXPERT:?set LEDGER_TOKEN_MARKETING_EXPERT in .env}
       KITCHEN_SPREADSHEET: /data/despensa_dona_maria.xlsx
       KITCHEN_CONTRACTS_DIR: /contracts
       KITCHEN_IMPORT_DIR: /opt/data/cache/documents
@@ -111,7 +111,7 @@ services:
       <<: *agent-env
       KITCHEN_AGENT_ROLE: orchestrator
       KITCHEN_A2A_TOKEN: ${A2A_TOKEN_ORCHESTRATOR:?set A2A_TOKEN_ORCHESTRATOR in .env}
-      COSTS_MCP_TOKEN: ${COSTS_MCP_TOKEN_ORCHESTRATOR}
+      LEDGER_TOKEN: ${LEDGER_TOKEN_ORCHESTRATOR}
       KITCHEN_IMPORT_DIR: /opt/data/cache/documents
       API_SERVER_ENABLED: "true"  # self-test and evals only (Loop 4 step 7); bound to the container loopback
       API_SERVER_HOST: 127.0.0.1
@@ -124,7 +124,7 @@ services:
     volumes:
       - ./agents/orchestrator:/seed:ro
       - hermes_orchestrator:/opt/data
-      - orchestrator_documents:/opt/data/cache/documents  # where Hermes saves received files; read-only in costs-mcp
+      - orchestrator_documents:/opt/data/cache/documents  # where Hermes saves received files; read-only in kitchen-ledger
     healthcheck:  # the API server answers only after the gateway loaded its plugins: `up --wait` then means the self-test can run
       test: ["CMD", "/opt/hermes/.venv/bin/python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8642/health', timeout=3)"]
       interval: 10s
@@ -137,7 +137,7 @@ services:
       <<: *agent-env
       KITCHEN_AGENT_ROLE: recipe_expert
       KITCHEN_A2A_TOKEN: ${A2A_TOKEN_RECIPE_EXPERT:?set A2A_TOKEN_RECIPE_EXPERT in .env}
-      COSTS_MCP_TOKEN: ${COSTS_MCP_TOKEN_RECIPE_EXPERT}
+      LEDGER_TOKEN: ${LEDGER_TOKEN_RECIPE_EXPERT}
       A2A_PORT: "9900"
       A2A_HOST: 0.0.0.0
       A2A_PUBLIC_URL: http://recipe-expert:9900
@@ -156,7 +156,7 @@ services:
       <<: *agent-env
       KITCHEN_AGENT_ROLE: cost_expert
       KITCHEN_A2A_TOKEN: ${A2A_TOKEN_COST_EXPERT:?set A2A_TOKEN_COST_EXPERT in .env}
-      COSTS_MCP_TOKEN: ${COSTS_MCP_TOKEN_COST_EXPERT}
+      LEDGER_TOKEN: ${LEDGER_TOKEN_COST_EXPERT}
       A2A_PORT: "9900"
       A2A_HOST: 0.0.0.0
       A2A_PUBLIC_URL: http://cost-expert:9900
@@ -175,7 +175,7 @@ services:
       <<: *agent-env
       KITCHEN_AGENT_ROLE: marketing_expert
       KITCHEN_A2A_TOKEN: ${A2A_TOKEN_MARKETING_EXPERT:?set A2A_TOKEN_MARKETING_EXPERT in .env}
-      COSTS_MCP_TOKEN: ${COSTS_MCP_TOKEN_MARKETING_EXPERT}
+      LEDGER_TOKEN: ${LEDGER_TOKEN_MARKETING_EXPERT}
       A2A_PORT: "9900"
       A2A_HOST: 0.0.0.0
       A2A_PUBLIC_URL: http://marketing-expert:9900

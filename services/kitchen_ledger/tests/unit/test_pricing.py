@@ -4,7 +4,7 @@ from decimal import Decimal
 
 import pytest
 
-from costs_mcp.pricing import (
+from kitchen_ledger.pricing import (
     cmv_per_portion,
     format_brl,
     format_brl_min,

@@ -6,8 +6,8 @@ WORKDIR /app
 COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev --no-install-project
 
-COPY costs_mcp ./costs_mcp
+COPY kitchen_ledger ./kitchen_ledger
 ENV PATH="/app/.venv/bin:$PATH" PYTHONUNBUFFERED=1
 
 EXPOSE 8000
-CMD ["python", "-m", "costs_mcp.server"]
+CMD ["python", "-m", "kitchen_ledger.server"]

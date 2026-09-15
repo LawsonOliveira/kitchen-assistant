@@ -27,7 +27,7 @@ running the Langfuse SDK on the host against a local OTLP capture server.
   - `pre_tool_call`: `tool_name, args, task_id, session_id, tool_call_id, turn_id, api_request_id, middleware_trace`;
     `{"action": "modify", "args": {...}}` shallow-merges into the original args before dispatch
     (`hermes_cli/plugins.py`). MCP tools then call `session.call_tool(tool_name, arguments=args)` unchanged
-    (`tools/mcp_tool_handlers.py`), so costs-mcp receives `trace_id`.
+    (`tools/mcp_tool_handlers.py`), so kitchen-ledger receives `trace_id`.
   - `post_tool_call`: same ids plus `result, duration_ms, status, error_type, error_message`. Fired with
     `status="blocked"` when a `pre_tool_call` blocks, and **suppressed** for tools running inside another tool.
   - `transform_tool_result`: same ids, `result, duration_ms, status, …`; fires after `post_tool_call` for every
@@ -56,9 +56,9 @@ running the Langfuse SDK on the host against a local OTLP capture server.
   caller's `parent_span_id`; a delegated child opens a `subagent` span under the tool that launched it
   (`fan_out_research`). A span's Langfuse observation id *is* the event `span_id`, which is what makes cross-process
   parenting work.
-- **costs-mcp in Langfuse.** Loop 5 step 4 sends costs-mcp events to the cockpit only. In Langfuse a costs-mcp call
-  appears as the calling agent's `mcp__costs__<tool>` tool observation, and `audit_log.trace_id` equals the Langfuse
-  trace id. Writing server-side spans from costs-mcp would need the SDK (plus OpenTelemetry) in that image; left out.
+- **kitchen-ledger in Langfuse.** Loop 5 step 4 sends kitchen-ledger events to the cockpit only. In Langfuse a kitchen-ledger call
+  appears as the calling agent's `mcp__ledger__<tool>` tool observation, and `audit_log.trace_id` equals the Langfuse
+  trace id. Writing server-side spans from kitchen-ledger would need the SDK (plus OpenTelemetry) in that image; left out.
 - **prompt_hash** = sha256 of `$HERMES_HOME/SOUL.md`, the workspace `.hermes.md`, then `skills/*/SKILL.md` in path
   order, each followed by a NUL byte. Bundled Hermes skills are synced to `skills/<category>/<name>/`
   (`tools/skills_sync.py`), so the one-level glob covers the repo's skills (plus any bundled skill at depth one) and
@@ -113,10 +113,10 @@ running the Langfuse SDK on the host against a local OTLP capture server.
 - **One trace across containers.** Turn "cadastra o strogonoff e me diz quanto gastaria com creme de leite":
   `audit_log.trace_id` (recipe_expert and cost_expert rows) = Langfuse trace `a98f906a…` with 50 observations:
   orchestrator GENERATIONs and TOOL `ask_recipe_expert`/`ask_cost_expert` → AGENT `recipe_expert`/`cost_expert` →
-  their GENERATIONs and TOOL `mcp__costs__*`; cost_expert TOOL `research` → AGENT `researcher` → TOOL
+  their GENERATIONs and TOOL `mcp__ledger__*`; cost_expert TOOL `research` → AGENT `researcher` → TOOL
   `fan_out_research` → AGENT `researcher` (child) → TOOL `web_search`/`web_extract`. orchestrator's spans carry the owner's
   session id and show `isRootObservation: true` (their random OTel parent is not an observation).
-- **Cockpit.** The SSE replay carried events from orchestrator, recipe_expert, cost_expert, researcher and costs_mcp
+- **Cockpit.** The SSE replay carried events from orchestrator, recipe_expert, cost_expert, researcher and kitchen_ledger
   (`a2a_call`, `a2a_serve`, `mcp_call`, `state_snapshot`, guard events); after a purchase confirmed in the CLI the
   latest `state_snapshot` went from "Saldo R$ 80,00" to "Saldo R$ 74,02".
 - **Resilience.** With `langfuse-web` and `cockpit` stopped, a full `hermes chat -q` turn answered normally in 20 s;

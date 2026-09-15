@@ -1,7 +1,7 @@
 """Trace context of one owner turn across the five agents (PLAN.md D32, Loop 5).
 
 orchestrator starts a trace for every owner message; kitchen_a2a puts {trace_id, parent_span_id} in every A2A request; the
-serving agent adopts it from the request JSON and its delegated web children inherit it; costs-mcp tool calls get
+serving agent adopts it from the request JSON and its delegated web children inherit it; kitchen-ledger tool calls get
 the trace_id in their arguments, so audit_log rows belong to the same trace.
 
 State is keyed by Hermes session id rather than a ContextVar: every hook and tool handler receives session_id, while
@@ -113,9 +113,9 @@ def outgoing(session_id: str, tool_name: str) -> dict:
 
 
 def mcp_args(tool_name: str, session_id: str) -> dict | None:
-    """pre_tool_call directive adding the trace_id to costs-mcp tool arguments (it lands in audit_log)."""
+    """pre_tool_call directive adding the trace_id to kitchen-ledger tool arguments (it lands in audit_log)."""
     scope = current(session_id)
-    if not tool_name.startswith("mcp__costs__") or scope is None:
+    if not tool_name.startswith("mcp__ledger__") or scope is None:
         return None
     return {"action": "modify", "args": {"trace_id": scope["trace_id"]}}
 

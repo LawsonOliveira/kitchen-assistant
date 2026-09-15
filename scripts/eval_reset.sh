@@ -11,7 +11,7 @@ if [ "${KITCHEN_ALLOW_EVAL_RESET:-}" != "1" ]; then
   cat >&2 <<MSG
 eval-reset erases the business state of the running stack:
   - app Postgres tables: $TABLES
-    (costs-mcp re-seeds data/despensa_dona_maria.xlsx when it restarts)
+    (kitchen-ledger re-seeds data/despensa_dona_maria.xlsx when it restarts)
   - orchestrator memories (/opt/data/memories) and received documents (/opt/data/cache/documents)
 Refusing to run: set KITCHEN_ALLOW_EVAL_RESET=1 to confirm.
 MSG
@@ -19,13 +19,13 @@ MSG
 fi
 
 # Agents stop first: a turn still running from an interrupted trial could write between the TRUNCATE and the seed, and
-# costs-mcp only seeds an empty database. Stopping orchestrator also ends any CLI session left inside it.
+# kitchen-ledger only seeds an empty database. Stopping orchestrator also ends any CLI session left inside it.
 # shellcheck disable=SC2086
 docker compose stop $AGENTS >/dev/null
 docker compose exec -T postgres psql -U kitchen -d kitchen -q -c "TRUNCATE $TABLES RESTART IDENTITY CASCADE" -c "DELETE FROM measures WHERE source <> 'seed'"
 docker compose run --rm --no-deps -T --entrypoint sh orchestrator -c 'rm -f /opt/data/memories/* /opt/data/cache/documents/*' >/dev/null
-docker compose restart costs-mcp >/dev/null
-docker compose up -d --wait costs-mcp >/dev/null
+docker compose restart kitchen-ledger >/dev/null
+docker compose up -d --wait kitchen-ledger >/dev/null
 ingredients=$(docker compose exec -T postgres psql -U kitchen -d kitchen -At -c "SELECT count(*) FROM ingredients")
 if ! [ "${ingredients:-0}" -gt 0 ] 2>/dev/null; then
   echo "eval-reset: the spreadsheet seed did not run (ingredients=${ingredients:-none}); agents left stopped" >&2

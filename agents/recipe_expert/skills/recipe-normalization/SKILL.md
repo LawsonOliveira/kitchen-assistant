@@ -35,4 +35,4 @@ everything comes from her words, and a question goes to `questions_for_owner` wh
    stove_burners>=N (count the pans used at the same time), technique:fresh_pasta, technique:bechamel,
    technique:meat_doneness, technique:deep_frying, technique:bread_baking, technique:caramel,
    technique:tempering_chocolate, fridge_space_liters>=N. Anything else becomes other:<short text>.
-   Do not add max_batch_time_minutes: the costs service derives it from prep_time_minutes.
+   Do not add max_batch_time_minutes: the ledger service derives it from prep_time_minutes.

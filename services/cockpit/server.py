@@ -89,7 +89,7 @@ class Hub:
 
 def make_server(host: str, port: int, token: str, schema: dict | None = None) -> ThreadingHTTPServer:
     if not token:
-        raise ValueError("KITCHEN_COCKPIT_TOKEN must be set: agents and costs-mcp authenticate their events with it")
+        raise ValueError("KITCHEN_COCKPIT_TOKEN must be set: agents and kitchen-ledger authenticate their events with it")
     schema = schema or load_schema()
     hub, page = Hub(), (HERE / "index.html").read_bytes()
 

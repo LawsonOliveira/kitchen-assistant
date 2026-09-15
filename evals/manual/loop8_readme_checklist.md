@@ -6,7 +6,7 @@ reading it. For each decision: the choice, the alternative rejected and why.
 ## Brief categories (desafio-senior-ai-engineer.md) — one explicit section each
 - [x] Modelo (which model per agent and why)
 - [x] Arquivos de contexto (SOUL.md, `.hermes.md`, child instructions)
-- [x] Ferramentas / MCP (costs-mcp tools and permissions, A2A tools, web search)
+- [x] Ferramentas / MCP (kitchen-ledger tools and permissions, A2A tools, web search)
 - [x] Estrutura de memória (Hermes memory on orchestrator only, write guard; business state in Postgres)
 - [x] Skills (which skills, when they load)
 
@@ -17,7 +17,7 @@ reading it. For each decision: the choice, the alternative rejected and why.
 - [x] D4 Only orchestrator talks to the owner; experts return `questions_for_owner`
 - [x] D5 researcher: fixed task types, strict schemas, stateless, provenance-checked
 - [x] D6 Typed A2A tools with contract validation
-- [x] D7 All money/quantity logic in costs-mcp (deterministic MCP server)
+- [x] D7 All money/quantity logic in kitchen-ledger (deterministic MCP server)
 - [x] D8 Dedicated Postgres for business state
 - [x] D9 Models per agent
 - [x] D10 Guardrail placement (`kitchen_guardrails` plugin)

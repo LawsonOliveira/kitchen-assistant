@@ -4,7 +4,7 @@ from decimal import Decimal
 import pytest
 from conftest import REAL_WORKBOOK, real_rows
 
-from costs_mcp.pantry_import import PantryImportError, diff, load_records
+from kitchen_ledger.pantry_import import PantryImportError, diff, load_records
 
 
 def _codes(error: PantryImportError) -> set[str]:

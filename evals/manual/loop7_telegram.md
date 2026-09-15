@@ -23,7 +23,7 @@ business state reset to the seeded spreadsheet.
   grandma hero, the PT-BR welcome and the 🍲 Dona Sálvia reply label. Telegram wiring checked: the bot token answers
   `getMe`, the allowlist is one numeric id, orchestrator's gateway logs "Connected to Telegram (polling mode)", and received
   files are cached in `$HERMES_HOME/cache/documents` (`gateway/platforms/base.py`), the `orchestrator_documents` volume that
-  costs-mcp imports from. Rows 1–7 need messages sent from Telegram accounts: pending the owner.
+  kitchen-ledger imports from. Rows 1–7 need messages sent from Telegram accounts: pending the owner.
 - 2026-09-13 (owner): tested the bot on Telegram ("ficou muito bom") and asked to consider the checklist done. Observed in
   the owner's session: greeting answered (Dona Sálvia persona), the real workbook sent as a document → import preview with
   no changes (row 6's expected diff, reached through an upload), a carbonara suggestion with pantry coverage. Not observed
