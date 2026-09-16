@@ -145,3 +145,26 @@ def test_progress_messages_for_the_expert_tools():
     assert progress.progress_message("ask_cost_expert") == "🧮 Fazendo as contas…"
     assert progress.progress_message("ask_marketing_expert") == "✍️ Escrevendo a descrição do prato…"
     assert progress.progress_message("clarify") is None
+
+
+# --- a decision she clicks is asked once, with the protocol choices (owner's live session, 2026-09-16) ------------
+
+DECISION_CASES = [
+    ("Posso aceitar o escondidinho de carne moída como prato do lançamento?", ["Sim, aceitar o prato", "Não"], True),
+    ("Posso aceitar o escondidinho de carne moída como prato do lançamento?", ["Confirmar", "Cancelar"], False),
+    ("Registrar a compra de 1 pote de pimenta branca por R$ 7,99?", ["Pode comprar", "Deixa pra lá"], True),
+    ("Fixar o preço do escondidinho em qual valor?", ["R$ 11,90", "R$ 13,90", "R$ 15,90"], False),
+    ("A cozinha tem forno disponível?", ["Sim, tenho forno", "Não tenho forno"], False),
+]
+
+
+@pytest.mark.parametrize("question, choices, blocked", DECISION_CASES)
+def test_a_decision_she_clicks_is_asked_with_confirmar_and_cancelar(question, choices, blocked):
+    # She was asked twice for the same decision: "Posso aceitar...?" with her own words as choices, and then the same
+    # thing again with Confirmar. Only the second one authorises the write, so the first is a question she answers for
+    # nothing. A menu of options (the price scenarios) is a choice, not a confirmation, and stays as it is.
+    args = {"questions": [{"question": question, "choices": choices}]}
+    decision = tool_policy.check_decision_choices("clarify", args)
+    assert (decision is not None) == blocked
+    if blocked:
+        assert decision["message"] == tool_policy.DECISION_CHOICES_MESSAGE

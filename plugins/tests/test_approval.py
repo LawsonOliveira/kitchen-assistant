@@ -103,3 +103,25 @@ def test_a_shortened_choice_still_finds_its_dish():
     args = state.clarify_with_evidence("s1", {"questions": [{
         "question": "Qual desses pratos a senhora gosta de cozinhar?", "choices": ["Lasanha", "Escondidinho"]}]})
     assert "Lasanha de carne moída: 69% da despensa." in args["questions"][0]["question"]
+
+
+REAL_UNITS = {"task": "register_candidate", "payload": {"launch_batch_portions": 8, "recipe": {
+    "name": "Escondidinho", "yield_portions": 8, "prep_time_minutes": 40, "source_url": "https://exemplo.com/e",
+    "ingredients": [{"name": "Sal", "quantity": None, "unit": "to_taste", "pantry_match": "Sal"},
+                    {"name": "Alho", "quantity": 4, "unit": "clove", "pantry_match": "Alho"},
+                    {"name": "Leite", "quantity": 2, "unit": "cup", "pantry_match": "Leite"},
+                    {"name": "Manteiga", "quantity": 1, "unit": "tablespoon", "pantry_match": "Manteiga"},
+                    {"name": "Azeite", "quantity": 1, "unit": "drizzle", "pantry_match": "Azeite"},
+                    {"name": "Milho", "quantity": 2, "unit": "can", "pantry_match": "Milho"}]}}}
+
+
+def test_the_units_are_written_the_way_she_says_them():
+    # Owner (2026-09-16): "ao listar os ingredientes apareceu None e tbm to_taste". The contract's units are English
+    # enums and a "to_taste" ingredient has no quantity at all; she reads none of that.
+    state = approval.Approvals()
+    state.remember_request("s1", REAL_UNITS)
+    question = state.with_evidence("s1", "Aceitar o Escondidinho no cardápio?")
+    assert "- Sal: a gosto" in question and "None" not in question and "to_taste" not in question
+    assert "- Alho: 4 dentes" in question and "- Leite: 2 xícaras" in question
+    assert "- Manteiga: 1 colher de sopa" in question and "- Azeite: um fio" in question
+    assert "- Milho: 2 latas" in question
