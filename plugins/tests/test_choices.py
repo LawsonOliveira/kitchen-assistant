@@ -71,3 +71,17 @@ def test_anything_that_is_not_a_provider_reply_passes_through():
     seen, next_call = calls_returning(CLARIFIED)
     assert choices.with_clarify("model-response", REQUEST, next_call) == "model-response"
     assert seen == []
+
+
+def test_what_she_would_have_read_is_never_lost():
+    # Owner (2026-09-16): "em nenhum momento falou que faltava tais ingredientes". The first answer carried the pantry
+    # coverage and what is missing to buy; the retry came back with the clarify call and a one-line question, and she
+    # read only that. The text she would have read is the model's first answer; the retry contributes its call.
+    full = Reply(Block("text", "1. Lasanha - 69% da despensa. Falta comprar: creme de leite.\n\nGosta de alguma?"))
+    short = Reply(Block("text", "Achei duas opções:"), Block("tool_use"))
+    short.content[1].name = "clarify"
+    seen, next_call = calls_returning(short)
+    reply = choices.with_clarify(full, REQUEST, next_call)
+    texts = [block.text for block in reply.content if block.type == "text"]
+    assert texts == ["1. Lasanha - 69% da despensa. Falta comprar: creme de leite.\n\nGosta de alguma?"]
+    assert [block.type for block in reply.content] == ["text", "tool_use"]
