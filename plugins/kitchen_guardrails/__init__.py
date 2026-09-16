@@ -76,7 +76,7 @@ def register(ctx) -> None:
     costs = cost_cap.SessionCosts(Decimal(os.environ["KITCHEN_TURN_COST_CAP_USD"]), agent=role)
     cost_cap.ACTIVE = costs
     ledger, groundings = tool_policy.ClickLedger(), {}
-    open_state, shown_accounts, approvals = pending.Pending(), {}, approval.Approvals()
+    open_state, shown_accounts, approvals, verdicts = pending.Pending(), {}, approval.Approvals(), {}
     guard_pool = ThreadPoolExecutor(max_workers=4, thread_name_prefix="kitchen-input-guard")
     import_dir = os.environ.get("KITCHEN_IMPORT_DIR", "/opt/data/cache/documents")
 
@@ -93,10 +93,18 @@ def register(ctx) -> None:
         try:
             if role == "orchestrator" and platform not in SKIPPED_PLATFORMS and api_call_count == 1:
                 # PL9 lever 4: the classification (2–5 s) runs alongside the first model call; a block discards the answer,
-                # whose tool calls have not run yet.
+                # whose tool calls have not run yet. One owner message gets one verdict: Hermes may start the turn again
+                # after an API retry, and asking twice gave two different answers for the same sentence (C92).
                 owner, last_assistant = _owner_and_last_assistant(request)
-                guard = guard_pool.submit(input_guard.decide, owner, last_assistant, classify_with("input_guard.md"),
-                                          api_call_count=api_call_count, import_dir=import_dir)
+                decided = verdicts.get(session_id)
+                if not owner:
+                    guard = None
+                elif decided and decided[0] == owner:
+                    decision = decided[1]
+                    return _synthetic(decision.message, model) if decision.action == "block" else next_call(request)
+                else:
+                    guard = guard_pool.submit(input_guard.decide, owner, last_assistant, classify_with("input_guard.md"),
+                                              api_call_count=api_call_count, import_dir=import_dir)
             if platform != "curator" and not costs.allows_next_call(session_id):
                 _emit("error", "turn_cost_cap_reached", status="blocked", session_id=session_id,
                       preview=json.dumps(costs.breakdown(session_id))[:200])
@@ -112,6 +120,8 @@ def register(ctx) -> None:
         except Exception:
             log.exception("kitchen_guardrails: input guard failed; blocking")
             decision = input_guard.Decision("block", INFRA_BLOCK_MESSAGE)
+        owner, _ = _owner_and_last_assistant(request)
+        verdicts[session_id] = (owner, decision)
         _emit("guard_input", "input_guard", status="blocked" if decision.action == "block" else "ok",
               session_id=session_id, prompt_hash=classifier.prompt_hash("input_guard.md"))
         return _synthetic(decision.message, model) if decision.action == "block" else response
