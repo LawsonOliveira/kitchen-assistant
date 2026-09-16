@@ -111,3 +111,24 @@ def test_the_rubric_scores_carry_the_queue_config_so_the_reviewer_sees_the_judge
     assert by_name["tone"]["configId"] == "cfg-tone" and by_name["owner_decides"]["configId"] == "cfg-owner"
     assert "configId" not in by_name["latency_p90_seconds"]
     assert by_name["tone"]["id"] == "review-sess-1-tone"  # the same id as before: a rerun updates, never duplicates
+
+
+def test_the_queue_reuses_its_configs_and_hands_them_back_for_the_scores():
+    # The queue and its score configs are created on first use and reused by name afterwards; the caller needs the ids
+    # to write the judge's notes against them, so the helper returns both.
+    calls = []
+
+    def langfuse(method, path, body=None):
+        calls.append((method, path))
+        if path.startswith("score-configs?"):
+            return {"data": [{"name": "tone", "id": "cfg-tone"}]}
+        if path.startswith("annotation-queues?"):
+            return {"data": []}
+        if path == "score-configs":
+            return {"id": f"cfg-{body['name']}"}
+        return {"id": "queue-1"}
+
+    queue_id, configs = review.queue_and_configs(langfuse, ["tone", "owner_decides"])
+    assert queue_id == "queue-1"
+    assert configs == {"tone": "cfg-tone", "owner_decides": "cfg-owner_decides"}
+    assert ("POST", "score-configs") in calls and calls.count(("POST", "score-configs")) == 1  # tone already existed
