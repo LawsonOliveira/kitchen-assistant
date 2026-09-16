@@ -2631,6 +2631,13 @@ evidence, what was changed, and where. Open questions that were "default applied
   authorises `select_price_scenario` is the Confirmar one; making the scenario pick itself the click would remove the
   second question and is the owner's call.
 
+- **C99 — A evidência que só existia nos testes.** Asked where "Ver a receita completa" shows up, the honest answer was
+  nowhere: `Approvals` has two entry points, `with_evidence` (question by question) and `clarify_with_evidence` (the
+  whole call, which also offers the recipe page and, since C96, explains what each dish is missing), and `pre_tool_call`
+  only ever called the first. The third choice and the pantry lines passed their unit tests and never reached a real
+  session. The hook now rewrites the whole call, and the wiring test asks for both through the hook the agent actually
+  fires, so a guard feature that is not wired fails a test from now on. Red 1 of 16; green 253 passed, 1 skipped.
+
 ## Post-loop changes (owner requests, 2026-09-13)
 Requested by the owner while Loops 6–8 were running, test-first, each recorded as a correction. **Order decided by the
 owner:** Loop 6 pauses; Loop 7 (the owner's Telegram checks) and Loop 8 finish, then PL1–PL9, then Loop 6 resumes and
