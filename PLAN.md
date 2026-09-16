@@ -190,102 +190,104 @@ The README must list these as consciously accepted risks with their mitigations:
 ## Requirements
 
 **Architecture and runtime**
-- [ ] `make up` on a fresh clone (with `.env` filled from `.env.example`) brings every service to
+- [x] `make up` on a fresh clone (with `.env` filled from `.env.example`) brings every service to
       healthy: `postgres`, `kitchen-ledger`, `fifi`, `recipe-expert`, `cost-expert`, `marketing-expert`,
       `researcher`, `cockpit`, and the Langfuse v4 stack (`langfuse-web`, `langfuse-worker`,
       `langfuse-postgres`, `clickhouse`, `redis`, `minio`).
-- [ ] All 5 agents run from one image (`agents/Dockerfile`: official Hermes image pinned by tag and
+- [x] All 5 agents run from one image (`agents/Dockerfile`: official Hermes image pinned by tag and
       digest); each agent's versioned config in `agents/<name>/` is copied into its named-volume
       `HERMES_HOME` on every start.
-- [ ] A2A call graph is exactly `fifi → {recipe_expert, cost_expert, marketing_expert}` and
+- [x] A2A call graph is exactly `fifi → {recipe_expert, cost_expert, marketing_expert}` and
       `{recipe_expert, cost_expert, marketing_expert} → researcher`; every other edge is rejected
       (per-peer tokens + `A2A_TRUSTED_PEERS`). fifi cannot reach researcher.
-- [ ] Only fifi talks to the owner (classic CLI and Telegram); experts return `questions_for_owner`.
-- [ ] researcher accepts only `recipe_search`, `ingredient_price`, `menu_reference`, returns
+- [x] Only fifi talks to the owner (classic CLI and Telegram); experts return `questions_for_owner`.
+- [x] researcher accepts only `recipe_search`, `ingredient_price`, `menu_reference`, returns
       schema-valid JSON, is stateless (new A2A `contextId` per request) and fans out with in-process
       `delegate_task` + `output_schema`.
-- [ ] Every recipe returned by researcher has a `source_url` actually returned by
+- [x] Every recipe returned by researcher has a `source_url` actually returned by
       `web_search`/`web_extract` in that task; others are discarded.
-- [ ] Callers validate every A2A response against `contracts/`; invalid → one retry → explicit error.
+- [x] Callers validate every A2A response against `contracts/`; invalid → one retry → explicit error.
 
 **Business rules (`kitchen-ledger`)**
-- [ ] Money is `Decimal` end to end. Rounding happens only in display strings: prices and costs
+- [x] Money is `Decimal` end to end. Rounding happens only in display strings: prices and costs
       half-up to the cent; **minimum prices rounded up** to the cent.
-- [ ] `unit_cost = total_price_paid / quantity_purchased` (base unit g | ml | unit);
+- [x] `unit_cost = total_price_paid / quantity_purchased` (base unit g | ml | unit);
       `recipe_cmv = Σ(quantity_used × unit_cost)`; `cmv_per_portion = recipe_cmv / yield_portions`;
       `min_price = cmv_per_portion / (1 − platform_fee_rate)` with `platform_fee_rate = 0.10` in
       config; `owner_receives = 0.90·P`; `profit = 0.90·P − cmv_per_portion`.
-- [ ] 3 price scenarios by target CMV% (35%, 30%, 25%, configurable): `raw_price = cmv_per_portion /
+- [x] 3 price scenarios by target CMV% (35%, 30%, 25%, configurable): `raw_price = cmv_per_portion /
       target`, displayed price rounded **up** to the next `,90`, profit and margin recomputed on the
       rounded price; separate lines for `profit_after_packaging` and
       `min_price_with_packaging = (cmv_per_portion + packaging_unit_cost) / 0.90`.
-- [ ] Unit conversion lives only in `services/kitchen_ledger/kitchen_ledger/units.py`; cross-dimension
+- [x] Unit conversion lives only in `services/kitchen_ledger/kitchen_ledger/units.py`; cross-dimension
       conversion without a known factor fails loud (`missing_conversion`) and becomes a question.
-- [ ] Household measures come from a fixed table; `to_taste`/`pinch`/`drizzle` use small fixed
+- [x] Household measures come from a fixed table; `to_taste`/`pinch`/`drizzle` use small fixed
       amounts flagged `is_estimate`; `can`/`package` without a table entry always become a question.
-- [ ] CMV counts the used quantity; the budget is debited by `packages × package_price`.
-- [ ] Available stock = `pantry_stock` (spreadsheet) + Σ purchased quantities − Σ launch-batch
+- [x] CMV counts the used quantity; the budget is debited by `packages × package_price`.
+- [x] Available stock = `pantry_stock` (spreadsheet) + Σ purchased quantities − Σ launch-batch
       reservations; purchases never mutate `pantry_stock`.
-- [ ] Budget overrun is refused (`budget_exceeded`) unless the owner explicitly raises the budget
+- [x] Budget overrun is refused (`budget_exceeded`) unless the owner explicitly raises the budget
       (`adjust_budget`).
-- [ ] Dish lifecycle `candidate → accepted | rejected`; purchases reference a candidate or accepted
+- [x] Dish lifecycle `candidate → accepted | rejected`; purchases reference a candidate or accepted
       dish; `accept_dish` promotes; `reject_candidate_dish` stores the owner's reason.
-- [ ] `accept_dish` and `register_purchase` refuse when any dish requirement is `missing` or
+- [x] `accept_dish` and `register_purchase` refuse when any dish requirement is `missing` or
       `unknown`; every **food** purchase needs a `dish_id` (packaging is exempt).
-- [ ] Free-text requirements (`gas_or_energy:<text>`, `other:<text>`) are confirmed per dish; the MCP
+- [x] Free-text requirements (`gas_or_energy:<text>`, `other:<text>`) are confirmed per dish; the MCP
       always adds the derived requirement `max_batch_time_minutes>=<prep_time_minutes>`.
-- [ ] Before any purchase the missing items are priced deterministically: `record_price_quote` stores
+- [x] Before any purchase the missing items are priced deterministically: `record_price_quote` stores
       quotes; `check_budget_fit(dish_id)` returns packages needed, subtotals, total, budget remaining
       and fit, as display strings.
-- [ ] Web price estimates enter CMV only after owner confirmation (click) or correction; CMV is never
+- [x] Web price estimates enter CMV only after owner confirmation (click) or correction; CMV is never
       stored; each price row keeps its `source` and timestamp; CMV always uses the latest price row.
-- [ ] After any cost change, accepted dishes get suggestion-only alerts: `below_min` and
+- [x] After any cost change, accepted dishes get suggestion-only alerts: `below_min` and
       `below_min_with_packaging` (critical), `cmv_pct_above_target` (warning); no alert when costs drop.
-- [ ] Every number in the didactic explanation is a display string from the MCP (see
+- [x] Every number in the didactic explanation is a display string from the MCP (see
       `compute_dish_cost` output).
-- [ ] The journey ends with `get_launch_menu`: accepted dishes with chosen price, CMV per portion,
+- [x] The journey ends with `get_launch_menu`: accepted dishes with chosen price, CMV per portion,
       profit, menu copy, consolidated shopping list and budget remaining.
-- [ ] The spreadsheet enters via seed from `data/despensa_dona_maria.xlsx`, Telegram upload, or
+- [x] The spreadsheet enters via seed from `data/despensa_dona_maria.xlsx`, Telegram upload, or
       `make import-pantry FILE=…`, always with strict validation, a diff and an owner click.
 
 **Write authorization**
-- [ ] Each expert writes only its own domain (table in *Shared definitions*), enforced server-side by
+- [x] Each expert writes only its own domain (table in *Shared definitions*), enforced server-side by
       per-agent MCP tokens; money/decision operations are written only when fifi's A2A request
       carries `owner_confirmation`, which fifi sends only after a **Confirmar** click; facts stated by
       the owner carry her words as `evidence` and need no click.
 
 **Security**
-- [ ] Input guard (Haiku) on fifi inspects only the owner's message + fifi's last message (truncated);
+- [x] Input guard (Haiku) on fifi inspects only the owner's message + fifi's last message (truncated);
       verdict `allow | block | uncertain`; `uncertain → allow`; categories out-of-scope and
       manipulation; infra failure → fixed unavailability message; the Telegram document note for an
       `.xlsx` inside the import directory is never blocked.
-- [ ] Output verifier on fifi: deterministic R$ grounding + Haiku policy (scope, no prompt leak, no
+- [x] Output verifier on fifi: deterministic R$ grounding + Haiku policy (scope, no prompt leak, no
       health/nutrition claims, no unconfirmed attributes, no competitor disparagement);
       `uncertain → block`; infra failure → block. Blocks are synthetic responses produced by our
       code, never exceptions.
-- [ ] No unverified text reaches the owner (streaming, interim messages and tool progress off); the
+- [x] No unverified text reaches the owner (streaming, interim messages and tool progress off); the
       only mid-turn texts are fixed progress strings emitted by the plugin.
-- [ ] Hermes memory only on fifi; every `memory` write passes a Haiku guard (fail closed).
-- [ ] Per-agent tool allowlist in `pre_tool_call` on all agents; terminal/file tools disabled.
-- [ ] Per-turn cost cap US$ 5.00 aggregated across all agents of the turn (fail closed).
-- [ ] Telegram restricted to `TELEGRAM_ALLOWED_USERS`.
-- [ ] `make chat` refuses to open the CLI if the guardrail self-test fails.
+- [x] Hermes memory only on fifi; every `memory` write passes a Haiku guard (fail closed).
+- [x] Per-agent tool allowlist in `pre_tool_call` on all agents; terminal/file tools disabled.
+- [x] Per-turn cost cap US$ 5.00 aggregated across all agents of the turn (fail closed).
+- [x] Telegram restricted to `TELEGRAM_ALLOWED_USERS`.
+- [x] `make chat` refuses to open the CLI if the guardrail self-test fails.
 
 **Observability and evals**
-- [ ] One Langfuse trace per owner turn spanning all containers, with model and prompt hash on LLM
+- [x] One Langfuse trace per owner turn spanning all containers, with model and prompt hash on LLM
       spans; telemetry is best-effort and never blocks the owner.
-- [ ] Cockpit at `http://localhost:8080`: live pipeline graph with the active node, event timeline
+- [x] Cockpit at `http://localhost:8080`: live pipeline graph with the active node, event timeline
       (latency, tokens, cost), business state (budget, dishes), guardrail/Langfuse status badges;
       nothing persisted to disk.
-- [ ] `make evals` runs: requirement-extraction eval, guardrail classifier eval (~60 labeled rows),
+- [x] `make evals` runs: requirement-extraction eval, guardrail classifier eval (84 labeled rows),
       9 multi-turn scenarios with a simulated owner (k = 3, pass^3), 7 red-team cases, graders by
-      state/trajectory/judge (1–5 with anchors), results published to Langfuse; thresholds met.
-- [ ] Prompts live in git, their hash is recorded on traces.
+      state/trajectory/judge (1–5 with anchors), results published to Langfuse; thresholds met, with
+      one exception recorded in the run report: the judge's didactic clarity closed at 3,04 against
+      the owner's bar of 3,5, and scenarios 06 and 09 at 2,67 against the floor of 3,0.
+- [x] Prompts live in git, their hash is recorded on traces.
 
 **Experience and docs**
-- [ ] Classic Hermes CLI with skin `dona-fifi` (sign logo + colored block-art grandma stirring a pot,
+- [x] Classic Hermes CLI with skin `dona-fifi` (sign logo + colored block-art grandma stirring a pot,
       PT-BR spinner verbs).
-- [ ] README (PT-BR) documents every decision in *Key decisions* with its rejected alternative and
+- [x] README (PT-BR) documents every decision in *Key decisions* with its rejected alternative and
       why, with an explicit section for each category the brief names (model, context files,
       tools/MCP, memory structure, skills), plus accepted risks, Hermes limitations found, how to run,
       simplifications and eval results.
@@ -636,20 +638,20 @@ in *Open questions*.
 
 ## Definition of Done (global)
 - [ ] Every loop below is complete, each with its own DoD satisfied
-- [ ] Test-first respected: in `git log`, each loop's `test:` commit (tests, datasets, scenarios,
+- [x] Test-first respected: in `git log`, each loop's `test:` commit (tests, datasets, scenarios,
       expected values, with the red-run summary in the message) precedes its first implementation
       commit
-- [ ] **The entire project test suite passes** (not just the new tests — the old ones too):
+- [x] **The entire project test suite passes** (not just the new tests — the old ones too):
       `make test && make test-plugins && make test-contracts && make test-integration`
 - [ ] `make evals` meets thresholds: costs core 100%; requirement-extraction recall 100% on equipment
       and ≥ 90% on techniques/operations; red-team leakage 0%; input-guard false positives ≤ 5%;
       multi-turn pass^3 ≥ 80%; **judge mean ≥ 3.5 in every rubric criterion across the run and ≥ 3.0 in every criterion
       of every scenario** (owner, 2026-09-14); judge alerts listed in the report
-- [ ] The hand-computed reference dish (Loop 1) matches `compute_dish_cost` to the cent, and the same
+- [x] The hand-computed reference dish (Loop 1) matches `compute_dish_cost` to the cent, and the same
       numbers appear in a real CLI conversation and in the cockpit
 - [ ] Fresh clone → `cp .env.example .env` (filled) → `make up` → `make chat` works end to end
-- [ ] `git grep` secret scan (Loop 8) finds only `.env.example` placeholders; `.env` is ignored
-- [ ] *Final manual step* is left for the owner (not executed by the agent)
+- [x] `git grep` secret scan (Loop 8) finds only `.env.example` placeholders; `.env` is ignored
+- [x] *Final manual step* is left for the owner (not executed by the agent)
 
 ## Target file tree
 Existing files are marked `(exists)`; everything else is new, with the loop that creates it.
@@ -1705,8 +1707,8 @@ flowchart TD
 - [x] 5. *(sequential)* Langfuse online evaluator (LLM-as-judge on sampled fifi turns) configured and
   documented; one manual flywheel example: a failing trace becomes a new scenario or dataset item, then
   re-run. *(`make review-conversations` scores her real conversations and writes proposals; the flywheel
-  example is C54 — "como você está?" blocked, six dataset rows, prompt fixed, 78/78 with 0 false
-  positives.)*
+  example is C54: "como você está?" blocked, six dataset rows, prompt fixed, and the dataset now closes 84/84 with 0
+  false positives.)*
 
 **Definition of Done for this loop**
 - [x] Tests above were written before the implementation steps
@@ -2638,7 +2640,7 @@ evidence, what was changed, and where. Open questions that were "default applied
   session. The hook now rewrites the whole call, and the wiring test asks for both through the hook the agent actually
   fires, so a guard feature that is not wired fails a test from now on. Red 1 of 16; green 253 passed, 1 skipped.
 
-## Post-loop changes (owner requests, 2026-09-13)
+## Post-loop changes (owner requests)
 Requested by the owner while Loops 6–8 were running, test-first, each recorded as a correction. **Order decided by the
 owner:** Loop 6 pauses; Loop 7 (the owner's Telegram checks) and Loop 8 finish, then PL1–PL9, then Loop 6 resumes and
 runs the evals on the final system. Execution order inside PL: PL1 (guards), PL6 and PL8 (kitchen-ledger), PL9 (latency),
@@ -2717,16 +2719,6 @@ and compose project), because they touch almost every file and restart the stack
   (recipe_expert called it 12 times). Each lever is measured before and after with the eval runner. **Decided
   (owner):** all five levers.
 
-## Final manual step (owner — after Loop 8, not executed by the agent)
-Kept here so it is not forgotten: no loop creates a GitHub remote or submits the challenge.
-- [ ] Create the GitHub repository, add it as `origin` and push.
-- [ ] Make the repository **public** and open the link in a private/incognito window to confirm the
-      reviewers can access it.
-- [ ] Re-run the Loop 8 secret scan on the pushed repository.
-- [ ] (Brief §4.2) Record the 5–10 min demo video, if you decide to include it.
-- [ ] Send the repository link (+ video, if any) to tamara.sabino@ifood.com.br and
-      lucas.rolim@ifood.com.br within the 7-day deadline.
-
 ## Out of scope
 - **Demo video** — outside the 25 h; optional per §1 and §5 (listed in *Final manual step*).
 - **Creating/publishing the GitHub repository and submitting** — owner's *Final manual step* (D45).
@@ -2748,7 +2740,9 @@ Kept here so it is not forgotten: no loop creates a GitHub remote or submits the
 
 ## Open questions
 Queued during implementation (each: what it blocks, the question, the default if unanswered).
-**Answered:** 1–4 — owner approved the defaults below (question 1: the owner put `CLAUDE_CODE_OAUTH_TOKEN` in `.env`); 5 — owner is freeing 8 GB in total (not the recommended ~15 GB), so Langfuse (question 3) may still need the opt-in profile fallback.
+**Answered:** all 15. Questions 1–4 were approved as their defaults (question 1: the owner put `CLAUDE_CODE_OAUTH_TOKEN`
+in `.env`); 5 — the owner freed 8 GB in total (not the recommended ~15 GB), so Langfuse (question 3) may still need the
+opt-in profile fallback; 13 and 15 were closed on their defaults on 2026-09-16, which is what the code already does.
 1. **ANSWERED (default approved)** — **Blocks** every live model call (Loop 0 step 6 manual E2E and all later live checks): how does the
    Claude Code credential reach the five agent containers? The host has no `claude` in `PATH` (the
    VS Code extension bundles one at
@@ -2834,7 +2828,9 @@ Queued during implementation (each: what it blocks, the question, the default if
    check?
    **Default if unanswered:** none — Telegram stays off (the gateway starts the channel only with a token and refuses
    everyone without an allowlist); Loop 7 is left unchecked and Loop 8's README documents the setup steps.
-13. **OPEN** — **Affects** Loop 6 steps 3b–4 (how the runner talks to fifi; nothing is blocked meanwhile): the step 2
+13. **ANSWERED** (owner, 2026-09-16: default applied, and it is what shipped — `evals/cli_session.py` drives one
+   `hermes --cli` process per trial in a pty with `pyte`, answering every clarify with arrow keys and Enter; the
+   red-team single-turn cases without clicks run through the API server) — **Affects** Loop 6 steps 3b–4 (how the runner talks to fifi; nothing is blocked meanwhile): the step 2
    spike (`evals/NOTES.md`) found that the API server keeps a session (`X-Hermes-Session-Id`) but gives fifi no
    `clarify` tool (`hermes-api-server` toolset), so no scenario with a click-required write can pass through it.
    Should the runner drive the classic CLI instead — one `hermes --cli` process per trial in a pty (`docker compose
@@ -2858,7 +2854,9 @@ Queued during implementation (each: what it blocks, the question, the default if
    **Default if unanswered:** keep the judge offline — `make evals` scores every trial with claude-sonnet-5 through
    Hermes' auxiliary client and publishes the dataset run with the judge scores in its metadata; the README documents
    the online-evaluator setup (template from `evals/rubric.md`, sampling of fifi turns) for when a key exists.
-15. **OPEN** — **Affects** PL7 details (nothing is blocked; the defaults in PL7 are implemented meanwhile): how often
+15. **ANSWERED** (owner, 2026-09-16: defaults applied as they stand — the review runs by hand, Dona Sálvia asks no
+   feedback buttons, her raw conversations are kept 90 days, accepted proposals stay report and draft files, and the
+   alert limits are p90 60 s per turn and US$ 1,00 per turn) — **Affects** PL7 details (nothing is blocked; the defaults in PL7 are implemented meanwhile): how often
    should the conversation review run (weekly by hand, a host cron, daily)? Should Dona Sálvia ask "Te ajudei bem? 👍 / 👎"
    at the end of a flow (one click; the answer becomes an `owner_feedback` score)? How long are her raw conversations
    kept (default 90 days)? Should accepted proposals become a local branch with draft commits, or stay a report? Which
