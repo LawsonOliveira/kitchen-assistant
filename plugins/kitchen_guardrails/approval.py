@@ -9,8 +9,8 @@ import json
 import threading
 
 ACCEPT_WORDS = ("aceitar", "aceito", "aceite")
-METHOD_CHOICE = "Ver o modo de preparo"
-# The recipe contract keeps the source page, never the steps, so the method is fetched from the page when she asks.
+METHOD_CHOICE = "Ver a receita completa"
+# The recipe contract keeps the source page, never the steps (D5), so the choice hands her the page itself.
 PLURALS = ("dente", "unidade", "colher", "xícara", "fatia", "lata", "pacote", "ramo", "folha", "pitada", "caixinha")
 SAVE_WORDS = ("salvar", "descrição", "descricao", "cardápio do", "cardapio do")
 

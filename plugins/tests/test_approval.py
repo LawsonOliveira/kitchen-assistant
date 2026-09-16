@@ -17,7 +17,7 @@ MENU = json.dumps({"result": {"menu_copy": {"title": "Escondidinho da Dona Maria
 def test_the_accept_question_lists_the_recipe_and_offers_the_method():
     # Live session: "Aceitar o Escondidinho de carne moída como prato do cardápio de lançamento?" and the recipe was
     # never on screen — she approved a dish she had not read. One ingredient per line, her own number format, and the
-    # method is one click away, because the contract keeps the source page but not the steps.
+    # page the recipe came from is one click away, because the contract keeps it but never the steps.
     state = approval.Approvals()
     state.remember_request("s1", RECIPE)
     args = state.clarify_with_evidence("s1", {"questions": [{
@@ -27,7 +27,7 @@ def test_the_accept_question_lists_the_recipe_and_offers_the_method():
     assert "- Carne moída: 500 g\n" in question
     assert "- Mandioca: 1,5 kg" in question and "- Alho: 3 dentes" in question  # her decimal, her plural
     assert "rende 8 porções" in question and "40 min" in question
-    assert args["questions"][0]["choices"] == ["Confirmar", "Cancelar", "Ver o modo de preparo"]
+    assert args["questions"][0]["choices"] == ["Confirmar", "Cancelar", "Ver a receita completa"]
 
 
 def test_the_save_question_shows_the_title_and_the_description():
