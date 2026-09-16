@@ -1797,7 +1797,7 @@ flowchart TD
 **Steps**
 - [x] 1. *(sequential)* Write `scripts/rehearsal.sh` and the README checklist; run red; commit
   `test: L8 …`.
-- [ ] 2. *(parallel with each other)*
+- [x] 2. *(parallel with each other)*
   - [ ] a) `README.md`, written in PT-BR for the owner, with these sections: overview; how to run
     (≈16 GiB RAM, `.env`, `make up`, `make chat`, Telegram, cockpit, Langfuse); architecture (Mermaid of the
     topology and of one turn); one section per brief category; decisions (every *Key decisions* item with its
@@ -1816,9 +1816,9 @@ flowchart TD
 
 **Definition of Done for this loop**
 - [x] Tests above were written before the implementation steps
-- [ ] Steps completed
-- [ ] Tests above pass
-- [ ] README reviewed against the checklist
+- [x] Steps completed
+- [x] Tests above pass
+- [x] README reviewed against the checklist
 
 ---
 
@@ -2642,7 +2642,7 @@ evidence, what was changed, and where. Open questions that were "default applied
   session. The hook now rewrites the whole call, and the wiring test asks for both through the hook the agent actually
   fires, so a guard feature that is not wired fails a test from now on. Red 1 of 16; green 253 passed, 1 skipped.
 
-## Post-loop changes (owner requests, 2026-09-13)
+## Post-loop changes (owner requests)
 Requested by the owner while Loops 6–8 were running, test-first, each recorded as a correction. **Order decided by the
 owner:** Loop 6 pauses; Loop 7 (the owner's Telegram checks) and Loop 8 finish, then PL1–PL9, then Loop 6 resumes and
 runs the evals on the final system. Execution order inside PL: PL1 (guards), PL6 and PL8 (kitchen-ledger), PL9 (latency),
