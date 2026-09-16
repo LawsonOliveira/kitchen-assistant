@@ -22,10 +22,11 @@ class Approvals:
         self._lock = threading.Lock()
 
     def remember_request(self, session_id: str, request) -> None:
-        recipe = ((request or {}).get("payload") or {}).get("recipe")
+        payload = (request or {}).get("payload") or {}
+        recipe = payload.get("recipe")
         if isinstance(recipe, dict) and recipe.get("ingredients"):
             with self._lock:
-                self._recipes[session_id] = recipe
+                self._recipes[session_id] = {**recipe, "launch_batch_portions": payload.get("launch_batch_portions")}
 
     def remember_result(self, session_id: str, result) -> None:
         copy = (((_parsed(result) or {}).get("result") or {}).get("menu_copy"))
@@ -45,6 +46,8 @@ class Approvals:
             head = f'{recipe["name"]} rende {recipe.get("yield_portions", "?")} porções'
             if recipe.get("prep_time_minutes"):
                 head += f' em {recipe["prep_time_minutes"]} min'
+            if recipe.get("launch_batch_portions"):  # the batch she chose is not the recipe's own yield
+                head += f' (lote de lançamento: {recipe["launch_batch_portions"]})'
             return f"{question}\n\n{head}:\n{lines}"
         return question
 
