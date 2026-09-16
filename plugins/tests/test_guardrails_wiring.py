@@ -141,6 +141,7 @@ def test_the_guard_shows_itself_working_before_its_verdict(orchestrator, monkeyp
 def test_the_owner_message_is_classified_once(orchestrator, monkeypatch):
     # Live session: the same sentence was blocked at 01:12:55 and allowed at 01:13:00 — Hermes started the turn again
     # (an API retry) and the classifier, asked twice, answered differently. One owner message, one verdict.
+    import kitchen_guardrails
     from kitchen_guardrails import classifier
 
     calls = []
@@ -150,6 +151,7 @@ def test_the_owner_message_is_classified_once(orchestrator, monkeypatch):
         return classifier.Verdict("allow" if len(calls) == 1 else "block", "out_of_scope", "")
 
     monkeypatch.setattr(classifier, "classify", classify)
+    monkeypatch.setattr(kitchen_guardrails, "_synthetic", lambda text, model: {"synthetic": text})
     middleware = orchestrator.middleware["llm_execution"][0]
     request = {"messages": [{"role": "user", "content": "oi, quero fazer uma lasanha, pesquise na internet"}]}
     call = dict(next_call=lambda r: "model-response", api_call_count=1, platform="cli", session_id="s1", model="m")
