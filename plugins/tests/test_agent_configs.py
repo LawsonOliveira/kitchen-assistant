@@ -71,6 +71,14 @@ def test_an_expert_never_sends_more_questions_than_its_contract_accepts():
         assert f"at most {cap}" in rule, expert
 
 
+def test_the_method_is_fetched_from_the_recipe_page_when_she_asks_for_it():
+    # The accept question offers "Ver o modo de preparo" (the guard adds it), and the recipe contract keeps the source
+    # page but never the steps — so answering her means reading that page, not inventing the method.
+    rule = next(line for line in (AGENTS / "orchestrator" / "SOUL.md").read_text().splitlines()
+                if "modo de preparo" in line)
+    assert "source_url" in rule and "research" in rule
+
+
 def test_what_she_already_has_is_registered_as_stock_never_as_a_purchase():
     # Full run 20260915-095503, scenario 03 trials 1 and 2: she cancelled the purchase and said the creme de leite was
     # already at home; the only tool that adds stock was register_purchase, so R$ 3,49 left a budget she never spent.
