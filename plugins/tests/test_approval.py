@@ -6,20 +6,28 @@ from kitchen_guardrails import approval
 
 
 RECIPE = {"task": "register_candidate", "payload": {"recipe": {
-    "name": "Escondidinho de carne moída", "yield_portions": 8,
-    "ingredients": [{"name": "Carne moída", "quantity": 500, "unit": "g"}, {"name": "Mandioca", "quantity": 1, "unit": "kg"}]}}}
+    "name": "Escondidinho de carne moída", "yield_portions": 8, "prep_time_minutes": 40,
+    "source_url": "https://exemplo.com/escondidinho",
+    "ingredients": [{"name": "Carne moída", "quantity": 500, "unit": "g"}, {"name": "Mandioca", "quantity": 1.5, "unit": "kg"},
+                    {"name": "Alho", "quantity": 3, "unit": "dente"}]}}}
 MENU = json.dumps({"result": {"menu_copy": {"title": "Escondidinho da Dona Maria",
                                             "description": "Carne moída temperada sob purê de mandioca gratinado."}}})
 
 
-def test_the_accept_question_shows_the_recipe_she_is_accepting():
+def test_the_accept_question_lists_the_recipe_and_offers_the_method():
     # Live session: "Aceitar o Escondidinho de carne moída como prato do cardápio de lançamento?" and the recipe was
-    # never on screen — she approved a dish she had not read.
+    # never on screen — she approved a dish she had not read. One ingredient per line, her own number format, and the
+    # method is one click away, because the contract keeps the source page but not the steps.
     state = approval.Approvals()
     state.remember_request("s1", RECIPE)
-    question = state.with_evidence("s1", "Aceitar o Escondidinho de carne moída como prato do cardápio de lançamento?")
-    assert "Carne moída 500 g" in question and "Mandioca 1 kg" in question and "8 porções" in question
-    assert question.startswith("Aceitar")
+    args = state.clarify_with_evidence("s1", {"questions": [{
+        "question": "Aceitar o Escondidinho de carne moída como prato do cardápio de lançamento?",
+        "choices": ["Confirmar", "Cancelar"]}]})
+    question = args["questions"][0]["question"]
+    assert "- Carne moída: 500 g\n" in question
+    assert "- Mandioca: 1,5 kg" in question and "- Alho: 3 dentes" in question  # her decimal, her plural
+    assert "rende 8 porções" in question and "40 min" in question
+    assert args["questions"][0]["choices"] == ["Confirmar", "Cancelar", "Ver o modo de preparo"]
 
 
 def test_the_save_question_shows_the_title_and_the_description():
@@ -36,3 +44,10 @@ def test_a_question_that_already_shows_it_is_left_alone():
     asked = 'Salvar "Escondidinho da Dona Maria" com a descrição "Carne moída temperada sob purê de mandioca gratinado."?'
     assert state.with_evidence("s1", asked) == asked
     assert state.with_evidence("s1", "Quantas porções no lote?") == "Quantas porções no lote?"
+
+
+def test_only_the_accept_question_gains_the_method_choice():
+    state = approval.Approvals()
+    state.remember_request("s1", RECIPE)
+    other = {"questions": [{"question": "Quantas porções no lote?", "choices": ["4", "8"]}]}
+    assert state.clarify_with_evidence("s1", other) == other
