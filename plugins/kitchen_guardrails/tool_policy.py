@@ -32,6 +32,10 @@ ALLOWED = {
 BLOCKED_MESSAGE = "This tool is not allowed for this agent."
 CLICK_REQUIRED_MESSAGE = ("Nothing was sent: this request carries owner_confirmation but Dona Maria has not chosen "
                           "Confirmar in a clarify prompt for it. Ask her with clarify first.")
+ONE_DECISION_MESSAGE = ("Nothing was asked: this confirmation carries more than one purchase, and a Confirmar "
+                        "authorises one write. Ask for uma compra por vez, so Dona Maria sees exactly what she is "
+                        "approving.")
+_PACKAGE_PRICE = re.compile(r"(?:pacote|pote|caixinha|lata|vidro|sach[êe]|unidade|barra|ma[çc]o|garrafa)[^?]{0,60}?R\$\s*\d")
 REPEATED_QUESTION_MESSAGE = ("Nothing was asked: Dona Maria already answered Cancelar to this very question. Asking it "
                              "again is not a new chance — act on the no, or ask her something different.")
 # She answered, and the answer was no: repeating the question is what turns a decision into a loop (full run 01/1).
@@ -134,4 +138,20 @@ def check_repeat(ledger: ClickLedger, session_id: str, tool_name: str, args: dic
     asked = [entry.get("question", "") for entry in questions if isinstance(entry, dict)] if isinstance(questions, list) else [(args or {}).get("question", "")]
     if any(question and ledger.already_refused_question(session_id, question) for question in asked):
         return {"action": "block", "message": REPEATED_QUESTION_MESSAGE}
+    return None
+
+
+def check_one_decision(tool_name: str, args: dict | None) -> dict | None:
+    """A click-required confirmation that bundles two purchases: one Confirmar authorises one write (D14), so the
+    second one comes back as another question anyway (owner's live session)."""
+    if tool_name != "clarify":
+        return None
+    for entry in (args or {}).get("questions") or []:
+        if not isinstance(entry, dict):
+            continue
+        choices = [str(choice).strip() for choice in entry.get("choices") or []]
+        if not any(_CONFIRMAR.match(choice) for choice in choices):
+            continue
+        if len(_PACKAGE_PRICE.findall(entry.get("question") or "")) > 1:
+            return {"action": "block", "message": ONE_DECISION_MESSAGE}
     return None

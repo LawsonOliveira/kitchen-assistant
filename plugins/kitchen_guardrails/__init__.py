@@ -76,7 +76,7 @@ def register(ctx) -> None:
     costs = cost_cap.SessionCosts(Decimal(os.environ["KITCHEN_TURN_COST_CAP_USD"]), agent=role)
     cost_cap.ACTIVE = costs
     ledger, groundings = tool_policy.ClickLedger(), {}
-    open_state = pending.Pending()
+    open_state, shown_accounts = pending.Pending(), {}
     guard_pool = ThreadPoolExecutor(max_workers=4, thread_name_prefix="kitchen-input-guard")
     import_dir = os.environ.get("KITCHEN_IMPORT_DIR", "/opt/data/cache/documents")
 
@@ -157,10 +157,13 @@ def register(ctx) -> None:
                     _show_progress(message)
                 if decision is None:
                     decision = tool_policy.check_repeat(ledger, session_id, tool_name, args)
+                if decision is None:
+                    decision = tool_policy.check_one_decision(tool_name, args)
                 if decision is None and tool_name == "clarify":
                     # The ledger wrote the account; the model keeps paraphrasing it, so the code puts it in front of
                     # the question that shows its result (probes A-C, didactic clarity stuck at 2).
-                    explained = account.clarify_with_account(args or {}, groundings.setdefault(session_id, SessionGrounding()).chains)
+                    explained = account.clarify_with_account(args or {}, groundings.setdefault(session_id, SessionGrounding()).chains,
+                                                             shown_accounts.setdefault(session_id, account.RememberedAccounts()))
                     if explained is not None:
                         return {"action": "modify", "args": explained}
             if decision is not None:
