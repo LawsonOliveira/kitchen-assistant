@@ -12,7 +12,7 @@ import os
 from concurrent.futures import ThreadPoolExecutor
 from decimal import Decimal
 
-from . import account, classifier, cost_cap, input_guard, memory_guard, output_guard, pending, progress, tool_policy
+from . import account, approval, classifier, cost_cap, input_guard, memory_guard, output_guard, pending, progress, tool_policy
 from .grounding import SessionGrounding
 from .messages import COST_CAP_MESSAGE, INFRA_BLOCK_MESSAGE
 
@@ -76,7 +76,7 @@ def register(ctx) -> None:
     costs = cost_cap.SessionCosts(Decimal(os.environ["KITCHEN_TURN_COST_CAP_USD"]), agent=role)
     cost_cap.ACTIVE = costs
     ledger, groundings = tool_policy.ClickLedger(), {}
-    open_state, shown_accounts = pending.Pending(), {}
+    open_state, shown_accounts, approvals = pending.Pending(), {}, approval.Approvals()
     guard_pool = ThreadPoolExecutor(max_workers=4, thread_name_prefix="kitchen-input-guard")
     import_dir = os.environ.get("KITCHEN_IMPORT_DIR", "/opt/data/cache/documents")
 
@@ -146,6 +146,8 @@ def register(ctx) -> None:
 
     def pre_tool_call(tool_name="", args=None, session_id="", **_):
         try:
+            if tool_name in tool_policy.ASK_TOOLS:
+                approvals.remember_request(session_id, args or {})
             decision = tool_policy.decide(role, tool_name)
             if decision is None and role == "orchestrator":
                 decision = tool_policy.check_click(ledger, session_id, tool_name, args)
@@ -162,8 +164,13 @@ def register(ctx) -> None:
                 if decision is None and tool_name == "clarify":
                     # The ledger wrote the account; the model keeps paraphrasing it, so the code puts it in front of
                     # the question that shows its result (probes A-C, didactic clarity stuck at 2).
-                    explained = account.clarify_with_account(args or {}, groundings.setdefault(session_id, SessionGrounding()).chains,
+                    questions = [{**entry, "question": approvals.with_evidence(session_id, entry.get("question", ""))}
+                                 if isinstance(entry, dict) else entry for entry in (args or {}).get("questions") or []]
+                    shown = {**(args or {}), "questions": questions} if questions else (args or {})
+                    explained = account.clarify_with_account(shown, groundings.setdefault(session_id, SessionGrounding()).chains,
                                                              shown_accounts.setdefault(session_id, account.RememberedAccounts()))
+                    if explained is None and questions and questions != ((args or {}).get("questions") or []):
+                        explained = shown
                     if explained is not None:
                         return {"action": "modify", "args": explained}
             if decision is not None:
@@ -187,6 +194,7 @@ def register(ctx) -> None:
             if tool_name in tool_policy.ASK_TOOLS or tool_name.startswith("mcp__ledger__"):
                 groundings.setdefault(session_id, SessionGrounding()).add_from_tool_result(result)
                 open_state.read_tool_result(session_id, result)
+                approvals.remember_result(session_id, result)
                 if tool_name in tool_policy.ASK_TOOLS:
                     data = _first_json_object(result if isinstance(result, str) else json.dumps(result))
                     error = data.get("error") if isinstance(data.get("error"), dict) else {}
