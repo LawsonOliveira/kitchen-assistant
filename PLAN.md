@@ -2560,6 +2560,15 @@ evidence, what was changed, and where. Open questions that were "default applied
   ingredients and yield and the save question the title and the description, and a question that already shows them is
   left alone.
 
+- **C92 — One owner message, one verdict.** The owner typed "oi, gostaria de fazer um escondinho ou uma lasanha,
+  pesquise na internet" and the input guard blocked it at 01:12:55, allowed it at 01:13:00, blocked it again at
+  01:18:28 and allowed it at 01:18:32. The guard runs on the first model call of a turn, and Hermes starts the turn
+  over after an API retry — the network was dropping that night — so the same sentence was classified twice and Haiku
+  answered differently the second time. In the worst run the block arrived after 100 s of research, discarding an
+  answer that was already written. Test first: the decision is kept per session and reused when the same message comes
+  back, and a turn carrying no new message of hers is not classified at all. The classification itself was already
+  correct — the sentence scores allow on its own — so this is about asking once, not about the prompt.
+
 ## Post-loop changes (owner requests, 2026-09-13)
 Requested by the owner while Loops 6–8 were running, test-first, each recorded as a correction. **Order decided by the
 owner:** Loop 6 pauses; Loop 7 (the owner's Telegram checks) and Loop 8 finish, then PL1–PL9, then Loop 6 resumes and
