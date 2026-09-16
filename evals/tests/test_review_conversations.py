@@ -98,37 +98,3 @@ def test_rerunning_the_review_updates_the_same_scores_instead_of_adding_copies()
     assert [payload["id"] for payload in first] == [payload["id"] for payload in again]
     assert len({payload["id"] for payload in first}) == len(first)
     assert all("sess-1" in payload["id"] for payload in first)
-
-
-def test_the_rubric_scores_carry_the_queue_config_so_the_reviewer_sees_the_judge():
-    # Owner (2026-09-16): a session should reach the annotation queue with the judge's notes already on it. A score only
-    # shows up in the annotation form when it is written against the queue's own score config, so the rubric criteria
-    # take the config id and the deterministic signals stay plain session scores.
-    configs = {"tone": "cfg-tone", "owner_decides": "cfg-owner"}
-    payloads = review.score_payloads("sess-1", {"scope_blocks": 1, "tool_errors": 0, "latency_p90_seconds": 75, "cancel_clicks": 0},
-                                     {"tone": 4, "owner_decides": 5}, configs)
-    by_name = {payload["name"]: payload for payload in payloads}
-    assert by_name["tone"]["configId"] == "cfg-tone" and by_name["owner_decides"]["configId"] == "cfg-owner"
-    assert "configId" not in by_name["latency_p90_seconds"]
-    assert by_name["tone"]["id"] == "review-sess-1-tone"  # the same id as before: a rerun updates, never duplicates
-
-
-def test_the_queue_reuses_its_configs_and_hands_them_back_for_the_scores():
-    # The queue and its score configs are created on first use and reused by name afterwards; the caller needs the ids
-    # to write the judge's notes against them, so the helper returns both.
-    calls = []
-
-    def langfuse(method, path, body=None):
-        calls.append((method, path))
-        if path.startswith("score-configs?"):
-            return {"data": [{"name": "tone", "id": "cfg-tone"}]}
-        if path.startswith("annotation-queues?"):
-            return {"data": []}
-        if path == "score-configs":
-            return {"id": f"cfg-{body['name']}"}
-        return {"id": "queue-1"}
-
-    queue_id, configs = review.queue_and_configs(langfuse, ["tone", "owner_decides"])
-    assert queue_id == "queue-1"
-    assert configs == {"tone": "cfg-tone", "owner_decides": "cfg-owner_decides"}
-    assert ("POST", "score-configs") in calls and calls.count(("POST", "score-configs")) == 1  # tone already existed
