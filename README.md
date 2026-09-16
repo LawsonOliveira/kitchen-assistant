@@ -510,7 +510,11 @@ coloca na frente da pergunta não tem onde entrar, e a explicação volta a depe
 - **Embalagem fica fora do CMV**, mostrada à parte.
 
 ## Demo em vídeo e apresentação
-A demo em vídeo **está incluída nesta entrega** em um formato de apresentação em MP4.
+A demo **está incluída nesta entrega**, como uma apresentação narrada em MP4:
+
+- **Vídeo (13 min):** [apresentação no Google Drive](https://drive.google.com/file/d/1eXiemRD0rhErSL0KLPpw-Jys30pSncy7/view?usp=sharing), também versionado no repositório em `video-presentation.mp4`.
+- **Slides:** `presentation-contents/index.html`, que roda em qualquer navegador.
+- **Trechos usados dentro da apresentação:** `presentation-contents/videos/`: `video-1.mp4` (2min35, da despensa ao cardápio), `video-2.mp4` (49 s, red-team) e `video-3.mp4` (54 s, o que o Langfuse mostrou e o que mudou por causa disso).
 
 ## Próximos passos
 
