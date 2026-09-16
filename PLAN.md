@@ -1797,7 +1797,7 @@ flowchart TD
 **Steps**
 - [x] 1. *(sequential)* Write `scripts/rehearsal.sh` and the README checklist; run red; commit
   `test: L8 …`.
-- [x] 2. *(parallel with each other)*
+- [ ] 2. *(parallel with each other)*
   - [ ] a) `README.md`, written in PT-BR for the owner, with these sections: overview; how to run
     (≈16 GiB RAM, `.env`, `make up`, `make chat`, Telegram, cockpit, Langfuse); architecture (Mermaid of the
     topology and of one turn); one section per brief category; decisions (every *Key decisions* item with its
@@ -1816,9 +1816,9 @@ flowchart TD
 
 **Definition of Done for this loop**
 - [x] Tests above were written before the implementation steps
-- [x] Steps completed
-- [x] Tests above pass
-- [x] README reviewed against the checklist
+- [ ] Steps completed
+- [ ] Tests above pass
+- [ ] README reviewed against the checklist
 
 ---
 
