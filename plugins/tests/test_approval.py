@@ -64,3 +64,33 @@ def test_a_batch_that_is_not_a_number_still_shows_her_the_recipe():
         "launch_batch_portions": "6 porções", "recipe": RECIPE["payload"]["recipe"]}})
     question = state.with_evidence("s1", "Aceitar o Escondidinho de carne moída no cardápio?")
     assert "- Carne moída: 500 g" in question and "- Mandioca: 1,5 kg" in question  # unscaled, never missing
+
+
+CANDIDATES = json.dumps({"result": {"candidates": [
+    {"recipe": {"name": "Lasanha de carne moída"}, "pantry_coverage_pct": 69,
+     "missing_ingredients": ["Massa de lasanha", "Creme de leite", "Presunto"]},
+    {"recipe": {"name": "Escondidinho de carne moída"}, "pantry_coverage_pct": 100, "missing_ingredients": []},
+    {"recipe": {"name": "Torta de frango"}, "pantry_coverage_pct": None, "missing_ingredients": ["Farinha"]}]}},
+    ensure_ascii=False)
+
+
+def test_the_choice_question_says_what_each_dish_is_missing():
+    # Owner (2026-09-16): "não me falou os ingredientes que faltavam para cada receita". The expert answers with the
+    # coverage and the missing list of every candidate; which dish she picks depends on what she would have to buy, so
+    # those numbers belong in the question that offers the dishes, not in a paragraph the model may or may not write.
+    state = approval.Approvals()
+    state.remember_result("s1", CANDIDATES)
+    args = state.clarify_with_evidence("s1", {"questions": [{
+        "question": "Qual desses pratos a senhora gosta de cozinhar?",
+        "choices": ["Lasanha de carne moída", "Escondidinho de carne moída"]}]})
+    question = args["questions"][0]["question"]
+    assert "Lasanha de carne moída: 69% da despensa. Falta comprar: Massa de lasanha, Creme de leite, Presunto." in question
+    assert "Escondidinho de carne moída: 100% da despensa. Não falta nada." in question
+    assert "Torta de frango" not in question  # a dish she was not offered is not explained
+
+
+def test_a_question_that_offers_no_dish_keeps_its_own_words():
+    state = approval.Approvals()
+    state.remember_result("s1", CANDIDATES)
+    other = {"questions": [{"question": "Quantas porções no lote?", "choices": ["4", "8"]}]}
+    assert state.clarify_with_evidence("s1", other) == other
