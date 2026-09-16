@@ -2609,6 +2609,15 @@ evidence, what was changed, and where. Open questions that were "default applied
   the model's own words. The SOUL rule now says that moving a question into clarify never means answering with less.
   Red first: 1 failed of 7, then 1 failed of 8 for the shortened choice; green: 246 passed, 1 skipped.
 
+- **C97 — O pesquisador ficou aceso depois de terminar.** The owner saw the researcher node still highlighted while its
+  arrow had already gone dark, which was right. In the live buffer one `web_extract` span of the researcher published
+  its opening half and never its closing one (the fan-out branch ended with the request), and the node waited for a
+  half that never came. An agent's `a2a_serve` span contains everything that request started, so its close now clears
+  the node's open spans; a closing half that arrives before its own opening one is remembered, so the late opening
+  event cannot relight a finished span. The highlight block of `services/cockpit/index.html` is marked and
+  self-contained, and `services/cockpit/tests/test_pulse.py` extracts it and runs the page's own code under node: red
+  4 failed, green 15 passed with the server tests.
+
 ## Post-loop changes (owner requests, 2026-09-13)
 Requested by the owner while Loops 6–8 were running, test-first, each recorded as a correction. **Order decided by the
 owner:** Loop 6 pauses; Loop 7 (the owner's Telegram checks) and Loop 8 finish, then PL1–PL9, then Loop 6 resumes and
