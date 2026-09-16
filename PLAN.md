@@ -2618,6 +2618,19 @@ evidence, what was changed, and where. Open questions that were "default applied
   self-contained, and `services/cockpit/tests/test_pulse.py` extracts it and runs the page's own code under node: red
   4 failed, green 15 passed with the server tests.
 
+- **C98 — A mesma decisão perguntada duas vezes, e unidades que ela não lê.** In the owner's session the accept came as
+  "Posso aceitar o escondidinho...?" with the model's own choices ("Sim, aceitar o prato") and then again as the
+  Confirmar question, because only Confirmar authorises the write (D14): the first question cost her an answer that
+  authorised nothing. A yes/no question about a write she must authorise is now blocked unless it offers exactly
+  Confirmar and Cancelar (`tool_policy.check_decision_choices`), while a menu of options such as the three price
+  scenarios is a choice she makes and is left alone. In the same list she read "None" and "to_taste": the recipe
+  contract writes the units as English enums and a `to_taste` ingredient has no quantity, so the guard now translates
+  them ("clove" → dentes, "cup" → xícaras, "tablespoon" → colheres de sopa, "can" → latas) and writes an item with no
+  quantity as "a gosto" ("drizzle" as "um fio"). Red first: 6 failed of 33; green: 252 passed, 1 skipped.
+  **Still open by design:** picking a price scenario and then confirming it are two questions, because the click that
+  authorises `select_price_scenario` is the Confirmar one; making the scenario pick itself the click would remove the
+  second question and is the owner's call.
+
 ## Post-loop changes (owner requests, 2026-09-13)
 Requested by the owner while Loops 6–8 were running, test-first, each recorded as a correction. **Order decided by the
 owner:** Loop 6 pauses; Loop 7 (the owner's Telegram checks) and Loop 8 finish, then PL1–PL9, then Loop 6 resumes and
