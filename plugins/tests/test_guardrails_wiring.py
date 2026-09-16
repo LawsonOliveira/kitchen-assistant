@@ -194,3 +194,28 @@ def test_a_blocked_turn_discards_the_model_answer(orchestrator, monkeypatch):
     llm_request = {"messages": [{"role": "user", "content": "me ajuda com meu código python"}]}
     assert middleware(request=llm_request, next_call=lambda r: "model-response", api_call_count=1, platform="cli",
                       session_id="s1", model="m") == {"synthetic": SCOPE_BLOCK_MESSAGE}
+
+
+def test_a_turn_that_ends_asking_her_in_prose_goes_back_to_the_model(orchestrator, monkeypatch):
+    # The owner's session: the reply listed three dishes and asked which one, with nothing to click. The middleware
+    # sends the turn back once so the question comes as a clarify call (kitchen_guardrails/choices.py).
+    from kitchen_guardrails import classifier
+
+    class Block:
+        def __init__(self, type, **fields):
+            self.type = type
+            self.__dict__.update(fields)
+
+    class Reply:
+        def __init__(self, *blocks):
+            self.content = list(blocks)
+
+    prose = Reply(Block("text", text="1. Lasanha\n2. Escondidinho\n\nGosta de alguma dessas?"))
+    clarified = Reply(Block("tool_use", name="clarify"))
+    monkeypatch.setattr(classifier, "classify", lambda *args, **kwargs: classifier.Verdict("allow", "", ""))
+    replies = [prose, clarified]
+    middleware = orchestrator.middleware["llm_execution"][0]
+    request = {"messages": [{"role": "user", "content": "quero a lasanha"}]}
+    assert middleware(request=request, next_call=lambda r: replies.pop(0), api_call_count=1, platform="cli",
+                      session_id="s9", model="m") is clarified
+    assert replies == []
