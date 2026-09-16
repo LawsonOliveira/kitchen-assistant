@@ -2542,6 +2542,15 @@ evidence, what was changed, and where. Open questions that were "default applied
   the page animates whatever it receives, so history looked like live traffic. Replayed events now carry
   `replayed: true` and the page fills its tables with them without pulsing the topology.
 
+- **C90 — Two repetitions the owner saw in his own session.** The price question carried
+  "R$ 34,91 ÷ 4 porções = R$ 8,73 por porção" and the confirmation right after carried the same arithmetic again: the
+  injection fires on any question that shows an account's result and kept no memory of what it had already shown. And
+  "Confirma a compra de 1 pacote de óleo/azeite (900 ml) por R$ 7,59 e 1 pacote de pimenta-do-reino (100 g) por
+  R$ 6,99?" bundled two writes behind one click — the oil was registered, the click was spent (D14), and she was asked
+  again for the pepper. Test first for both: the guard now remembers the accounts shown per session, and a
+  click-required confirmation naming more than one package with its price is blocked with "uma compra por vez". The
+  second is a rule her contract already carried ("one decision per clarify"); the model broke it, so the code holds it.
+
 ## Post-loop changes (owner requests, 2026-09-13)
 Requested by the owner while Loops 6–8 were running, test-first, each recorded as a correction. **Order decided by the
 owner:** Loop 6 pauses; Loop 7 (the owner's Telegram checks) and Loop 8 finish, then PL1–PL9, then Loop 6 resumes and
