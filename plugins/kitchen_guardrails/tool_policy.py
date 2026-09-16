@@ -43,6 +43,13 @@ REFUSED_MESSAGE = ("Nothing was sent: Dona Maria chose Cancelar in the last clar
                    "failure — never tell her the system is broken. Do not ask the same thing again: act on the no "
                    "(another dish, the ingredient out of the recipe) or ask her what she wants to do instead.")
 _CONFIRMAR = re.compile(r"^Confirmar(?: \(Recommended\))?$")
+# A write she has to authorise (D14). Written in her words, because the question is written in her words.
+_DECISION = re.compile(r"\b(aceitar|aceito|fixar o pre[çc]o|registrar (a|essa) (compra|promo[çc][ãa]o)|comprar|"
+                       r"salvar (a|essa|o|esse)|aumentar o or[çc]amento|aplicar (a|essa) (importa[çc][ãa]o|planilha))", re.I)
+DECISION_CHOICES_MESSAGE = ("Nothing was asked: a decision Dona Maria has to authorise is asked once, with exactly the "
+                            "choices [\"Confirmar\", \"Cancelar\"] and a summary of what will happen. Asking it in "
+                            "other words first costs her an answer that authorises nothing, and then she is asked "
+                            "again. A question that offers her a menu of options is not this.")
 
 
 def decide(role: str, tool_name: str) -> dict | None:
@@ -154,4 +161,23 @@ def check_one_decision(tool_name: str, args: dict | None) -> dict | None:
             continue
         if len(_PACKAGE_PRICE.findall(entry.get("question") or "")) > 1:
             return {"action": "block", "message": ONE_DECISION_MESSAGE}
+    return None
+
+
+def check_decision_choices(tool_name: str, args: dict | None) -> dict | None:
+    """A yes/no question about a write she must authorise, asked without the protocol choices (owner's live session).
+
+    She answered "Sim, aceitar o prato" and was then asked the same thing again with Confirmar, because only Confirmar
+    authorises the write. A menu of options (the three price scenarios) is a choice she makes, not a confirmation.
+    """
+    if tool_name != "clarify":
+        return None
+    for entry in (args or {}).get("questions") or []:
+        if not isinstance(entry, dict):
+            continue
+        choices = [str(choice).strip() for choice in entry.get("choices") or []]
+        if not choices or len(choices) > 2 or any(_CONFIRMAR.match(choice) for choice in choices):
+            continue
+        if _DECISION.search(entry.get("question") or ""):
+            return {"action": "block", "message": DECISION_CHOICES_MESSAGE}
     return None

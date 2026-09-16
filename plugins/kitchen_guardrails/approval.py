@@ -12,7 +12,12 @@ from decimal import Decimal, InvalidOperation
 ACCEPT_WORDS = ("aceitar", "aceito", "aceite")
 METHOD_CHOICE = "Ver a receita completa"
 # The recipe contract keeps the source page, never the steps (D5), so the choice hands her the page itself.
-PLURALS = ("dente", "unidade", "colher", "xícara", "fatia", "lata", "pacote", "ramo", "folha", "pitada", "caixinha")
+PLURALS = ("dente", "unidade", "colher", "xícara", "fatia", "lata", "pacote", "ramo", "folha", "pitada", "caixinha",
+           "colher de sopa", "colher de chá")
+# The contract writes the units in English (contracts/recipe.schema.json); she reads them in her own.
+UNITS = {"g": "g", "kg": "kg", "ml": "ml", "l": "L", "unit": "unidade", "cup": "xícara", "tablespoon": "colher de sopa",
+         "teaspoon": "colher de chá", "clove": "dente", "pinch": "pitada", "can": "lata", "package": "pacote"}
+NO_QUANTITY = {"to_taste": "a gosto", "drizzle": "um fio"}
 SAVE_WORDS = ("salvar", "descrição", "descricao", "cardápio do", "cardapio do")
 
 
@@ -125,10 +130,19 @@ def _batch(recipe: dict) -> tuple:
 
 
 def _amount(quantity, unit: str, factor: Decimal = Decimal(1)) -> str:
-    """Her own way of writing it: 1,5 kg and 3 dentes, not 1.5 kg and 3 dente."""
+    """Her own way of writing it: 1,5 kg, 3 dentes and "a gosto", never 1.5 kg, 3 clove or None to_taste."""
+    if unit in NO_QUANTITY or quantity is None:
+        return NO_QUANTITY.get(unit, "a gosto")
+    label = UNITS.get(unit, unit)
     text = _number(quantity, factor)
-    plural = f"{unit}s" if unit in PLURALS and text != "1" else unit
+    plural = _plural(label) if label in PLURALS and text not in ("1", "0,5") else label
     return f"{text} {plural}".strip()
+
+
+def _plural(label: str) -> str:
+    """"colher de sopa" pluralises the spoon, not the soup."""
+    head, _, tail = label.partition(" ")
+    return f"{head}es {tail}".strip() if head.endswith("r") else f"{head}s {tail}".strip()
 
 
 def _number(quantity, factor: Decimal) -> str:

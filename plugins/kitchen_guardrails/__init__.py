@@ -214,6 +214,8 @@ def register(ctx) -> None:
                     decision = tool_policy.check_repeat(ledger, session_id, tool_name, args)
                 if decision is None:
                     decision = tool_policy.check_one_decision(tool_name, args)
+                if decision is None:
+                    decision = tool_policy.check_decision_choices(tool_name, args)
                 if decision is None and tool_name == "clarify":
                     # Everything this guard adds to a question is a convenience; the question is not. pre_tool_call
                     # fails closed, so a failure here would block the clarify and leave her nothing to answer.
