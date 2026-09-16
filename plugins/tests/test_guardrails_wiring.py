@@ -219,3 +219,35 @@ def test_a_turn_that_ends_asking_her_in_prose_goes_back_to_the_model(orchestrato
     assert middleware(request=request, next_call=lambda r: replies.pop(0), api_call_count=1, platform="cli",
                       session_id="s9", model="m") is clarified
     assert replies == []
+
+
+def test_the_reply_that_closes_a_turn_with_tools_is_checked_too(orchestrator):
+    # The question she could not answer came after ask_recipe_expert, on the turn's second model call: the input guard
+    # runs only on the first one, and the check for a prose question belongs to every call of the turn.
+    class Block:
+        def __init__(self, type, **fields):
+            self.type = type
+            self.__dict__.update(fields)
+
+    class Reply:
+        def __init__(self, *blocks):
+            self.content = list(blocks)
+
+    prose = Reply(Block("text", text="Achei três opções. Gosta de alguma dessas?"))
+    clarified = Reply(Block("tool_use", name="clarify"))
+    replies = [prose, clarified]
+    middleware = orchestrator.middleware["llm_execution"][0]
+    request = {"messages": [{"role": "user", "content": "quero a lasanha"}]}
+    assert middleware(request=request, next_call=lambda r: replies.pop(0), api_call_count=2, platform="cli",
+                      session_id="s10", model="m") is clarified
+
+
+def test_a_broken_evidence_never_costs_her_the_question(orchestrator, monkeypatch):
+    # Owner (2026-09-16): "as questões com clarify sumiram após sua mudança anterior". Whatever the guard wants to add
+    # to a clarify, a failure in it must leave the question exactly as the model asked it.
+    from kitchen_guardrails import approval
+
+    monkeypatch.setattr(approval.Approvals, "with_evidence",
+                        lambda self, session_id, question: (_ for _ in ()).throw(ValueError("boom")))
+    args = {"questions": [{"question": "Aceitar o prato?", "choices": ["Confirmar", "Cancelar"]}]}
+    assert fire(orchestrator, "pre_tool_call", tool_name="clarify", session_id="s11", args=args) == [None]

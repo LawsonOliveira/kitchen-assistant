@@ -54,3 +54,13 @@ def test_only_the_accept_question_gains_the_method_choice():
     state.remember_request("s1", RECIPE)
     other = {"questions": [{"question": "Quantas porções no lote?", "choices": ["4", "8"]}]}
     assert state.clarify_with_evidence("s1", other) == other
+
+
+def test_a_batch_that_is_not_a_number_still_shows_her_the_recipe():
+    # The batch reaches the guard as whatever the model wrote in the request ("6 porções", "", null). Scaling is a
+    # convenience; the list is not. Nothing here may raise, because the exception would cost her the question itself.
+    state = approval.Approvals()
+    state.remember_request("s1", {"task": "register_candidate", "payload": {
+        "launch_batch_portions": "6 porções", "recipe": RECIPE["payload"]["recipe"]}})
+    question = state.with_evidence("s1", "Aceitar o Escondidinho de carne moída no cardápio?")
+    assert "- Carne moída: 500 g" in question and "- Mandioca: 1,5 kg" in question  # unscaled, never missing
