@@ -2569,6 +2569,15 @@ evidence, what was changed, and where. Open questions that were "default applied
   back, and a turn carrying no new message of hers is not classified at all. The classification itself was already
   correct — the sentence scores allow on its own — so this is about asking once, not about the prompt.
 
+- **C93 — Caching the verdict by the sentence made it worse, and the batch she chose was not on screen.** After C92 the
+  owner ran the flow again and it ended with the scope message after a Confirmar, with no classification logged for
+  that turn: the cache had answered. Keying by the sentence alone meant a bare "sim" carried whatever verdict some
+  other "sim" had received, in any session — one bad classification stuck to every later yes. The key is now the pair
+  the classifier itself reads, the question above and what she said, so a restarted turn still reuses its verdict and a
+  short answer is judged next to its question. In the same run she answered "6 porções" for the launch batch and the
+  accept question said "rende 8 porções", the recipe's own yield: both numbers are real and different, so the question
+  now shows the batch she chose beside the yield.
+
 ## Post-loop changes (owner requests, 2026-09-13)
 Requested by the owner while Loops 6–8 were running, test-first, each recorded as a correction. **Order decided by the
 owner:** Loop 6 pauses; Loop 7 (the owner's Telegram checks) and Loop 8 finish, then PL1–PL9, then Loop 6 resumes and
