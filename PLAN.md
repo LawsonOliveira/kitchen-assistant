@@ -1798,7 +1798,7 @@ flowchart TD
 - [x] 1. *(sequential)* Write `scripts/rehearsal.sh` and the README checklist; run red; commit
   `test: L8 …`.
 - [x] 2. *(parallel with each other)*
-  - [ ] a) `README.md`, written in PT-BR for the owner, with these sections: overview; how to run
+  - [x] a) `README.md`, written in PT-BR for the owner, with these sections: overview; how to run
     (≈16 GiB RAM, `.env`, `make up`, `make chat`, Telegram, cockpit, Langfuse); architecture (Mermaid of the
     topology and of one turn); one section per brief category; decisions (every *Key decisions* item with its
     rejected alternative and why); security (guard semantics, fail-open vs fail-closed, accepted risks);
@@ -1811,7 +1811,7 @@ flowchart TD
   - [x] b) `.github/workflows/test.yml`: deterministic suites only — `make test` (host, uv),
     `make test-contracts` and `make test-plugins` (build the agents image once), `make
     test-integration` (Postgres service); no LLM evals and no API keys in CI.
-- [ ] 3. *(sequential)* Run the rehearsal, full suite and secret scan; review the README against the
+- [x] 3. *(sequential)* Run the rehearsal, full suite and secret scan; review the README against the
   checklist.
 
 **Definition of Done for this loop**
