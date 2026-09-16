@@ -103,6 +103,9 @@ def register(ctx) -> None:
                     decision = decided[1]
                     return _synthetic(decision.message, model) if decision.action == "block" else next_call(request)
                 else:
+                    # The cockpit should light the guard while it classifies, not only when it answers.
+                    _emit("guard_input", "input_guard", status="running", session_id=session_id,
+                          prompt_hash=classifier.prompt_hash("input_guard.md"))
                     guard = guard_pool.submit(input_guard.decide, owner, last_assistant, classify_with("input_guard.md"),
                                               api_call_count=api_call_count, import_dir=import_dir)
             if platform != "curator" and not costs.allows_next_call(session_id):
