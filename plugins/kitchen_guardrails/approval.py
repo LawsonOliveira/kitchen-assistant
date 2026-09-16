@@ -9,6 +9,9 @@ import json
 import threading
 
 ACCEPT_WORDS = ("aceitar", "aceito", "aceite")
+METHOD_CHOICE = "Ver o modo de preparo"
+# The recipe contract keeps the source page, never the steps, so the method is fetched from the page when she asks.
+PLURALS = ("dente", "unidade", "colher", "xícara", "fatia", "lata", "pacote", "ramo", "folha", "pitada", "caixinha")
 SAVE_WORDS = ("salvar", "descrição", "descricao", "cardápio do", "cardapio do")
 
 
@@ -37,15 +40,48 @@ class Approvals:
         if copy and any(word in lowered for word in SAVE_WORDS) and copy["title"].lower() not in lowered:
             return f'{question}\n\nTítulo: {copy["title"]}\nDescrição: {copy.get("description", "")}'
         if recipe and any(word in lowered for word in ACCEPT_WORDS) and "ingrediente" not in lowered:
-            lines = ", ".join(f'{item["name"]} {_plain(item.get("quantity"))} {item.get("unit", "")}'.strip()
+            lines = "\n".join(f'- {item["name"]}: {_amount(item.get("quantity"), item.get("unit", ""))}'
                               for item in recipe["ingredients"])
-            return f'{question}\n\n{recipe["name"]} rende {recipe.get("yield_portions", "?")} porções: {lines}'
+            head = f'{recipe["name"]} rende {recipe.get("yield_portions", "?")} porções'
+            if recipe.get("prep_time_minutes"):
+                head += f' em {recipe["prep_time_minutes"]} min'
+            return f"{question}\n\n{head}:\n{lines}"
         return question
 
+    def clarify_with_evidence(self, session_id: str, args: dict) -> dict:
+        """The clarify arguments with the evidence in each question, and the method offered on the accept question."""
+        questions = (args or {}).get("questions")
+        if not isinstance(questions, list):
+            return args
+        rewritten = []
+        for entry in questions:
+            if not isinstance(entry, dict):
+                rewritten.append(entry)
+                continue
+            question = self.with_evidence(session_id, entry.get("question", ""))
+            choices = list(entry.get("choices") or [])
+            if question != entry.get("question") and any(word in question.lower() for word in ACCEPT_WORDS) \
+                    and self._recipe_url(session_id) and METHOD_CHOICE not in choices:
+                choices = choices + [METHOD_CHOICE]
+            rewritten.append({**entry, "question": question, **({"choices": choices} if choices else {})})
+        return {**args, "questions": rewritten} if rewritten != questions else args
 
-def _plain(value) -> str:
-    text = f"{value}"
-    return text[:-2] if text.endswith(".0") else text
+    def _recipe_url(self, session_id: str) -> str:
+        with self._lock:
+            return (self._recipes.get(session_id) or {}).get("source_url", "")
+
+    def method_url(self, session_id: str) -> str:
+        return self._recipe_url(session_id)
+
+
+def _amount(quantity, unit: str) -> str:
+    """Her own way of writing it: 1,5 kg and 3 dentes, not 1.5 kg and 3 dente."""
+    text = f"{quantity}"
+    if text.endswith(".0"):
+        text = text[:-2]
+    text = text.replace(".", ",")
+    plural = f"{unit}s" if unit in PLURALS and quantity not in (1, "1") else unit
+    return f"{text} {plural}".strip()
 
 
 def _parsed(value):
