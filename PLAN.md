@@ -2551,6 +2551,15 @@ evidence, what was changed, and where. Open questions that were "default applied
   click-required confirmation naming more than one package with its price is blocked with "uma compra por vez". The
   second is a rule her contract already carried ("one decision per clarify"); the model broke it, so the code holds it.
 
+- **C91 — She was asked to approve what she had never read.** In the owner's live session the click came twice for
+  something invisible: "Aceitar o Escondidinho de carne moída como prato do cardápio de lançamento?" with the recipe
+  never on screen, and "Salvar essa descrição e título no cardápio do escondidinho?" with neither the title nor the
+  description shown. The click guard was doing its job — one decision, one confirmation — but the decision had no
+  evidence in front of it. Both pieces pass through the guard: the recipe in the register_candidate request and the
+  copy in the marketing reply. Test first: the clarify now carries them, the accept question listing the dish's
+  ingredients and yield and the save question the title and the description, and a question that already shows them is
+  left alone.
+
 ## Post-loop changes (owner requests, 2026-09-13)
 Requested by the owner while Loops 6–8 were running, test-first, each recorded as a correction. **Order decided by the
 owner:** Loop 6 pauses; Loop 7 (the owner's Telegram checks) and Loop 8 finish, then PL1–PL9, then Loop 6 resumes and
