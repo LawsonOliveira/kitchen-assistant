@@ -71,12 +71,13 @@ def test_an_expert_never_sends_more_questions_than_its_contract_accepts():
         assert f"at most {cap}" in rule, expert
 
 
-def test_the_method_is_fetched_from_the_recipe_page_when_she_asks_for_it():
-    # The accept question offers "Ver o modo de preparo" (the guard adds it), and the recipe contract keeps the source
-    # page but never the steps — so answering her means reading that page, not inventing the method.
+def test_the_recipe_page_is_what_she_is_offered_not_a_remembered_method():
+    # The accept question offers a third choice. The orchestrator has no research task of its own (recipe_expert's
+    # contract has suggest_dishes, normalize_recipe, register_candidate and the writes), and neither the recipe nor its
+    # reply carries the steps — so the honest answer is the page the recipe came from.
     rule = next(line for line in (AGENTS / "orchestrator" / "SOUL.md").read_text().splitlines()
-                if "modo de preparo" in line)
-    assert "source_url" in rule and "research" in rule
+                if "receita completa" in line.lower())
+    assert "source_url" in rule and "nunca" in rule.lower()
 
 
 def test_what_she_already_has_is_registered_as_stock_never_as_a_purchase():
