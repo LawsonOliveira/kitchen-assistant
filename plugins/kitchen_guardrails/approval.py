@@ -85,9 +85,10 @@ def _batch(recipe: dict) -> tuple:
     yield_portions, batch = recipe.get("yield_portions"), recipe.get("launch_batch_portions")
     if not batch:
         return yield_portions if yield_portions else "?", Decimal(1)
-    if not yield_portions:
-        return batch, Decimal(1)
-    return batch, Decimal(batch) / Decimal(yield_portions)
+    try:
+        return batch, Decimal(str(batch)) / Decimal(str(yield_portions))
+    except (InvalidOperation, ZeroDivisionError, TypeError):
+        return batch, Decimal(1)  # whatever the model wrote, the list she reads is worth more than the scaling
 
 
 def _amount(quantity, unit: str, factor: Decimal = Decimal(1)) -> str:

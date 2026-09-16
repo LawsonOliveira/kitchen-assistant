@@ -12,7 +12,7 @@ import os
 from concurrent.futures import ThreadPoolExecutor
 from decimal import Decimal
 
-from . import account, approval, classifier, cost_cap, input_guard, memory_guard, output_guard, pending, progress, tool_policy
+from . import account, approval, choices, classifier, cost_cap, input_guard, memory_guard, output_guard, pending, progress, tool_policy
 from .grounding import SessionGrounding
 from .messages import COST_CAP_MESSAGE, INFRA_BLOCK_MESSAGE
 
@@ -98,6 +98,17 @@ def register(ctx) -> None:
 
     def llm_execution(request=None, next_call=None, api_call_count=0, platform="", session_id="", model="", **_):
         guard = None
+
+        def answered(response):
+            """Her reply. A question that ends the turn as prose leaves her nothing to click, so it is asked again."""
+            if role != "orchestrator" or platform in SKIPPED_PLATFORMS:
+                return response
+            try:
+                return choices.with_clarify(response, request, next_call)
+            except Exception:
+                log.exception("kitchen_guardrails: the clarify retry failed; her reply goes as it came")
+                return response
+
         try:
             if role == "orchestrator" and platform not in SKIPPED_PLATFORMS and api_call_count == 1:
                 # PL9 lever 4: the classification (2–5 s) runs alongside the first model call; a block discards the answer,
@@ -109,7 +120,7 @@ def register(ctx) -> None:
                     guard = None
                 elif decided is not None:
                     decision = decided
-                    return _synthetic(decision.message, model) if decision.action == "block" else next_call(request)
+                    return _synthetic(decision.message, model) if decision.action == "block" else answered(next_call(request))
                 else:
                     # The cockpit should light the guard while it classifies, not only when it answers.
                     _emit("guard_input", "input_guard", status="running", session_id=session_id,
@@ -125,7 +136,7 @@ def register(ctx) -> None:
             return _synthetic(INFRA_BLOCK_MESSAGE if role == "orchestrator" else cost_cap_reply(), model)
         response = next_call(request)
         if guard is None:
-            return response
+            return answered(response)
         try:
             decision = guard.result()
         except Exception:
@@ -139,7 +150,9 @@ def register(ctx) -> None:
                 verdicts.pop(old, None)
         _emit("guard_input", "input_guard", status="blocked" if decision.action == "block" else "ok",
               session_id=session_id, prompt_hash=classifier.prompt_hash("input_guard.md"))
-        return _synthetic(decision.message, model) if decision.action == "block" else response
+        if decision.action == "block":
+            return _synthetic(decision.message, model)
+        return answered(response)
 
     def pre_llm_call(session_id="", turn_id="", user_message="", platform="", parent_session_id="", **_):
         if platform == "subagent":
@@ -169,6 +182,21 @@ def register(ctx) -> None:
             usd = costs.cap.cap
         costs.add_own(session_id, usd)
 
+    def _with_evidence_and_account(session_id: str, args) -> dict | None:
+        """The clarify arguments with the recipe, the menu copy and the account the ledger wrote, or None to leave them.
+
+        The ledger wrote the account; the model keeps paraphrasing it, so the code puts it in front of the question that
+        shows its result (probes A-C, didactic clarity stuck at 2).
+        """
+        questions = [{**entry, "question": approvals.with_evidence(session_id, entry.get("question", ""))}
+                     if isinstance(entry, dict) else entry for entry in (args or {}).get("questions") or []]
+        shown = {**(args or {}), "questions": questions} if questions else (args or {})
+        explained = account.clarify_with_account(shown, groundings.setdefault(session_id, SessionGrounding()).chains,
+                                                 shown_accounts.setdefault(session_id, account.RememberedAccounts()))
+        if explained is None and questions and questions != ((args or {}).get("questions") or []):
+            return shown
+        return explained
+
     def pre_tool_call(tool_name="", args=None, session_id="", **_):
         try:
             if tool_name in tool_policy.ASK_TOOLS:
@@ -187,15 +215,13 @@ def register(ctx) -> None:
                 if decision is None:
                     decision = tool_policy.check_one_decision(tool_name, args)
                 if decision is None and tool_name == "clarify":
-                    # The ledger wrote the account; the model keeps paraphrasing it, so the code puts it in front of
-                    # the question that shows its result (probes A-C, didactic clarity stuck at 2).
-                    questions = [{**entry, "question": approvals.with_evidence(session_id, entry.get("question", ""))}
-                                 if isinstance(entry, dict) else entry for entry in (args or {}).get("questions") or []]
-                    shown = {**(args or {}), "questions": questions} if questions else (args or {})
-                    explained = account.clarify_with_account(shown, groundings.setdefault(session_id, SessionGrounding()).chains,
-                                                             shown_accounts.setdefault(session_id, account.RememberedAccounts()))
-                    if explained is None and questions and questions != ((args or {}).get("questions") or []):
-                        explained = shown
+                    # Everything this guard adds to a question is a convenience; the question is not. pre_tool_call
+                    # fails closed, so a failure here would block the clarify and leave her nothing to answer.
+                    try:
+                        explained = _with_evidence_and_account(session_id, args)
+                    except Exception:
+                        log.exception("kitchen_guardrails: the clarify evidence failed; asking her question as it is")
+                        explained = None
                     if explained is not None:
                         return {"action": "modify", "args": explained}
             if decision is not None:
