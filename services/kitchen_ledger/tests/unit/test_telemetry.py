@@ -136,3 +136,11 @@ def test_without_a_cockpit_url_nothing_is_sent_or_logged(caplog):
     telemetry.send(telemetry.mcp_call_event("cost_expert", "get_pantry", None, "2026-09-13T12:00:00+00:00", 1, None))
     telemetry.flush(1)
     assert [r for r in caplog.records if r.levelno >= logging.WARNING] == []
+
+
+def test_a_reset_announces_the_state_it_left_behind(monkeypatch, sent):
+    # `make eval-reset` truncates the tables with SQL, so no write passes through the ledger and the cockpit kept
+    # showing the old balance (owner: "o cockpit ainda está mostrando 71 R$"). The reset says what the state is now.
+    telemetry.publish_state("eval_reset", SUMMARY)
+    assert [(event["kind"], event["name"]) for event in sent] == [("state_snapshot", "eval_reset")]
+    assert "Saldo" in sent[0]["preview"]
