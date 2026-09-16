@@ -251,3 +251,27 @@ def test_a_broken_evidence_never_costs_her_the_question(orchestrator, monkeypatc
                         lambda self, session_id, question: (_ for _ in ()).throw(ValueError("boom")))
     args = {"questions": [{"question": "Aceitar o prato?", "choices": ["Confirmar", "Cancelar"]}]}
     assert fire(orchestrator, "pre_tool_call", tool_name="clarify", session_id="s11", args=args) == [None]
+
+
+def test_the_clarify_the_agent_sees_carries_everything_the_guard_adds(orchestrator):
+    # The guard had two ways in: `with_evidence`, question by question, and `clarify_with_evidence`, which also offers
+    # "Ver a receita completa" and explains each dish. Only the first was wired, so the third choice and the pantry
+    # lines existed in the tests and never in her session (owner, 2026-09-16: "o ver receita aparece em qual caso ?").
+    import json as _json
+
+    candidates = _json.dumps({"result": {"candidates": [
+        {"recipe": {"name": "Escondidinho de carne moída"}, "pantry_coverage_pct": 64,
+         "missing_ingredients": ["Milho", "Ervilha"]}]}}, ensure_ascii=False)
+    recipe = {"task": "register_candidate", "payload": {"launch_batch_portions": 6, "recipe": {
+        "name": "Escondidinho de carne moída", "yield_portions": 8, "prep_time_minutes": 40,
+        "source_url": "https://exemplo.com/escondidinho",
+        "ingredients": [{"name": "Carne moída", "quantity": 500, "unit": "g", "pantry_match": "Carne moída"}]}}}
+    fire(orchestrator, "transform_tool_result", tool_name="ask_recipe_expert", args={}, result=candidates, session_id="s12")
+    choice = fire(orchestrator, "pre_tool_call", tool_name="clarify", session_id="s12", args={"questions": [
+        {"question": "Qual desses pratos a senhora gosta de cozinhar?", "choices": ["Escondidinho de carne moída"]}]})[0]
+    assert "64% da despensa. Falta comprar: Milho, Ervilha." in choice["args"]["questions"][0]["question"]
+
+    fire(orchestrator, "pre_tool_call", tool_name="ask_recipe_expert", session_id="s12", args=recipe)
+    accept = fire(orchestrator, "pre_tool_call", tool_name="clarify", session_id="s12", args={"questions": [
+        {"question": "Aceitar o Escondidinho de carne moída no cardápio?", "choices": ["Confirmar", "Cancelar"]}]})[0]
+    assert accept["args"]["questions"][0]["choices"] == ["Confirmar", "Cancelar", "Ver a receita completa"]
