@@ -53,6 +53,12 @@ def state_snapshot_event(tool: str, trace_id: str | None, summary: dict) -> dict
     return _event("state_snapshot", tool, trace_id, now(), 0, "ok", " | ".join([f"Saldo {summary['budget_remaining_display']}", *dishes]))
 
 
+def publish_state(tool: str, summary: dict) -> None:
+    """Announce the current state without a write: `make eval-reset` empties the tables with SQL, and the cockpit would
+    otherwise keep the balance from before it."""
+    send(state_snapshot_event(tool, None, summary))
+
+
 def after_call(conn, agent: str, tool: str, trace_id: str | None, started_at: str, started_monotonic: float,
                error_code: str | None) -> None:
     """Called by server.dispatch once the audit row is committed."""

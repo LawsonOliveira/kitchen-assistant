@@ -33,4 +33,11 @@ if ! [ "${ingredients:-0}" -gt 0 ] 2>/dev/null; then
 fi
 # shellcheck disable=SC2086
 docker compose up -d --wait $AGENTS >/dev/null
+# The truncate above never passes through the ledger, so the cockpit would keep the balance from before the reset.
+docker compose exec -T kitchen-ledger python -c "
+from kitchen_ledger import db, operations, telemetry
+from kitchen_ledger.server import _dsn
+with db.connect(_dsn()) as conn:
+    telemetry.publish_state('eval_reset', operations.get_state_summary(conn))
+telemetry.flush()" >/dev/null 2>&1 || echo "eval-reset: could not refresh the cockpit panel" >&2
 echo "eval-reset: ingredients=$ingredients, agents up"
