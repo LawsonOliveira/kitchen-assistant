@@ -49,6 +49,25 @@ def clarify_single(answer, question="Confirma a compra?"):
     return json.dumps({"question": question, "choices_offered": ["Confirmar", "Cancelar"], "user_response": answer})
 
 
+def test_one_purchase_per_confirmation():
+    # Live CLI session: "Confirma a compra de 1 pacote de óleo/azeite (900 ml) por R$ 7,59 e 1 pacote de
+    # pimenta-do-reino (100 g) por R$ 6,99?" was answered Confirmar. One click authorises one write (D14), so the oil
+    # went in, the click was spent, and Dona Maria was asked again for the pepper.
+    two = {"questions": [{"question": "Confirma a compra de 1 pacote de óleo/azeite (900 ml) por R$ 7,59 e 1 pacote de "
+                                      "pimenta-do-reino (100 g) por R$ 6,99?", "choices": ["Confirmar", "Cancelar"]}]}
+    blocked = tool_policy.check_one_decision("clarify", two)
+    assert blocked["action"] == "block" and "uma" in blocked["message"].lower()
+
+    one = {"questions": [{"question": "Confirma a compra de 1 pacote de pimenta-do-reino (100 g) por R$ 6,99?",
+                          "choices": ["Confirmar", "Cancelar"]}]}
+    assert tool_policy.check_one_decision("clarify", one) is None
+    priced = {"questions": [{"question": "Fixar o preço em R$ 25,90? (custo R$ 8,73 por porção; a senhora recebe "
+                                         "R$ 23,31 e sobram R$ 14,58)", "choices": ["Confirmar", "Cancelar"]}]}
+    assert tool_policy.check_one_decision("clarify", priced) is None  # many amounts, one decision
+    asking = {"questions": [{"question": "Quanto a senhora paga pelo óleo e pela pimenta?", "choices": ["Não sei"]}]}
+    assert tool_policy.check_one_decision("clarify", asking) is None  # not a confirmation
+
+
 def test_the_same_question_is_not_asked_again_after_a_cancelar():
     # Full run 20260915-095503, scenario 03 trial 2: "Registrar a compra de 1 potinho de pimenta-do-reino (30 g) por
     # R$ 4,89?" was asked, cancelled, and asked again word for word — three times — and Dona Maria heard "pode ser
