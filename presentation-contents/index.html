@@ -396,25 +396,6 @@
   <aside class="speaker" hidden>Dois comandos escrevem no Langfuse. O make evals roda os 9 cenários três vezes na pilha real e publica cada tentativa como run item ligada ao trace do turno, com as notas do juiz; o id de cada score é estável, então repetir a rodada atualiza em vez de duplicar. O make review-conversations lê as sessões reais da CLI e do Telegram do state.db, calcula sinais determinísticos (bloqueios, erros de ferramenta, Cancelar, p90, US$), dá nota com a mesma rubrica e manda para a fila de anotação o que tiver alerta; nada é aplicado sozinho, o que sai são rascunhos. Quando a pessoa decide que um bloqueio foi errado, a mensagem dela vira uma linha em evals/guardrail_dataset.jsonl e o make eval-guardrails passa o classificador de verdade, dentro do orchestrator, nas 84 mensagens rotuladas: é o portão que impede a correção de um caso de quebrar os outros. Três otimizações vieram daí: o caminho rápido, depois de ver o ranking de latência por span; o teto de custo por turno, depois de ver o US$ por agente; e a clareza didática, que o juiz manteve em 2 enquanto os outros critérios iam a 4 e 5, até a conta virar dado do ledger. E a regra que não muda: o juiz nunca decide passa ou falha, quem decide é estado e trajetória.</aside>
 </section>
 
-      <section>
-        <h3>Desenho</h3>
-        <ul class="plain">
-          <li><b>Unidade: o restaurante</b>, não o turno. Memória e estado atravessam as conversas</li>
-          <li><b>Atribuição por hash</b> do id do restaurante; a variante vai no trace</li>
-          <li><b>Redução de variância</b> com a atividade anterior do restaurante (CUPED) e teste sequencial</li>
-          <li><b>Juiz calibrado</b> contra rótulos humanos da fila antes de virar métrica</li>
-        </ul>
-      </section>
-      <section>
-        <div class="metric"><span>primária</span><b>Restaurantes com o 1º prato aceito e precificado em 7 dias</b></div>
-        <div class="metric"><span>não pode piorar</span><p class="small">vazamento · R$ bloqueado na saída · Cancelar · p90 · US$ por prato aceito</p></div>
-        <div class="metric"><span>norte</span><p class="small">margem real dos pratos nos pedidos do iFood: a Dona Maria não perder dinheiro</p></div>
-      </section>
-    </div>
-  </div>
-  <aside class="speaker" hidden>Para o cientista de dados: randomizar por turno contamina, porque a mesma dona vê as duas variantes e a memória carrega. As métricas de guarda são contramétricas, não objetivos.</aside>
-</section>
-
 <!-- 12 · escala ---------------------------------------------------------------------------------------------------------->
 <section class="slide" data-seconds="20" data-title="Escala" id="escala">
   <div class="slide-in">
