@@ -5,11 +5,13 @@ import json
 from kitchen_guardrails import approval
 
 
-RECIPE = {"task": "register_candidate", "payload": {"recipe": {
-    "name": "Escondidinho de carne moída", "yield_portions": 8, "prep_time_minutes": 40,
-    "source_url": "https://exemplo.com/escondidinho",
-    "ingredients": [{"name": "Carne moída", "quantity": 500, "unit": "g"}, {"name": "Mandioca", "quantity": 1.5, "unit": "kg"},
-                    {"name": "Alho", "quantity": 3, "unit": "dente"}]}}}
+RECIPE = {"task": "register_candidate", "payload": {
+    "launch_batch_portions": 6,
+    "recipe": {"name": "Escondidinho de carne moída", "yield_portions": 8, "prep_time_minutes": 40,
+               "source_url": "https://exemplo.com/escondidinho",
+               "ingredients": [{"name": "Carne moída", "quantity": 500, "unit": "g"},
+                               {"name": "Mandioca", "quantity": 1.5, "unit": "kg"},
+                               {"name": "Alho", "quantity": 3, "unit": "dente"}]}}}
 MENU = json.dumps({"result": {"menu_copy": {"title": "Escondidinho da Dona Maria",
                                             "description": "Carne moída temperada sob purê de mandioca gratinado."}}})
 
@@ -27,6 +29,7 @@ def test_the_accept_question_lists_the_recipe_and_offers_the_method():
     assert "- Carne moída: 500 g\n" in question
     assert "- Mandioca: 1,5 kg" in question and "- Alho: 3 dentes" in question  # her decimal, her plural
     assert "rende 8 porções" in question and "40 min" in question
+    assert "lote de lançamento: 6" in question  # she chose 6; the recipe's own yield is another number
     assert args["questions"][0]["choices"] == ["Confirmar", "Cancelar", "Ver a receita completa"]
 
 
