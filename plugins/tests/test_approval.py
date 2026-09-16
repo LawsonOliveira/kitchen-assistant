@@ -94,3 +94,12 @@ def test_a_question_that_offers_no_dish_keeps_its_own_words():
     state.remember_result("s1", CANDIDATES)
     other = {"questions": [{"question": "Quantas porções no lote?", "choices": ["4", "8"]}]}
     assert state.clarify_with_evidence("s1", other) == other
+
+
+def test_a_shortened_choice_still_finds_its_dish():
+    # The model writes the choices in its own words ("Lasanha", "Escondidinho"); the dish is the same one.
+    state = approval.Approvals()
+    state.remember_result("s1", CANDIDATES)
+    args = state.clarify_with_evidence("s1", {"questions": [{
+        "question": "Qual desses pratos a senhora gosta de cozinhar?", "choices": ["Lasanha", "Escondidinho"]}]})
+    assert "Lasanha de carne moída: 69% da despensa." in args["questions"][0]["question"]
