@@ -2599,6 +2599,16 @@ evidence, what was changed, and where. Open questions that were "default applied
   model once with the correction, only being replaced if the retry does clarify. Red first: plugins 3 failed of 20 and a
   collection error for the new `choices.py`; green after: 242 passed, 1 skipped.
 
+- **C96 — A pergunta ganhou o clique e perdeu o motivo.** With C95 the dish question finally came as a clarify, and the
+  owner read only "Qual desses pratos a senhora gosta de cozinhar?": "não me falou os ingredientes que faltavam para
+  cada receita... essa parte funcionava perfeito até esse momento". The coverage and the missing list were text the
+  model used to write before asking, and the new SOUL line ("options enumerated in the text are dead prose") pushed it
+  to drop the substance with the options. Fixed where the other evidence already lives: the guard remembers every
+  candidate from the recipe expert's answer and appends one line per offered dish to the question ("Lasanha de carne
+  moída: 69% da despensa. Falta comprar: massa de lasanha, creme de leite, presunto."), matching a choice written in
+  the model's own words. The SOUL rule now says that moving a question into clarify never means answering with less.
+  Red first: 1 failed of 7, then 1 failed of 8 for the shortened choice; green: 246 passed, 1 skipped.
+
 ## Post-loop changes (owner requests, 2026-09-13)
 Requested by the owner while Loops 6–8 were running, test-first, each recorded as a correction. **Order decided by the
 owner:** Loop 6 pauses; Loop 7 (the owner's Telegram checks) and Loop 8 finish, then PL1–PL9, then Loop 6 resumes and
