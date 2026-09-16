@@ -12,8 +12,8 @@ leva ela da despensa ao cardápio de lançamento:
 sem modificar o Hermes: tudo é configuração, plugins, skills, skin, `SOUL.md` e arquivos de contexto sobre a imagem
 Docker oficial.
 
-A fonte do escopo é [desafio-senior-ai-engineer.md](desafio-senior-ai-engineer.md); o plano completo, com cada decisão,
-correção e pergunta aberta, está em [PLAN.md](PLAN.md).
+A fonte do escopo é [desafio-senior-ai-engineer.md](desafio-senior-ai-engineer.md); o plano completo, com as 47
+decisões, as 99 correções registradas e as 15 perguntas ao dono, está em [PLAN.md](PLAN.md).
 
 ## Sumário
 - [Como rodar](#como-rodar)
@@ -54,7 +54,7 @@ Outros comandos:
 | http://localhost:8080 | cockpit ao vivo: qual agente, ferramenta e MCP estão ativos, custo do turno, saldo |
 | http://localhost:3000 | Langfuse (usuário e senha do `.env`): um trace por turno, atravessando os contêineres |
 | `make import-pantry FILE=…` | envia uma planilha nova; a Dona Sálvia mostra a diferença e só aplica depois de um clique |
-| `make test`, `make test-plugins`, `make test-contracts`, `make test-integration` | suítes determinísticas (também no CI) |
+| `make test`, `make test-plugins`, `make test-contracts`, `make test-integration` | suítes determinísticas, 706 testes ao todo, também no CI |
 | `KITCHEN_ALLOW_EVAL_RESET=1 make evals` | todas as camadas de eval. **Apaga o estado de negócio** da pilha em execução |
 
 ## Arquitetura
@@ -327,12 +327,15 @@ Cada item: a decisão, a alternativa rejeitada e o porquê. O detalhe está em *
   vem antes do `feat:`.
 - **D47 — Regra que precisa valer mora no código, não no prompt.** Medido três vezes em 15/09: regra escrita na
   `SOUL.md` e ignorada pelo modelo custa uma tentativa perdida; a mesma regra no ledger ou no guard simplesmente vale.
-  Foram movidas quatro: registrar a mesma receita duas vezes devolve o prato que já existe (um *retry* não cria prato
+  Foram movidas oito: registrar a mesma receita duas vezes devolve o prato que já existe (um *retry* não cria prato
   novo) e uma receita alterada vira revisão do mesmo candidato; calcular custo com requisito em aberto é recusado, com
   a lista do que perguntar; um **Cancelar** é anunciado ao modelo como decisão dela, não falha; e a conta de cada
   número vem pronta do ledger (`cost_chain_display`, `min_price_chain_display`, `profit_chain_display`,
   `promotion_chain_display`) e o guard a coloca na frente da pergunta que mostra o resultado, via diretiva `modify` do
-  `pre_tool_call`. Rejeitado: pedir de novo ao modelo com uma frase mais forte — três rodadas assim deixaram a clareza
+  `pre_tool_call`. Depois vieram mais quatro, das sessões da dona: toda pergunta vai pelo `clarify` (o turno volta uma
+  vez ao modelo quando ele pergunta em prosa); a pergunta que oferece os pratos carrega a cobertura da despensa e o que
+  falta comprar em cada um; uma decisão que ela autoriza só é aceita com as opções Confirmar e Cancelar, para não ser
+  perguntada duas vezes; e tudo que ela lê sai escalonado ao lote que vai cozinhar. Rejeitado: pedir de novo ao modelo com uma frase mais forte — três rodadas assim deixaram a clareza
   didática em 2,33–2,78, e a primeira rodada com a conta injetada deu 3,80. Rejeitado também: bloquear a resposta sem
   conta, que custaria uma ida ao modelo e pode matar a conversa (o bloqueio de alegação já mostrou como isso soa).
 - **D45 — Publicação manual e por último,** feita pela dona.
@@ -412,7 +415,7 @@ Verificadas na imagem fixada `nousresearch/hermes-agent:v2026.9.11`. Cada uma vi
 
 | Camada | Como | Limite |
 |---|---|---|
-| Núcleo de custos | `pytest` unitário e de integração do kitchen-ledger | 100% |
+| Núcleo de custos | `pytest` unitário e de integração do kitchen-ledger (85 + 90 testes) | 100% |
 | Extração de requisitos | páginas fixas repetidas pelo `researcher-eval` | recall 100% equipamentos, ≥ 90% técnicas |
 | Guard de entrada | 84 mensagens rotuladas em `evals/guardrail_dataset.jsonl` | falsos positivos ≤ 5% |
 | Cenários multi-turno | 9 cenários × 3 tentativas: a Dona Maria simulada conversa na CLI; graders de estado final e trajetória decidem; juiz Sonnet só alerta | pass^3 ≥ 80% |
@@ -441,7 +444,9 @@ roda à mão e as conversas ficam 90 dias (pergunta aberta 15 no plano).
 **Exemplo do ciclo de melhoria.** A dona perguntou "como você está?" e o guard de entrada bloqueou. A conversa virou
 seis linhas de conversa rápida em `evals/guardrail_dataset.jsonl`; com o classificador real, cinco saíram bloqueadas
 (13,9% de falsos positivos, acima do limite de 5%). O prompt do guard passou a permitir cumprimentos e a nova rodada deu
-66/66 corretas, com 0 falso positivo (correção C54).
+66/66 corretas, com 0 falso positivo (correção C54), com as 66 linhas que o dataset tinha então. O mesmo ciclo se
+repetiu depois com "me acha receitas na internet" (C89) e com a escalada de autoridade dos testes de intrusão, e o
+dataset está hoje em 84 linhas, todas corretas.
 
 **Resultados:** ver a seção *Latest eval run* abaixo, atualizada a cada rodada completa.
 
@@ -451,7 +456,7 @@ seis linhas de conversa rápida em `evals/guardrail_dataset.jsonl`; com o classi
 
 | Camada | Resultado | Limite |
 |---|---|---|
-| Núcleo do ledger (unitário e integração) | passou | 100% |
+| Núcleo do ledger (unitário e integração) | passou (175 testes) | 100% |
 | Extração de requisitos | passou | 100% |
 | Guard de entrada | 0 falso positivo, precisão 1,0, recall 1,0 (84 mensagens) | ≤ 5% |
 | Cenários multi-turno (pass^3) | **100%** (9 de 9) | ≥ 80% |
@@ -481,13 +486,6 @@ didática, 3,04 contra 3,5**, com dois cenários abaixo do piso de 3,0 — o 06 
 explora e muda de ideia). São justamente os dois fluxos sem momento de preço: a conta que o ledger escreve e o guard
 coloca na frente da pergunta não tem onde entrar, e a explicação volta a depender do modelo.
 
-**O que esta rodada mudou no sistema.** Sete defeitos viraram código durante a medição, cada um com teste antes e
-registrado no PLAN.md: registrar a mesma receita duas vezes devolve o prato existente e uma receita alterada vira
-revisão; `compute_dish_cost` recusa prato com requisito em aberto; um **Cancelar** é anunciado ao modelo como decisão
-dela; a mesma pergunta não é feita de novo depois de um não; a conta de cada número (custo, preço mínimo, lucro,
-promoção e preço de embalagem) vem pronta do ledger e o guard a injeta na pergunta; o que a dona já tem em casa vira
-correção de estoque, não compra; e a resposta que fecharia sem pergunta, com prato pendente, recebe a próxima pergunta.
-
 **Próximo passo para a didática:** levar a conta também aos momentos sem preço — a medida caseira do cenário 06
 ("1 barra = 1 kg, então 200 g = 1/5 da barra") e o estado da exploração no 09.
 
@@ -498,16 +496,12 @@ correção de estoque, não compra; e a resposta que fecharia sem pergunta, com 
 - **A taxa da plataforma é fixa em 10%** e ignora planos reais.
 - **Embalagem fica fora do CMV**, mostrada à parte.
 
-## Demo em vídeo
-
-A demo em vídeo **não está incluída nesta entrega**. O §4 do desafio a lista como entregável, mas o §1 e o §5 a tratam
-como opcional ("+ demo, se houver").
+## Demo em vídeo e apresentação
+A demo em vídeo **está incluída nesta entrega** bem como a apresentação em **presentation/**.
 
 ## Próximos passos
 
-- WhatsApp pela Cloud API oficial.
 - Deploy em nuvem com segredos gerenciados.
-- W3C `traceparent` no lugar do trace no contrato.
 - Postgres multi-tenant para várias donas.
 - Classificador na saída do researcher, se o red-team mostrar vazamento.
 - Evals de LLM agendadas fora do CI.
