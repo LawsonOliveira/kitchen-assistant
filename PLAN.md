@@ -2578,6 +2578,16 @@ evidence, what was changed, and where. Open questions that were "default applied
   accept question said "rende 8 porções", the recipe's own yield: both numbers are real and different, so the question
   now shows the batch she chose beside the yield.
 
+- **C94 — Every number is the batch she will cook.** After C93 showed her chosen batch beside the recipe's yield, the
+  owner closed the point: "ela vai fabricar somente 6 porções, então vamos mostrar tudo escalonado a 6". The CMV per
+  portion does not change with the batch (the ledger already scaled the ingredients when matching the pantry), but the
+  totals she reads should be the money she will actually spend, so `compute_dish_cost` now returns `batch_portions` and
+  `batch_cost_display` and builds `cost_chain_display` from the batch ("R$ 23,19 ÷ 6 porções = R$ 3,86 por porção"),
+  and the accept question lists each ingredient scaled by batch ÷ yield under a head line that says "lote de 6 porções"
+  instead of the recipe's own yield. Red first: ledger integration 1 failed of 17, plugins `test_approval` 1 failed of
+  4; green after: 85 unit, 89 integration, 233 plugins. The business state was reset to the spreadsheet afterwards at
+  the owner's request (R$ 80,00, 37 ingredients, no dishes or purchases).
+
 ## Post-loop changes (owner requests, 2026-09-13)
 Requested by the owner while Loops 6–8 were running, test-first, each recorded as a correction. **Order decided by the
 owner:** Loop 6 pauses; Loop 7 (the owner's Telegram checks) and Loop 8 finish, then PL1–PL9, then Loop 6 resumes and
