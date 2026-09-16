@@ -191,25 +191,34 @@ function applyLayout(name) {
   draw(name);
 }
 
-const timers = {}, running = {};
+// --- highlight: self-contained on purpose, run as it is by services/cockpit/tests/test_pulse.py ---
+const timers = {}, running = {}, finished = {};
+// An agent answering an A2A request contains everything it started: when that span closes, nothing of it is running.
+const CONTAINER_KINDS = new Set(["a2a_serve"]);
+const SPAN_MEMORY = 200;
 // A replayed event fills the tables but never animates: opening the cockpit used to light every node at once.
 // An event with status "running" keeps the node lit until its finished half arrives (same span_id).
 function pulse(key, el, cls = "active", e = {}) {
   if (e.replayed) return;
+  const open = running[key] = running[key] || new Set();
+  const done = finished[key] = finished[key] || new Set();
+  if (e.status === "running" && done.has(e.span_id)) return;  // its closing half came first; the span is over
   el.classList.remove("error", "blocked");
   el.classList.add(cls);
   clearTimeout(timers[key]);
   if (e.status === "running") {
-    (running[key] = running[key] || new Set()).add(e.span_id);
+    open.add(e.span_id);
     return;
   }
-  const open = running[key];
-  if (open) {
-    open.delete(e.span_id);
-    if (open.size) return;  // another call is still working on this node
-  }
+  done.add(e.span_id);
+  for (const span of [...done].slice(0, done.size - SPAN_MEMORY)) done.delete(span);
+  open.delete(e.span_id);
+  // A span of a finished request may never close (a fan-out branch that ended with it): the request closing ends it.
+  if (CONTAINER_KINDS.has(e.kind)) open.clear();
+  if (open.size) return;  // another call is still working on this node
   timers[key] = setTimeout(() => el.classList.remove(cls), PULSE_MS);
 }
+// --- end highlight ---
 
 function nodeFor(e) {
   if (e.kind === "guard_input" || e.kind === "guard_output") return e.kind;
