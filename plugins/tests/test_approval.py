@@ -26,10 +26,10 @@ def test_the_accept_question_lists_the_recipe_and_offers_the_method():
         "question": "Aceitar o Escondidinho de carne moída como prato do cardápio de lançamento?",
         "choices": ["Confirmar", "Cancelar"]}]})
     question = args["questions"][0]["question"]
-    assert "- Carne moída: 500 g\n" in question
-    assert "- Mandioca: 1,5 kg" in question and "- Alho: 3 dentes" in question  # her decimal, her plural
-    assert "rende 8 porções" in question and "40 min" in question
-    assert "lote de lançamento: 6" in question  # she chose 6; the recipe's own yield is another number
+    # Everything scaled to the batch she will cook: 6 of the recipe's 8 portions is three quarters of each ingredient.
+    assert "- Carne moída: 375 g\n" in question
+    assert "- Mandioca: 1,125 kg" in question and "- Alho: 2,25 dentes" in question  # her decimal
+    assert "lote de 6 porções" in question and "40 min" in question
     assert args["questions"][0]["choices"] == ["Confirmar", "Cancelar", "Ver a receita completa"]
 
 

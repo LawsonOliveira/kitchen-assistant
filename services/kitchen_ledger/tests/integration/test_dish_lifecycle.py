@@ -174,3 +174,15 @@ def test_choosing_the_same_price_twice_is_the_same_decision(conn):
     first = operations.select_price_scenario(conn, dish_id, "0.30")
     assert operations.select_price_scenario(conn, dish_id, "0.30") == first
     assert conn.execute("SELECT count(*) FROM audit_log WHERE tool = 'select_price_scenario'").fetchone()[0] >= 0
+
+
+def test_the_cost_is_told_for_the_batch_she_will_cook(conn):
+    # Owner (2026-09-16): "ela vai fabricar somente 6 porções, então vamos mostrar tudo escalonado a 6". The cost per
+    # portion does not change with the batch, but the totals she reads should be the ones she will actually spend.
+    viable_profile(conn, oven=True)
+    dish_id = operations.register_candidate_dish(conn, make_recipe(RICE, name="Escondidinho", yield_portions=8),
+                                                 yield_portions=8, launch_batch_portions=6, evidence=EVIDENCE)["dish_id"]
+    cost = operations.compute_dish_cost(conn, dish_id=dish_id)
+    assert cost["batch_portions"] == 6
+    assert cost["cost_chain_display"].endswith("÷ 6 porções = " + cost["cmv_per_portion_display"] + " por porção")
+    assert cost["batch_cost_display"] == cost["cost_chain_display"].split(" ÷")[0]
