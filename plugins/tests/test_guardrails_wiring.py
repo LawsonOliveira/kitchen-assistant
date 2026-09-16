@@ -122,6 +122,39 @@ def test_the_input_guard_runs_alongside_the_first_model_call(orchestrator, monke
     assert events.index("model") < events.index("classify-end")
 
 
+def test_the_owner_message_is_classified_once(orchestrator, monkeypatch):
+    # Live session: the same sentence was blocked at 01:12:55 and allowed at 01:13:00 — Hermes started the turn again
+    # (an API retry) and the classifier, asked twice, answered differently. One owner message, one verdict.
+    from kitchen_guardrails import classifier
+
+    calls = []
+
+    def classify(llm, prompt_file, content, timeout_s):
+        calls.append(content)
+        return classifier.Verdict("allow" if len(calls) == 1 else "block", "out_of_scope", "")
+
+    monkeypatch.setattr(classifier, "classify", classify)
+    middleware = orchestrator.middleware["llm_execution"][0]
+    request = {"messages": [{"role": "user", "content": "oi, quero fazer uma lasanha, pesquise na internet"}]}
+    call = dict(next_call=lambda r: "model-response", api_call_count=1, platform="cli", session_id="s1", model="m")
+    assert middleware(request=request, **call) == "model-response"
+    assert middleware(request=request, **call) == "model-response"  # the turn restarted; the verdict is the one taken
+    assert len(calls) == 1
+
+
+def test_a_turn_without_a_new_owner_message_is_not_classified(orchestrator, monkeypatch):
+    # The guard exists to judge what Dona Maria typed; a turn that carries no new message of hers has nothing to judge.
+    from kitchen_guardrails import classifier
+
+    calls = []
+    monkeypatch.setattr(classifier, "classify", lambda *args, **kwargs: calls.append(1) or classifier.Verdict("allow", "", ""))
+    middleware = orchestrator.middleware["llm_execution"][0]
+    request = {"messages": [{"role": "assistant", "content": "Achei três opções"}]}
+    assert middleware(request=request, next_call=lambda r: "model-response", api_call_count=1, platform="cli",
+                      session_id="s2", model="m") == "model-response"
+    assert calls == []
+
+
 def test_a_blocked_turn_discards_the_model_answer(orchestrator, monkeypatch):
     import kitchen_guardrails
     from kitchen_guardrails import classifier
