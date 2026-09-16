@@ -7,10 +7,10 @@ back to the model once, with her own question quoted, and only an answer that ca
 """
 
 RETRY_INSTRUCTION = (
-    "Your reply ends by asking Dona Maria something, but it ends the turn: she has nothing to click. Send the same "
-    "reply again in the same words and numbers, and ask through the `clarify` tool in the same turn, one question per "
-    "open point, with the options as `choices` (never enumerated in the text). Free-text questions go through clarify "
-    "too, without choices."
+    "Your reply above ends by asking Dona Maria something, but it ends the turn: she has nothing to click. Ask it "
+    "through the `clarify` tool, one question per open point, with the options as `choices` (a free-text question goes "
+    "through clarify too, without choices). Answer with the tool call only: she reads the reply above exactly as you "
+    "wrote it, so do not rewrite or summarize it."
 )
 
 
@@ -23,7 +23,12 @@ def with_clarify(response, request, next_call):
     retry = {**request, "messages": messages + [{"role": "assistant", "content": question},
                                                 {"role": "user", "content": RETRY_INSTRUCTION}]}
     second = next_call(retry)
-    return second if _calls_clarify(second) else response
+    if not _calls_clarify(second):
+        return response
+    # Her answer is the first one, whatever the second says: the retry exists for the call, not for a new text.
+    second.content = [block for block in response.content if getattr(block, "type", "") == "text"] + \
+                     [block for block in second.content if getattr(block, "type", "") != "text"]
+    return second
 
 
 def _prose_question(response) -> str:
