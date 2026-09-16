@@ -2588,6 +2588,17 @@ evidence, what was changed, and where. Open questions that were "default applied
   4; green after: 85 unit, 89 integration, 233 plugins. The business state was reset to the spreadsheet afterwards at
   the owner's request (R$ 80,00, 37 ingredients, no dishes or purchases).
 
+- **C95 — A question she could not answer.** In the owner's session Dona Sálvia listed the three dishes inside the reply
+  and asked "Gosta de cozinhar alguma dessas?" as prose, with nothing to click, and the next turn asked the batch the
+  same way ("agr nao retorna mais opções"; "as questões com clarify sumiram após sua mudança anterior"). Two causes, both
+  fixed in code (D47). First, `pre_tool_call` fails closed by design, so any exception while the guard decorates a
+  clarify blocks the question itself; the evidence step is now fail-open and `_batch` treats a launch batch that is not
+  a number ("6 porções", "", null) as no scaling instead of raising `InvalidOperation`. Second, the rule that every
+  question goes through clarify lived only in the prompt and the model followed it two sessions out of three: now every
+  model call of the turn is checked, and a final answer that asks her something without calling clarify goes back to the
+  model once with the correction, only being replaced if the retry does clarify. Red first: plugins 3 failed of 20 and a
+  collection error for the new `choices.py`; green after: 242 passed, 1 skipped.
+
 ## Post-loop changes (owner requests, 2026-09-13)
 Requested by the owner while Loops 6–8 were running, test-first, each recorded as a correction. **Order decided by the
 owner:** Loop 6 pauses; Loop 7 (the owner's Telegram checks) and Loop 8 finish, then PL1–PL9, then Loop 6 resumes and
