@@ -98,3 +98,16 @@ def test_rerunning_the_review_updates_the_same_scores_instead_of_adding_copies()
     assert [payload["id"] for payload in first] == [payload["id"] for payload in again]
     assert len({payload["id"] for payload in first}) == len(first)
     assert all("sess-1" in payload["id"] for payload in first)
+
+
+def test_the_rubric_scores_carry_the_queue_config_so_the_reviewer_sees_the_judge():
+    # Owner (2026-09-16): a session should reach the annotation queue with the judge's notes already on it. A score only
+    # shows up in the annotation form when it is written against the queue's own score config, so the rubric criteria
+    # take the config id and the deterministic signals stay plain session scores.
+    configs = {"tone": "cfg-tone", "owner_decides": "cfg-owner"}
+    payloads = review.score_payloads("sess-1", {"scope_blocks": 1, "tool_errors": 0, "latency_p90_seconds": 75, "cancel_clicks": 0},
+                                     {"tone": 4, "owner_decides": 5}, configs)
+    by_name = {payload["name"]: payload for payload in payloads}
+    assert by_name["tone"]["configId"] == "cfg-tone" and by_name["owner_decides"]["configId"] == "cfg-owner"
+    assert "configId" not in by_name["latency_p90_seconds"]
+    assert by_name["tone"]["id"] == "review-sess-1-tone"  # the same id as before: a rerun updates, never duplicates
