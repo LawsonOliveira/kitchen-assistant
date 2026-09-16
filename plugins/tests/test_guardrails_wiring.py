@@ -155,6 +155,8 @@ def test_the_owner_message_is_classified_once(orchestrator, monkeypatch):
     call = dict(next_call=lambda r: "model-response", api_call_count=1, platform="cli", session_id="s1", model="m")
     assert middleware(request=request, **call) == "model-response"
     assert middleware(request=request, **call) == "model-response"  # the turn restarted; the verdict is the one taken
+    # The restart comes back as a new turn, sometimes with a new session: the sentence is what was judged, not the turn.
+    assert middleware(request=request, **{**call, "session_id": "s1-again"}) == "model-response"
     assert len(calls) == 1
 
 
