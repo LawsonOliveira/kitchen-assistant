@@ -52,7 +52,9 @@
   .node.error rect { stroke: var(--error); stroke-width: 3; }
   .node.blocked rect { stroke: var(--blocked); stroke-width: 3; }
   .edge { stroke: var(--edge); stroke-width: 1.5; fill: none; marker-end: url(#arrow); }
-  .edge.active { stroke: var(--active); stroke-width: 3; stroke-dasharray: 8 6; animation: flow .6s linear infinite; }
+  .edge.active { stroke: var(--active); stroke-width: 3; stroke-dasharray: 8 6; animation: flow .6s linear infinite;
+                 marker-end: url(#arrow-active); }
+  .edge.error, .edge.blocked { marker-end: url(#arrow-error); }
   @keyframes pulse { 50% { stroke-opacity: .35; } }
   @keyframes flow { to { stroke-dashoffset: -14; } }
   .turn { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 8px; color: var(--muted); }
@@ -87,6 +89,13 @@
       <defs>
         <marker id="arrow" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
           <path d="M0,0 L10,5 L0,10 z" fill="var(--edge)"></path>
+        </marker>
+        <!-- A marker cannot inherit the line's colour, so a lit edge needs its own arrowhead. -->
+        <marker id="arrow-active" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--active)"></path>
+        </marker>
+        <marker id="arrow-error" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--error)"></path>
         </marker>
       </defs>
       <g id="edges"></g>
