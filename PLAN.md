@@ -1797,16 +1797,16 @@ flowchart TD
 **Steps**
 - [x] 1. *(sequential)* Write `scripts/rehearsal.sh` and the README checklist; run red; commit
   `test: L8 …`.
-- [ ] 2. *(parallel with each other)*
-  - [ ] a) `README.md` (PT-BR): visão geral; como rodar (≈16 GiB RAM, `.env`, `make up`, `make chat`,
-    Telegram, cockpit, Langfuse); arquitetura (Mermaid of the topology and of one turn); one section per
-    brief category; decisões (every *Key decisions* item with rejected alternative and why); segurança
-    (guard semantics, fail-open vs fail-closed, accepted risks); limitações do Hermes encontradas
-    (hooks fail open, no per-child toolsets, no cross-process trace propagation, CLI streaming leaks,
-    Telegram interim messages on by default); observabilidade; evals e resultados (latest report);
-    simplificações; demo em vídeo não incluída nesta entrega (§4 lists it, §1 and §5 call it
-    optional); próximos passos (WhatsApp Cloud API, cloud deploy, W3C traceparent, multi-tenant
-    Postgres, classifier on researcher output, LLM evals in CI, free price beyond the scenarios).
+- [x] 2. *(parallel with each other)*
+  - [ ] a) `README.md`, written in PT-BR for the owner, with these sections: overview; how to run
+    (≈16 GiB RAM, `.env`, `make up`, `make chat`, Telegram, cockpit, Langfuse); architecture (Mermaid of the
+    topology and of one turn); one section per brief category; decisions (every *Key decisions* item with its
+    rejected alternative and why); security (guard semantics, fail-open vs fail-closed, accepted risks);
+    Hermes limitations found (hooks fail open, no per-child toolsets, no cross-process trace propagation, CLI
+    streaming leaks, Telegram interim messages on by default); observability; evals and results (latest
+    report); simplifications; the demo video and what ships with it; next steps (WhatsApp Cloud API, cloud
+    deploy, W3C traceparent, multi-tenant Postgres, classifier on researcher output, LLM evals in CI, free
+    price beyond the scenarios).
     *(Written and updated for PL1–PL9; only "evals e resultados" waits for the complete `make evals` report.)*
   - [x] b) `.github/workflows/test.yml`: deterministic suites only — `make test` (host, uv),
     `make test-contracts` and `make test-plugins` (build the agents image once), `make
@@ -1815,10 +1815,10 @@ flowchart TD
   checklist.
 
 **Definition of Done for this loop**
-- [ ] Tests above were written before the implementation steps
-- [ ] Steps completed
-- [ ] Tests above pass
-- [ ] README reviewed against the checklist
+- [x] Tests above were written before the implementation steps
+- [x] Steps completed
+- [x] Tests above pass
+- [x] README reviewed against the checklist
 
 ---
 
@@ -2603,7 +2603,7 @@ evidence, what was changed, and where. Open questions that were "default applied
   model once with the correction, only being replaced if the retry does clarify. Red first: plugins 3 failed of 20 and a
   collection error for the new `choices.py`; green after: 242 passed, 1 skipped.
 
-- **C96 — A pergunta ganhou o clique e perdeu o motivo.** With C95 the dish question finally came as a clarify, and the
+- **C96 — The question gained its click and lost its reason.** With C95 the dish question finally came as a clarify, and the
   owner read only "Qual desses pratos a senhora gosta de cozinhar?": "não me falou os ingredientes que faltavam para
   cada receita... essa parte funcionava perfeito até esse momento". The coverage and the missing list were text the
   model used to write before asking, and the new SOUL line ("options enumerated in the text are dead prose") pushed it
@@ -2613,7 +2613,7 @@ evidence, what was changed, and where. Open questions that were "default applied
   the model's own words. The SOUL rule now says that moving a question into clarify never means answering with less.
   Red first: 1 failed of 7, then 1 failed of 8 for the shortened choice; green: 246 passed, 1 skipped.
 
-- **C97 — O pesquisador ficou aceso depois de terminar.** The owner saw the researcher node still highlighted while its
+- **C97 — The researcher stayed lit after it had finished.** The owner saw the researcher node still highlighted while its
   arrow had already gone dark, which was right. In the live buffer one `web_extract` span of the researcher published
   its opening half and never its closing one (the fan-out branch ended with the request), and the node waited for a
   half that never came. An agent's `a2a_serve` span contains everything that request started, so its close now clears
@@ -2622,7 +2622,7 @@ evidence, what was changed, and where. Open questions that were "default applied
   self-contained, and `services/cockpit/tests/test_pulse.py` extracts it and runs the page's own code under node: red
   4 failed, green 15 passed with the server tests.
 
-- **C98 — A mesma decisão perguntada duas vezes, e unidades que ela não lê.** In the owner's session the accept came as
+- **C98 — The same decision asked twice, in units she does not read.** In the owner's session the accept came as
   "Posso aceitar o escondidinho...?" with the model's own choices ("Sim, aceitar o prato") and then again as the
   Confirmar question, because only Confirmar authorises the write (D14): the first question cost her an answer that
   authorised nothing. A yes/no question about a write she must authorise is now blocked unless it offers exactly
@@ -2635,14 +2635,14 @@ evidence, what was changed, and where. Open questions that were "default applied
   authorises `select_price_scenario` is the Confirmar one; making the scenario pick itself the click would remove the
   second question and is the owner's call.
 
-- **C99 — A evidência que só existia nos testes.** Asked where "Ver a receita completa" shows up, the honest answer was
+- **C99 — The evidence that only existed in the tests.** Asked where "Ver a receita completa" shows up, the honest answer was
   nowhere: `Approvals` has two entry points, `with_evidence` (question by question) and `clarify_with_evidence` (the
   whole call, which also offers the recipe page and, since C96, explains what each dish is missing), and `pre_tool_call`
   only ever called the first. The third choice and the pantry lines passed their unit tests and never reached a real
   session. The hook now rewrites the whole call, and the wiring test asks for both through the hook the agent actually
   fires, so a guard feature that is not wired fails a test from now on. Red 1 of 16; green 253 passed, 1 skipped.
 
-## Post-loop changes (owner requests)
+## Post-loop changes (owner requests, 2026-09-13)
 Requested by the owner while Loops 6–8 were running, test-first, each recorded as a correction. **Order decided by the
 owner:** Loop 6 pauses; Loop 7 (the owner's Telegram checks) and Loop 8 finish, then PL1–PL9, then Loop 6 resumes and
 runs the evals on the final system. Execution order inside PL: PL1 (guards), PL6 and PL8 (kitchen-ledger), PL9 (latency),
@@ -2720,6 +2720,19 @@ and compose project), because they touch almost every file and restart the stack
   concurrently with the first model call, discarding the answer when it blocks; (5) disabling `todo_list` on experts
   (recipe_expert called it 12 times). Each lever is measured before and after with the eval runner. **Decided
   (owner):** all five levers.
+
+## Final manual step (owner — after Loop 8, not executed by the agent)
+Kept here so it is not forgotten: no loop creates a GitHub remote or submits the challenge. The owner took these as his
+own on 2026-09-16 ("tbm considere como ok"); they are ticked as accepted, not as observed by the agent.
+- [x] Create the GitHub repository, add it as `origin` and push.
+- [x] Make the repository **public** and open the link in a private/incognito window to confirm the
+      reviewers can access it.
+- [x] Re-run the Loop 8 secret scan on the pushed repository.
+- [x] (Brief §4.2) Record the 5–10 min demo video, if you decide to include it. *(Three clips recorded on 2026-09-16:
+      `presentation/videos/video-1.mp4` 2:35 from pantry to menu, `video-2.mp4` 0:49 red-team, `video-3.mp4` 0:54 in
+      Langfuse, narrated live over the deck.)*
+- [x] Send the repository link (+ video, if any) to tamara.sabino@ifood.com.br and
+      lucas.rolim@ifood.com.br within the 7-day deadline.
 
 ## Out of scope
 - **Demo video** — outside the 25 h; optional per §1 and §5 (listed in *Final manual step*).
