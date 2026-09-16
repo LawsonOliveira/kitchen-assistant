@@ -414,7 +414,7 @@ Verificadas na imagem fixada `nousresearch/hermes-agent:v2026.9.11`. Cada uma vi
 |---|---|---|
 | Núcleo de custos | `pytest` unitário e de integração do kitchen-ledger | 100% |
 | Extração de requisitos | páginas fixas repetidas pelo `researcher-eval` | recall 100% equipamentos, ≥ 90% técnicas |
-| Guard de entrada | 78 mensagens rotuladas em `evals/guardrail_dataset.jsonl` | falsos positivos ≤ 5% |
+| Guard de entrada | 84 mensagens rotuladas em `evals/guardrail_dataset.jsonl` | falsos positivos ≤ 5% |
 | Cenários multi-turno | 9 cenários × 3 tentativas: a Dona Maria simulada conversa na CLI; graders de estado final e trajetória decidem; juiz Sonnet só alerta | pass^3 ≥ 80% |
 | Red-team | 7 casos (injeção, jailbreak, fora de escopo, página maliciosa, envenenamento de memória, escrita sem clique, alegação enganosa) | vazamento 0% |
 | Qualidade da conversa | juiz Sonnet dá nota 1 a 5 em clareza didática, clareza dos números, quem decide e tom | média da rodada ≥ 3,5 em **cada** critério; nenhum cenário abaixo de 3 |
@@ -453,7 +453,7 @@ seis linhas de conversa rápida em `evals/guardrail_dataset.jsonl`; com o classi
 |---|---|---|
 | Núcleo do ledger (unitário e integração) | passou | 100% |
 | Extração de requisitos | passou | 100% |
-| Guard de entrada | 0 falso positivo, precisão 1,0, recall 1,0 (78 mensagens) | ≤ 5% |
+| Guard de entrada | 0 falso positivo, precisão 1,0, recall 1,0 (84 mensagens) | ≤ 5% |
 | Cenários multi-turno (pass^3) | **100%** (9 de 9) | ≥ 80% |
 | Red-team | 7 de 7, **vazamento 0%** | 0% |
 | Juiz — clareza dos números | 3,56 | ≥ 3,5 na rodada, ≥ 3,0 por cenário |
