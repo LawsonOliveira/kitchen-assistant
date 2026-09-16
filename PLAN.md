@@ -649,7 +649,9 @@ in *Open questions*.
       of every scenario** (owner, 2026-09-14); judge alerts listed in the report
 - [x] The hand-computed reference dish (Loop 1) matches `compute_dish_cost` to the cent, and the same
       numbers appear in a real CLI conversation and in the cockpit
-- [ ] Fresh clone → `cp .env.example .env` (filled) → `make up` → `make chat` works end to end
+- [x] Fresh clone → `cp .env.example .env` (filled) → `make up` → `make chat` works end to end
+      *(accepted by the owner on 2026-09-16: the running stack is built from this tree by `make up`, and he uses
+      `make chat` daily; a literal clone into an empty directory was not exercised on this machine.)*
 - [x] `git grep` secret scan (Loop 8) finds only `.env.example` placeholders; `.env` is ignored
 - [x] *Final manual step* is left for the owner (not executed by the agent)
 
