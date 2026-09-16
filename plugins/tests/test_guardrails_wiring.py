@@ -122,6 +122,22 @@ def test_the_input_guard_runs_alongside_the_first_model_call(orchestrator, monke
     assert events.index("model") < events.index("classify-end")
 
 
+def test_the_guard_shows_itself_working_before_its_verdict(orchestrator, monkeypatch):
+    # The cockpit lit Dona Sálvia before the guard, as if the guard ran after her: the classification starts with the
+    # model call but only published its event at the end. It says it is running when it starts (owner, 2026-09-16).
+    import kitchen_guardrails
+    from kitchen_guardrails import classifier
+
+    events = []
+    monkeypatch.setattr(kitchen_guardrails, "_emit", lambda kind, name, **fields: events.append((kind, fields.get("status"))))
+    monkeypatch.setattr(classifier, "classify", lambda *args, **kwargs: classifier.Verdict("allow", "", ""))
+    middleware = orchestrator.middleware["llm_execution"][0]
+    request = {"messages": [{"role": "user", "content": "quero uma lasanha"}]}
+    middleware(request=request, next_call=lambda r: "model-response", api_call_count=1, platform="cli",
+               session_id="s3", model="m")
+    assert events == [("guard_input", "running"), ("guard_input", "ok")]
+
+
 def test_the_owner_message_is_classified_once(orchestrator, monkeypatch):
     # Live session: the same sentence was blocked at 01:12:55 and allowed at 01:13:00 — Hermes started the turn again
     # (an API retry) and the classifier, asked twice, answered differently. One owner message, one verdict.
