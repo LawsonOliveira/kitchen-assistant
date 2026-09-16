@@ -7,6 +7,7 @@ question carries them, instead of trusting the model to remember to show them.
 
 import json
 import threading
+from decimal import Decimal, InvalidOperation
 
 ACCEPT_WORDS = ("aceitar", "aceito", "aceite")
 METHOD_CHOICE = "Ver a receita completa"
@@ -41,13 +42,15 @@ class Approvals:
         if copy and any(word in lowered for word in SAVE_WORDS) and copy["title"].lower() not in lowered:
             return f'{question}\n\nTítulo: {copy["title"]}\nDescrição: {copy.get("description", "")}'
         if recipe and any(word in lowered for word in ACCEPT_WORDS) and "ingrediente" not in lowered:
-            lines = "\n".join(f'- {item["name"]}: {_amount(item.get("quantity"), item.get("unit", ""))}'
+            # She reads the batch she will actually cook, never the recipe's own yield (owner, 2026-09-16): a recipe for
+            # 8 shown to someone cooking 6 makes her buy the wrong amount of everything.
+            batch, factor = _batch(recipe)
+            lines = "\n".join(f'- {item["name"]}: {_amount(item.get("quantity"), item.get("unit", ""), factor)}'
                               for item in recipe["ingredients"])
-            head = f'{recipe["name"]} rende {recipe.get("yield_portions", "?")} porções'
+            head = f'{recipe["name"]}, lote de {batch} porções' if recipe.get("launch_batch_portions") \
+                else f'{recipe["name"]} rende {batch} porções'
             if recipe.get("prep_time_minutes"):
                 head += f' em {recipe["prep_time_minutes"]} min'
-            if recipe.get("launch_batch_portions"):  # the batch she chose is not the recipe's own yield
-                head += f' (lote de lançamento: {recipe["launch_batch_portions"]})'
             return f"{question}\n\n{head}:\n{lines}"
         return question
 
@@ -77,14 +80,34 @@ class Approvals:
         return self._recipe_url(session_id)
 
 
-def _amount(quantity, unit: str) -> str:
+def _batch(recipe: dict) -> tuple:
+    """The batch she will cook and how much of each ingredient that is, as a fraction of the recipe's own yield."""
+    yield_portions, batch = recipe.get("yield_portions"), recipe.get("launch_batch_portions")
+    if not batch:
+        return yield_portions if yield_portions else "?", Decimal(1)
+    if not yield_portions:
+        return batch, Decimal(1)
+    return batch, Decimal(batch) / Decimal(yield_portions)
+
+
+def _amount(quantity, unit: str, factor: Decimal = Decimal(1)) -> str:
     """Her own way of writing it: 1,5 kg and 3 dentes, not 1.5 kg and 3 dente."""
-    text = f"{quantity}"
-    if text.endswith(".0"):
-        text = text[:-2]
-    text = text.replace(".", ",")
-    plural = f"{unit}s" if unit in PLURALS and quantity not in (1, "1") else unit
+    text = _number(quantity, factor)
+    plural = f"{unit}s" if unit in PLURALS and text != "1" else unit
     return f"{text} {plural}".strip()
+
+
+def _number(quantity, factor: Decimal) -> str:
+    try:
+        value = Decimal(str(quantity)) * factor
+    except (InvalidOperation, TypeError):
+        return f"{quantity}".removesuffix(".0").replace(".", ",")
+    if value != value.to_integral_value():
+        value = value.quantize(Decimal("0.001"))
+    text = format(value, "f")
+    if "." in text:
+        text = text.rstrip("0").rstrip(".")
+    return text.replace(".", ",")
 
 
 def _parsed(value):

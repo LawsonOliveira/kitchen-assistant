@@ -592,6 +592,7 @@ def compute_dish_cost(conn, dish_id: int | None = None, recipe: dict | None = No
     else:
         raise DomainError("invalid_arguments", "pass dish_id or recipe")
     per_portion, packaging = cost["per_portion"], cost["packaging_cost"]
+    batch_portions = dish["launch_batch_portions"] if dish_id is not None else yield_portions
     lines = [{
         "ingredient": line["ingredient"]["name"],
         "quantity_used_display": _quantity_display(line["quantity_base"], line["ingredient"]["base_unit"]),
@@ -607,8 +608,11 @@ def compute_dish_cost(conn, dish_id: int | None = None, recipe: dict | None = No
         "recipe_cmv_display": format_brl(cost["recipe_cmv"]),
         "yield_portions": yield_portions,
         "cmv_per_portion_display": format_brl(per_portion),
+        # Everything she reads is the batch she will cook (owner, 2026-09-16); the cost per portion is the same number.
+        "batch_portions": batch_portions,
+        "batch_cost_display": format_brl(per_portion * batch_portions),
         # The account itself is a display string, so Dona Sálvia can show it without writing arithmetic of her own (D12).
-        "cost_chain_display": cost_chain_display(cost["recipe_cmv"], yield_portions, per_portion),
+        "cost_chain_display": cost_chain_display(per_portion * batch_portions, batch_portions, per_portion),
         "min_price_display": format_brl_min(min_price(per_portion, FEE_RATE)),
         "min_price_chain_display": min_price_chain_display(per_portion, FEE_RATE),
         "packaging_unit_cost_display": None if packaging is None else format_brl(packaging),
