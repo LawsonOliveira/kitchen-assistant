@@ -34,6 +34,13 @@ def _emit(kind: str, name: str, **fields) -> None:
         log.debug("guard event not emitted", exc_info=True)
 
 
+VERDICT_MEMORY = 50  # the last owner messages judged, enough for a conversation and bounded for a long-lived gateway
+
+
+def _said(owner: str) -> str:
+    return " ".join((owner or "").split()).casefold()
+
+
 def _text(content) -> str:
     if isinstance(content, str):
         return content
@@ -96,11 +103,11 @@ def register(ctx) -> None:
                 # whose tool calls have not run yet. One owner message gets one verdict: Hermes may start the turn again
                 # after an API retry, and asking twice gave two different answers for the same sentence (C92).
                 owner, last_assistant = _owner_and_last_assistant(request)
-                decided = verdicts.get(session_id)
+                decided = verdicts.get(_said(owner))
                 if not owner:
                     guard = None
-                elif decided and decided[0] == owner:
-                    decision = decided[1]
+                elif decided is not None:
+                    decision = decided
                     return _synthetic(decision.message, model) if decision.action == "block" else next_call(request)
                 else:
                     # The cockpit should light the guard while it classifies, not only when it answers.
@@ -124,7 +131,11 @@ def register(ctx) -> None:
             log.exception("kitchen_guardrails: input guard failed; blocking")
             decision = input_guard.Decision("block", INFRA_BLOCK_MESSAGE)
         owner, _ = _owner_and_last_assistant(request)
-        verdicts[session_id] = (owner, decision)
+        if owner:
+            # Keyed by what she typed: a restarted turn comes back with a new trace and sometimes a new session (C92).
+            verdicts[_said(owner)] = decision
+            for old in list(verdicts)[:-VERDICT_MEMORY]:
+                verdicts.pop(old, None)
         _emit("guard_input", "input_guard", status="blocked" if decision.action == "block" else "ok",
               session_id=session_id, prompt_hash=classifier.prompt_hash("input_guard.md"))
         return _synthetic(decision.message, model) if decision.action == "block" else response
