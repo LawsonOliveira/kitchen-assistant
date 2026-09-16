@@ -188,12 +188,10 @@ def register(ctx) -> None:
         The ledger wrote the account; the model keeps paraphrasing it, so the code puts it in front of the question that
         shows its result (probes A-C, didactic clarity stuck at 2).
         """
-        questions = [{**entry, "question": approvals.with_evidence(session_id, entry.get("question", ""))}
-                     if isinstance(entry, dict) else entry for entry in (args or {}).get("questions") or []]
-        shown = {**(args or {}), "questions": questions} if questions else (args or {})
+        shown = approvals.clarify_with_evidence(session_id, args or {})
         explained = account.clarify_with_account(shown, groundings.setdefault(session_id, SessionGrounding()).chains,
                                                  shown_accounts.setdefault(session_id, account.RememberedAccounts()))
-        if explained is None and questions and questions != ((args or {}).get("questions") or []):
+        if explained is None and shown != (args or {}):
             return shown
         return explained
 
