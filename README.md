@@ -54,8 +54,17 @@ Outros comandos:
 | http://localhost:8080 | cockpit ao vivo: qual agente, ferramenta e MCP estão ativos, custo do turno, saldo |
 | http://localhost:3000 | Langfuse (usuário e senha do `.env`): um trace por turno, atravessando os contêineres |
 | `make import-pantry FILE=…` | envia uma planilha nova; a Dona Sálvia mostra a diferença e só aplica depois de um clique |
+| `make logs` · `make down` | acompanha os contêineres; desce a pilha sem apagar volumes |
 | `make test`, `make test-plugins`, `make test-contracts`, `make test-integration` | suítes determinísticas, 706 testes ao todo, também no CI |
+| `make selftest` | canário dos guardrails contra o servidor do orchestrator; é o que o `make chat` roda antes de abrir |
 | `KITCHEN_ALLOW_EVAL_RESET=1 make evals` | todas as camadas de eval. **Apaga o estado de negócio** da pilha em execução |
+| `make eval-guardrails` | só o guard de entrada, com o classificador real, sobre as 84 mensagens rotuladas |
+| `make eval-requirements` | só a extração de requisitos, em páginas fixas, pelo `researcher-eval` |
+| `KITCHEN_ALLOW_EVAL_RESET=1 make eval-reset` | volta a despensa da planilha, o orçamento de R$ 80,00 e apaga pratos, compras e memórias |
+| `make review-conversations SINCE=AAAA-MM-DD` | lê as conversas reais dela, dá notas e escreve em `evals/reviews/` e no Langfuse |
+| `make latency-report` | onde o tempo do turno foi parar, a partir dos eventos e do `audit_log` |
+| `make smoke-a2a` · `make smoke-research` | checagem rápida da malha A2A e uma pesquisa real pelo contrato do researcher |
+| `make db-shell` · `make hermes-shell` | um `psql` no Postgres do negócio; um shell dentro do container do orchestrator |
 
 ## Arquitetura
 
@@ -94,8 +103,12 @@ sequenceDiagram
     participant C as cost_expert
     participant X as kitchen-ledger
     M->>F: "Quero a do meio, R$ 9,90"
-    F->>G: input guard (Haiku)
-    G-->>F: allow
+    par guard de entrada junto com a primeira chamada
+        F->>G: input guard (Haiku)
+        G-->>F: allow
+    end
+    F->>G: pre_tool_call: clarify
+    G-->>F: mesma pergunta com a conta do ledger na frente
     F->>M: clarify: Confirmar / Cancelar
     M->>F: Confirmar (clique)
     F->>G: pre_tool_call: há um clique não usado?
@@ -497,7 +510,7 @@ coloca na frente da pergunta não tem onde entrar, e a explicação volta a depe
 - **Embalagem fica fora do CMV**, mostrada à parte.
 
 ## Demo em vídeo e apresentação
-A demo em vídeo **está incluída nesta entrega** bem como a apresentação em **presentation/**.
+A demo em vídeo **está incluída nesta entrega** em um formato de apresentação em MP4.
 
 ## Próximos passos
 
