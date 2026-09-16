@@ -20,6 +20,7 @@ class Approvals:
     def __init__(self):
         self._recipes: dict[str, dict] = {}
         self._copies: dict[str, dict] = {}
+        self._candidates: dict[str, dict] = {}
         self._lock = threading.Lock()
 
     def remember_request(self, session_id: str, request) -> None:
@@ -30,10 +31,16 @@ class Approvals:
                 self._recipes[session_id] = {**recipe, "launch_batch_portions": payload.get("launch_batch_portions")}
 
     def remember_result(self, session_id: str, result) -> None:
-        copy = (((_parsed(result) or {}).get("result") or {}).get("menu_copy"))
+        answer = (_parsed(result) or {}).get("result") or {}
+        copy = answer.get("menu_copy")
         if isinstance(copy, dict) and copy.get("title"):
             with self._lock:
                 self._copies[session_id] = copy
+        for candidate in answer.get("candidates") or []:
+            name = ((candidate or {}).get("recipe") or {}).get("name")
+            if name:
+                with self._lock:
+                    self._candidates.setdefault(session_id, {})[name] = candidate
 
     def with_evidence(self, session_id: str, question: str) -> str:
         lowered = (question or "").lower()
@@ -66,11 +73,21 @@ class Approvals:
                 continue
             question = self.with_evidence(session_id, entry.get("question", ""))
             choices = list(entry.get("choices") or [])
+            question = self._with_pantry(session_id, question, choices)
             if question != entry.get("question") and any(word in question.lower() for word in ACCEPT_WORDS) \
                     and self._recipe_url(session_id) and METHOD_CHOICE not in choices:
                 choices = choices + [METHOD_CHOICE]
             rewritten.append({**entry, "question": question, **({"choices": choices} if choices else {})})
         return {**args, "questions": rewritten} if rewritten != questions else args
+
+    def _with_pantry(self, session_id: str, question: str, choices: list) -> str:
+        """The question that offers her the dishes, with what each one costs her in shopping (owner, 2026-09-16)."""
+        with self._lock:
+            known = dict(self._candidates.get(session_id) or {})
+        offered = [candidate for name, candidate in known.items() if _offered(name, choices)]
+        if not offered or "% da despensa" in question:
+            return question
+        return f"{question.rstrip()}\n\n" + "\n".join(_pantry_line(candidate) for candidate in offered)
 
     def _recipe_url(self, session_id: str) -> str:
         with self._lock:
@@ -78,6 +95,22 @@ class Approvals:
 
     def method_url(self, session_id: str) -> str:
         return self._recipe_url(session_id)
+
+
+def _offered(name: str, choices: list) -> bool:
+    """The choices are the model's words: "Lasanha" is the dish the expert called "Lasanha de carne moída"."""
+    dish = name.casefold()
+    return any(dish == choice or dish.startswith(choice) or choice.startswith(dish)
+               for choice in (str(item).casefold() for item in choices))
+
+
+def _pantry_line(candidate: dict) -> str:
+    """"Lasanha de carne moída: 69% da despensa. Falta comprar: massa de lasanha, creme de leite."""
+    name = (candidate.get("recipe") or {}).get("name", "")
+    coverage = candidate.get("pantry_coverage_pct")
+    missing = [item for item in candidate.get("missing_ingredients") or [] if item]
+    head = f"{name}: {coverage}% da despensa." if isinstance(coverage, int) else f"{name}:"
+    return f"{head} Falta comprar: {', '.join(missing)}." if missing else f"{head} Não falta nada."
 
 
 def _batch(recipe: dict) -> tuple:
