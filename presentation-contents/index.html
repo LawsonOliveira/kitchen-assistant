@@ -258,65 +258,11 @@
   <aside class="speaker" hidden>Narre por cima. Diga o tempo real das esperas aceleradas (a conversa inteira levou 9 min 42 s). Aponte no cockpit: pesquisador em paralelo, painel de saldo caindo depois da compra, caminho rápido do custo. Dois momentos valem parar: o aceite que o ledger recusou porque o clique ainda não tinha acontecido, e que virou pergunta antes de gravar; e a conta que aparece na própria pergunta do preço, vinda do ledger, porque nenhum agente escreve aritmética.</aside>
 </section>
 
-<!-- 6 · defesa em camadas ------------------------------------------------------------------------------------------------>
-<section class="slide" data-seconds="20" data-title="Defesa em camadas" id="defesa">
-  <div class="slide-in">
-    <div class="head">
-      <p class="tag"><b>06</b> segurança</p>
-      <h2>Os hooks do Hermes falham abertos. Cada guarda bloqueia na própria falha</h2>
-    </div>
-    <div class="body">
-      <div class="layers">
-        <div class="layer model">
-          <span class="chip model">modelo · Haiku</span><h3>Entrada</h3>
-          <p>Classificador fora do agente, em paralelo com o turno.</p>
-          <p class="fine"><b>uncertain</b> passa · <b>block</b> vira frase fixa · falha de infra bloqueia</p>
-        </div>
-        <div class="layer code">
-          <span class="chip code">código · pre_tool_call</span><h3>Allowlist</h3>
-          <p>Só as ferramentas do papel, conferidas de novo pelo token do MCP.</p>
-          <p class="fine">o único hook do Hermes que falha fechado</p>
-        </div>
-        <div class="layer code">
-          <span class="chip code">código · schema</span><h3>Contratos</h3>
-          <p>A web entra como dado, e só de URL que foi lida.</p>
-          <p class="fine">não existe campo para instrução</p>
-        </div>
-        <div class="layer code">
-          <span class="chip code">código · clique</span><h3>Confirmações</h3>
-          <p>Dinheiro exige um Confirmar ainda não consumido.</p>
-          <p class="fine">vale uma vez · texto não autoriza</p>
-        </div>
-        <div class="layer both">
-          <span class="chip code">código</span> <span class="chip model">+ modelo</span><h3>Saída</h3>
-          <p>Todo R$ ancorado no MCP ou na fala dela; depois, política.</p>
-          <p class="fine">aqui <b>uncertain</b> bloqueia, o contrário da entrada</p>
-        </div>
-        <div class="layer model">
-          <span class="chip model">modelo</span><h3>Memória</h3>
-          <p>Só gosto e estilo, e com allow explícito.</p>
-          <p class="fine">fato de negócio vai para o banco</p>
-        </div>
-        <div class="layer code">
-          <span class="chip code">código · pre_tool_call</span><h3>A conta</h3>
-          <p>A pergunta que mostra um preço sai com a conta do ledger na frente.</p>
-          <p class="fine">o modelo não escreve aritmética: ele copia, ou o código põe</p>
-        </div>
-      </div>
-      <div class="callout">
-        <span class="big num">84/84</span>
-        <p class="small">mensagens rotuladas classificadas certo pela guarda de entrada, 0% de falsos positivos. <code>make chat</code> nem abre se o canário do self-test passar pela guarda.</p>
-      </div>
-    </div>
-  </div>
-  <aside class="speaker" hidden>Não leia as seis caixas: diga a regra (cada guarda bloqueia na própria falha) e desenvolva duas. Entrada: classificador separado, roda junto com a primeira chamada do modelo; allow e uncertain passam porque falso positivo incomoda mais que assunto fora de escopo; block responde do código e descarta a resposta já gerada; timeout de 10 s, rede ou saída ilegível também bloqueiam. Saída: primeiro a ancoragem determinística de todo R$, depois a política (saúde, "orgânico", concorrente), e aí uncertain bloqueia. Se perguntarem de clique: o modelo já foi visto respondendo ao próprio clarify, por isso a checagem é código. Se perguntarem de memória: envenenar só alcança gosto e estilo, dinheiro está no Postgres. A sexta caixa é a lição mais cara da semana: o juiz batia na clareza didática porque ela mostrava "custo R$ 2,60" sem a conta, e ela não podia inventar aritmética (todo R$ tem que vir de display string do MCP). Três rodadas pedindo no prompt não mudaram nada; o ledger passou a devolver "R$ 25,96 ÷ 10 porções = R$ 2,60 por porção" como dado e o mesmo hook que bloqueia ferramenta agora reescreve a pergunta com a conta na frente.</aside>
-</section>
-
 <!-- 7 · demo red-team ---------------------------------------------------------------------------------------------------->
 <section class="slide" data-seconds="60" data-title="Demo: red-team" data-kind="video" id="demo-redteam">
   <div class="slide-in">
     <div class="head">
-      <p class="tag"><b>07</b> demo · 49 s · red-team ao vivo</p>
+      <p class="tag"><b>06</b> demo · 49 s · red-team ao vivo</p>
       <h2>Três ataques ao vivo, sete no portão, nenhum passa</h2>
     </div>
     <div class="demo">
@@ -340,7 +286,7 @@
 <section class="slide" data-seconds="20" data-title="Observabilidade" id="observabilidade">
   <div class="slide-in">
     <div class="head">
-      <p class="tag"><b>08</b> observabilidade</p>
+      <p class="tag"><b>07</b> observabilidade</p>
       <h2>Um trace por turno, atravessando os cinco contêineres</h2>
     </div>
     <div class="cols" style="--n: 2; grid-template-columns: minmax(0, 1.8fr) minmax(0, 1fr)">
@@ -388,7 +334,7 @@
 <section class="slide" data-seconds="20" data-title="Evals e melhoria contínua" id="evals">
   <div class="slide-in">
     <div class="head">
-      <p class="tag"><b>09</b> qualidade</p>
+      <p class="tag"><b>08</b> qualidade</p>
       <h2>Um portão offline e um ciclo com as conversas reais</h2>
     </div>
     <div class="cols" style="--n: 2; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr)">
@@ -429,7 +375,7 @@
 <section class="slide" data-seconds="60" data-title="Demo: Langfuse" data-kind="video" id="demo-melhoria">
   <div class="slide-in">
     <div class="head">
-      <p class="tag"><b>10</b> demo · 54 s · Langfuse</p>
+      <p class="tag"><b>09</b> demo · 54 s · Langfuse</p>
       <h2>Melhoria contínua</h2>
     </div>
     <div class="demo">
@@ -450,23 +396,6 @@
   <aside class="speaker" hidden>Dois comandos escrevem no Langfuse. O make evals roda os 9 cenários três vezes na pilha real e publica cada tentativa como run item ligada ao trace do turno, com as notas do juiz; o id de cada score é estável, então repetir a rodada atualiza em vez de duplicar. O make review-conversations lê as sessões reais da CLI e do Telegram do state.db, calcula sinais determinísticos (bloqueios, erros de ferramenta, Cancelar, p90, US$), dá nota com a mesma rubrica e manda para a fila de anotação o que tiver alerta; nada é aplicado sozinho, o que sai são rascunhos. Quando a pessoa decide que um bloqueio foi errado, a mensagem dela vira uma linha em evals/guardrail_dataset.jsonl e o make eval-guardrails passa o classificador de verdade, dentro do orchestrator, nas 84 mensagens rotuladas: é o portão que impede a correção de um caso de quebrar os outros. Três otimizações vieram daí: o caminho rápido, depois de ver o ranking de latência por span; o teto de custo por turno, depois de ver o US$ por agente; e a clareza didática, que o juiz manteve em 2 enquanto os outros critérios iam a 4 e 5, até a conta virar dado do ledger. E a regra que não muda: o juiz nunca decide passa ou falha, quem decide é estado e trajetória.</aside>
 </section>
 
-<!-- 11 · testes A/B ------------------------------------------------------------------------------------------------------>
-<section class="slide" data-seconds="15" data-title="Testes A/B" id="ab">
-  <div class="slide-in">
-    <div class="head">
-      <p class="tag"><b>11</b> experimentação</p>
-      <h2>Só vai para A/B o que passou no portão offline</h2>
-    </div>
-    <div class="ab">
-      <section>
-        <h3>O que variar</h3>
-        <ul class="plain">
-          <li><b>Versão do prompt</b>: o hash já está em cada span</li>
-          <li><b>Modelo por agente</b>: Haiku × Sonnet no especialista de custos</li>
-          <li><b>Pesquisa</b>: 3 × 2 candidatas por rodada</li>
-          <li><b>Elicitação</b>: tudo de uma vez × uma pergunta por vez</li>
-        </ul>
-      </section>
       <section>
         <h3>Desenho</h3>
         <ul class="plain">
@@ -490,7 +419,7 @@
 <section class="slide" data-seconds="20" data-title="Escala" id="escala">
   <div class="slide-in">
     <div class="head">
-      <p class="tag"><b>12</b> escala</p>
+      <p class="tag"><b>10</b> escala</p>
       <h2>Para milhares de conversas simultâneas, o gargalo é o modelo, não o código</h2>
     </div>
     <div class="body" style="gap: calc(var(--u) * 1.2)">
@@ -531,7 +460,7 @@
 <section class="slide" data-seconds="20" data-title="Como foi construído" id="metodo">
   <div class="slide-in">
     <div class="head">
-      <p class="tag"><b>13</b> método</p>
+      <p class="tag"><b>11</b> método</p>
       <h2>O produto foi escrito com o mesmo ciclo que ele usa para melhorar</h2>
     </div>
     <div class="body" style="gap: calc(var(--u) * 1.4)">
