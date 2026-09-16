@@ -89,11 +89,13 @@ def alerts(conversation_signals: dict, cost_usd: float, limits: dict = LIMITS) -
     return found
 
 
-def score_payloads(session_id: str, conversation_signals: dict, rubric_scores: dict) -> list[dict]:
+def score_payloads(session_id: str, conversation_signals: dict, rubric_scores: dict, configs: dict | None = None) -> list[dict]:
     values = {**rubric_scores, **{name: conversation_signals[name] for name in SIGNAL_SCORES}}
-    # A stable id per session and score: Langfuse upserts by id, so a rerun updates instead of adding a copy.
+    # A stable id per session and score: Langfuse upserts by id, so a rerun updates instead of adding a copy. A rubric
+    # score also carries the queue's config, which is what puts the judge's note in front of the person reviewing it.
     return [{"id": f"review-{session_id}-{name}", "sessionId": session_id, "name": name, "value": value, "dataType": "NUMERIC",
-             "comment": "review_conversations"} for name, value in values.items()]
+             "comment": "review_conversations", **({"configId": (configs or {})[name]} if name in (configs or {}) else {})}
+            for name, value in values.items()]
 
 
 def needs_annotation(judge: dict, conversation_signals: dict, conversation_alerts: list[str]) -> bool:
@@ -155,18 +157,23 @@ def _langfuse(env: dict):
     return call
 
 
-def _annotation_queue(langfuse, criteria: list[str]) -> str:
-    """The review queue, created on first use; Langfuse requires score configs on a queue, so the rubric criteria get
-    numeric 1–5 configs (reused by name)."""
+def queue_and_configs(langfuse, criteria: list[str]) -> tuple[str, dict]:
+    """The review queue and the score config of each rubric criterion, created on first use and reused by name.
+
+    Langfuse requires score configs on a queue, and a score only shows up in the annotation form when it was written
+    against one of them, so the caller gets the ids back to put the judge's notes in front of the person reviewing.
+    """
+    known = {config["name"]: config["id"] for config in langfuse("GET", "score-configs?limit=100").get("data", [])}
+    configs = {name: known.get(name) or langfuse("POST", "score-configs",
+                                                 {"name": name, "dataType": "NUMERIC", "minValue": 1, "maxValue": 5,
+                                                  "description": f"evals/rubric.md: {name}"})["id"] for name in criteria}
     queues = langfuse("GET", "annotation-queues?limit=50").get("data", [])
     existing = next((queue["id"] for queue in queues if queue["name"] == QUEUE_NAME), None)
     if existing:
-        return existing
-    configs = {config["name"]: config["id"] for config in langfuse("GET", "score-configs?limit=100").get("data", [])}
-    ids = [configs.get(name) or langfuse("POST", "score-configs", {"name": name, "dataType": "NUMERIC", "minValue": 1, "maxValue": 5,
-                                                                   "description": f"evals/rubric.md: {name}"})["id"] for name in criteria]
-    return langfuse("POST", "annotation-queues", {"name": QUEUE_NAME, "description": "Conversations flagged by review_conversations",
-                                                  "scoreConfigIds": ids})["id"]
+        return existing, configs
+    created = langfuse("POST", "annotation-queues", {"name": QUEUE_NAME, "description": "Conversations flagged by review_conversations",
+                                                     "scoreConfigIds": list(configs.values())})
+    return created["id"], configs
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -185,7 +192,9 @@ def main(argv: list[str] | None = None) -> int:
                 if next(row for row in rows if row["id"] == session)["source"] in sources]
     by_id, rubric, judge = {row["id"]: row for row in rows}, (EVALS / "rubric.md").read_text(), trials.judge()
     env = {**trials.dotenv(), **os.environ}
-    langfuse, queue_id, problems, reviews = (None if args.no_langfuse else _langfuse(env)), None, [], []
+    langfuse, problems, reviews = (None if args.no_langfuse else _langfuse(env)), [], []
+    # The queue and its configs come first: every session is published with the judge's notes already on it.
+    queue_id, configs = queue_and_configs(langfuse, graders.rubric_criteria(rubric)) if langfuse else (None, {})
     for session_id in selected:
         conversation_turns = turns(trials.orchestrator_session(session_id))
         if not conversation_turns:
@@ -200,11 +209,9 @@ def main(argv: list[str] | None = None) -> int:
         if langfuse is None:
             continue
         try:
-            for payload in score_payloads(session_id, conversation_signals, judged["scores"]):
+            for payload in score_payloads(session_id, conversation_signals, judged["scores"], configs):
                 langfuse("POST", "scores", payload)
             if needs_annotation(judged, conversation_signals, conversation_alerts):
-                if queue_id is None:
-                    queue_id = _annotation_queue(langfuse, graders.rubric_criteria(rubric))
                 queued = langfuse("GET", f"annotation-queues/{queue_id}/items?limit=100").get("data", [])
                 if not any(item.get("objectId") == session_id for item in queued):
                     langfuse("POST", f"annotation-queues/{queue_id}/items", {"objectId": session_id, "objectType": "SESSION"})
